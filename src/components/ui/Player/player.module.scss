@@ -1,0 +1,23 @@
+.player {
+   --gap: -20px;
+
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 15px;
+
+   flex: 0 0 auto;
+   width: 100px;
+
+   .cards {
+      display: flex;
+
+      .card {
+         width: 30px;
+
+         &:not(:first-child) {
+            margin-left: var(--gap);
+         }
+      }
+   }
+}

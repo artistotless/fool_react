@@ -1,0 +1,30 @@
+.avatar {
+   width: 60px;
+   aspect-ratio: 1;
+   background: white;
+   border-radius: 100%;
+   overflow: hidden;
+   border: 4px solid transparent; /* Добавляем прозрачную границу по умолчанию */
+   position: relative;
+
+   .name {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      z-index: 1;
+
+      font-size: 10px;
+      font-weight: 500;
+      color: black;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+   }
+
+   .image {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+   }
+}

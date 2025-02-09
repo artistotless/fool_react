@@ -1,0 +1,25 @@
+.field {
+   flex: 1 1 auto;
+   position: relative;
+
+   padding: 0 15px;
+
+   display: flex;
+   justify-content: flex-start;
+   align-items: center;
+   flex-direction: column;
+
+   background: url("src/assets/cards/background.png");
+   background-size: 10px;
+   background-repeat: repeat;
+}
+
+.players {
+   width: 100%;
+   display: flex;
+   justify-content: space-around;
+   gap: 10px;
+
+   padding: 35px 0;
+   padding-bottom: 25px;
+}
