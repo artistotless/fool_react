@@ -1,11 +1,11 @@
 import animationService from "src/contexts/animationService";
-import { useTransition, animated } from "react-spring";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import styles from "./deck.module.scss";
 
 import { ICard } from "src/types";
 import back from "src/assets/cards/backs/blue.svg";
 import Card from "src/components/ui/Card";
+import { AnimatePresence, motion } from "framer-motion";
 
 export interface DeckProps {
    trumpCard?: ICard | null;
@@ -13,31 +13,34 @@ export interface DeckProps {
 }
 
 export const Deck = (props: DeckProps) => {
-   const transitions = useTransition(props.isVisible, {
-      from: { opacity: 0, transform: "translateX(-30px)" },
-      enter: { opacity: 1, transform: "translateX(0)" },
-      leave: { opacity: 0, transform: "translateX(-30px)" },
-      config: { tension: 300 },
-   });
-
    const setDeckRef = useCallback((node: HTMLImageElement | null) => {
       if (node) {
          animationService.deckRef.current = node;
       }
    }, []);
 
-   return transitions(
-      (style, item) =>
-         item && (
-            <animated.div className={styles.deck_wrapper} style={style}>
-               <img
-                  id="deck"
-                  className={styles.stack}
-                  src={back}
-                  ref={setDeckRef}
-               ></img>
-               {props.trumpCard && <Card {...props.trumpCard} className={styles.trump} />}
-            </animated.div>
-         )
-   );
+   return (
+      <AnimatePresence>
+        {props.isVisible && (
+          <motion.div
+            className={styles.deck_wrapper}
+            initial={{ opacity: 0, x: -30 }} // Начальное состояние (появление)
+            animate={{ opacity: 1, x: 0 }} // Анимация появления
+            exit={{ opacity: 0, x: -30 }} // Анимация исчезновения
+            transition={{ type: "spring", stiffness: 300 }} // Параметры анимации
+          >
+            <img
+              id="deck"
+              className={styles.stack}
+              src={back}
+              ref={setDeckRef}
+              alt="Deck"
+            />
+            {props.trumpCard && (
+              <Card {...props.trumpCard} className={styles.trump} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
 };

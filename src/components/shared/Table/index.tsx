@@ -21,9 +21,7 @@ const Slot = ({ slot }: SlotProps, key:number) => {
       <div
          className={`${styles.slot} ${isDropping ? styles.drop : ""}`}
          key={key}
-         ref={(node) => {
-            setNodeRef(node);
-         }}
+         ref={setNodeRef}
       >
          {slot.cards.map((card, index) => (
             <Card

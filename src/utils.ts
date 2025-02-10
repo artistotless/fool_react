@@ -156,8 +156,8 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
       if (!serverUrl)
          throw new Error('Адрес сервера с картами не найден в localStorage');
 
-      // Формируем URL для загрузки карты с удалённого сервера
-      const imageUrl = `${serverUrl}/cards/${suit.name.toLowerCase()}/${rank.name.toLowerCase()}.svg`;
+      const cardPath = `cards/${suit.name.toLowerCase()}/${rank.name.toLowerCase()}.svg`;
+      const imageUrl = env.loadCardsLocally ? `../src/assets/${cardPath}` : `${serverUrl}/${cardPath}`;
 
       // Устанавливаем карту как источник изображения
       setSrc(imageUrl);

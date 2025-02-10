@@ -22,6 +22,7 @@ export const tokens = [
 ];
 
 export const signalRLoggingEnabled = true;
-// export const gsEndpoint = 'https://localhost:22001';
-export const gsEndpoint = 'http://artistotless:52001';
-export const cardServerUrl = 'http://artistotless:5500/durak_cards';
+// export const gsEndpoint = 'https://192.168.0.104:22001';
+export const gsEndpoint = 'http://192.168.0.104:52001';
+export const loadCardsLocally = true;
+export const cardServerUrl = 'http://192.168.0.104:5500/durak_cards';
