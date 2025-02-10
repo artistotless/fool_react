@@ -1,6 +1,5 @@
 import { useGame } from "src/contexts/GameContext";
 import { Player, PlayerProps } from "../../ui/Player";
-import { Deck } from "../Deck";
 import PlayerCards from "../PlayerCards";
 import Table from "../Table";
 import styles from "./gamefield.module.scss";
@@ -15,7 +14,6 @@ const GameField = () => {
          </div>
 
          <Table />
-         <Deck trumpCard={trumpCard} isVisible={deckCardsCount > 0} />
          <PlayerCards />
       </div>
    );

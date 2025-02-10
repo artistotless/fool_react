@@ -9,7 +9,7 @@ export interface PlayerProps {
    passed: boolean;
 }
 
-import red_back from "src/assets/cards/backs/red.svg";
+import red_back from "src/assets/cards/backs/red.png";
 import Avatar from "../Avatar";
 import { varibleGap } from "src/utils";
 
@@ -30,11 +30,6 @@ export const Player = memo(({ name, avatar, cardsCount, id }: PlayerProps) => {
          }
       >
          <Avatar src={avatar} name={name} playerId={id} />
-
-         <div className={styles.cards} id={`cards-${id}`}>
-            {<img src={red_back} className={styles.card} />}
-            {<b>x {cardsCount}</b>}
-         </div>
       </div>
    );
 });

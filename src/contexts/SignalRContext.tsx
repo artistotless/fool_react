@@ -128,7 +128,6 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
    }, [connection]);  // Мемоизация с зависимостью от connection
 
    // Функция для передачи хода 
-   // Функция для передачи хода
    const pass = useCallback(async () => {
       if (connection) {
          try {

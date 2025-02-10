@@ -17,9 +17,9 @@
 .players {
    width: 100%;
    display: flex;
-   justify-content: space-around;
+   justify-content: center;
    gap: 10px;
-
-   padding: 35px 0;
-   padding-bottom: 25px;
+   min-height: 84px;
+   height: 15lvh;
+   padding: 12px 0;
 }

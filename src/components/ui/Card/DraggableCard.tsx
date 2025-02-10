@@ -2,6 +2,7 @@ import { forwardRef, memo, useEffect, useState } from "react";
 import { ICard } from "src/types";
 import styles from "./card.module.scss";
 import { useDraggable } from "@dnd-kit/core";
+
 import { loadCardImage } from "src/utils";
 
 interface CardProps extends ICard {

@@ -1,6 +1,6 @@
 import { CSSProperties, RefObject } from "react";
-import back_ic from "src/assets/cards/backs/red.svg";
-import { IRank, ISuit } from "./types";
+import back_ic from "src/assets/cards/backs/red.png";
+import { IRank, ISuit, Ranks} from "./types";
 import * as env from "./environments/environment";
 
 export const varibleGap = (
@@ -156,8 +156,14 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
       if (!serverUrl)
          throw new Error('Адрес сервера с картами не найден в localStorage');
 
+      let extension = '.svg';
+
+      // if ([Ranks.Jack, Ranks.King, Ranks.Queen].indexOf(rank.name) != -1) {
+      //    extension = '.png'
+      // }
+      
       // Формируем URL для загрузки карты с удалённого сервера
-      const imageUrl = `${serverUrl}/cards/${suit.name.toLowerCase()}/${rank.name.toLowerCase()}.svg`;
+      const imageUrl = `${serverUrl}/cards/${suit.name.toLowerCase()}/${rank.name.toLowerCase()}${extension}`;
 
       // Устанавливаем карту как источник изображения
       setSrc(imageUrl);

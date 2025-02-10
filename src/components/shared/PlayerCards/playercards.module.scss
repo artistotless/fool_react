@@ -2,7 +2,7 @@
    position: absolute;
    z-index: 20;
    left: 0;
-   bottom: 0;
+   bottom: -9lvh;
 
    width: 100%;
 }
@@ -28,8 +28,7 @@
 
    > * {
       position: relative;
-      bottom: -100px;
-      width: clamp(100px, 15vh, 160px);
+      width: clamp(100px, 17vh, 220px);
       grid-row-start: 1;
       justify-self: center;
 

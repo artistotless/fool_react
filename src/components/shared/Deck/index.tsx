@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import styles from "./deck.module.scss";
 
 import { ICard } from "src/types";
-import back from "src/assets/cards/backs/blue.svg";
+import back from "src/assets/cards/backs/blue.png";
 import Card from "src/components/ui/Card";
 
 export interface DeckProps {

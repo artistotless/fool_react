@@ -2,13 +2,14 @@ import ConnPanel from "./components/shared/ConnPanel";
 import GameField from "./components/shared/GameField";
 import Navbar from "./components/shared/Navbar";
 import { useSignalR } from "./contexts/SignalRContext";
+import * as env from "./environments/environment";
 
 function App() {
    const { startConnection, isConnected } = useSignalR();
 
    return (
       <div>
-         {isConnected
+         {isConnected || !env.connPanelEnabled
             ? (<div className="root"><GameField /><Navbar /></div>)
             : (<ConnPanel startConnection={startConnection} />)}
       </div>
