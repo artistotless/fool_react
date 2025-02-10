@@ -1,7 +1,8 @@
 import { PlayerProps } from "src/components/ui/Player";
-import { ICard, IGameState, IPersonalState, } from "src/types";
+import { ICard, IGameState, IPersonalState, ISuit } from "src/types";
 import { clearTableAnimated } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import useAnimateElement, {
    animateElements,
 } from "src/hooks/useAnimateElement";
@@ -16,14 +17,15 @@ import {
    useEffect,
    useMemo,
 } from "react";
+import { testMode } from "src/environments/environment";
 
-export interface Slot {
+export interface ISlot {
    id: number;
    cards: ICard[];
 }
 
 interface GameContext {
-   slots: Slot[];
+   slots: ISlot[];
    hand: ICard[];
    trumpCard: ICard | null;
    deckCardsCount: number;
@@ -31,6 +33,7 @@ interface GameContext {
    attackerId: string | null;
    defenderId: string | null;
    addCardToHand: (card: ICard | ICard[]) => void;
+   addCardToSlot: (card: ICard, slotID: number) => void;
    removeCardFromHand: (card_id: number) => void;
    clearTable: () => void;
 }
@@ -39,8 +42,9 @@ const getInitialValue = () => ({
    slots: Array(6)
       .fill(null)
       .map((_, index) => ({ id: index, cards: [] })),
-   hand: Array(6)
-      .fill(null),
+   hand: testMode().useTestCards ? testMode().testCards :
+      Array(6)
+         .fill(null),
    players: Array(3)
       .fill(null)
       .map((_, index) => ({
@@ -52,10 +56,11 @@ const getInitialValue = () => ({
       })),
 });
 
+
 const GameContext = createContext<GameContext | null>(null);
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
-   const [slots, setSlots] = useState<Slot[]>(getInitialValue().slots);
+   const [slots, setSlots] = useState<ISlot[]>(getInitialValue().slots);
    const [hand, setHand] = useState<ICard[]>(getInitialValue().hand);
    const [players, setPlayers] = useState<PlayerProps[]>(getInitialValue().players);
    const [trumpCard, setTrumpCard] = useState<ICard | null>(null);
@@ -64,17 +69,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const [deckCardsCount, setDeckCardsCount] = useState<number>(36);
    const [leftCardsCount, setLeftCardsCount] = useState<number>(0);
    const [rounds, setRounds] = useState<number>(0);
-   const { playerId, gameState, personalState, attack, defend } = useSignalR();
+   const {isConnected, playerId, gameState, personalState, attack, defend } = useSignalR();
    const animate = useAnimateElement();
 
    // Синхронизация gameState с состоянием GameContext
    useEffect(() => {
-      if (gameState)
+      if (gameState && isConnected)
          handleGameState(gameState)
    }, [gameState]);
 
    useEffect(() => {
-      if (personalState) {
+      if (personalState && isConnected) {
          handlePlayerState(personalState)
       }
    }, [personalState]);
@@ -99,8 +104,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
          const toElement = defenderId === playerId ? "playercards" : `cards-${defenderId}`;
 
-         console.log('toElement', toElement)
-         console.log('tableCardsRef.current', tableCardsRef.current)
          animateElements(
             tableCardsRef.current,
             {
@@ -117,7 +120,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
       else {
          // Преобразуем tableCards из gameState в формат Slots[]
-         const transformedSlots: Slot[] = state.tableCards.map(tc => ({
+         const transformedSlots: ISlot[] = state.tableCards.map(tc => ({
             id: tc.slotIndex,
             cards: [tc.card, ...(tc.defendingCard ? [tc.defendingCard] : [])]
          }));
@@ -153,19 +156,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       })) || []); // Обновляем карты в руке текущего игрока
    };
 
-   // const addCardToSlot = useCallback(
-   //    (card: ICard, slotID: number) => {
-   //       setSlots((prev) => {
-   //          return prev.map((slot) => {
-   //             if (slot.id === slotID) {
-   //                return { ...slot, cards: [...slot.cards, card] };
-   //             }
-   //             return slot;
-   //          });
-   //       });
-   //    },
-   //    [setSlots]
-   // );
+   const addCardToSlot = useCallback(
+      (card: ICard, slotID: number) => {
+         setSlots((prev) => {
+            return prev.map((slot) => {
+               if (slot.id === slotID) {
+                  return { ...slot, cards: [...slot.cards, card] };
+               }
+               return slot;
+            });
+         });
+      },
+      [setSlots]
+   );
 
    const addCardToHand = useCallback(
       (card: ICard | ICard[]) => {
@@ -235,13 +238,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       defenderId,
       deckCardsCount,
       addCardToHand,
+      addCardToSlot,
       removeCardFromHand,
       clearTable
    }), [slots, hand, players, trumpCard, attackerId, defenderId, deckCardsCount]);
 
    return (
       <GameContext.Provider value={contextValue}      >
-         <DndContext onDragEnd={handleDragEnd}>{children}</DndContext>
+         <DndContext modifiers={[snapCenterToCursor]} onDragEnd={handleDragEnd}>{children}</DndContext>
       </GameContext.Provider>
    );
 };

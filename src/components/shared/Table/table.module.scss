@@ -4,12 +4,14 @@
    padding: 30px 25px;
 
    display: grid;
-   grid-template-columns: repeat(3, 1fr);
+   grid-template-columns: repeat(3, 0fr);
    min-height: 300px;
    gap: 12px;
-
+   border: 2px dashed transparent;
    max-width: 800px;
    width: 100%;
+   align-content: center;
+   justify-content: center;
 
    &.drop {
       border: 2px dashed rgba(255, 255, 255, 0.6);
@@ -17,9 +19,13 @@
    }
 
    .slot {
-      width: 100%;
+      width: fit-content;
+      height: fit-content;
       display: flex;
       justify-content: center;
+      border: 2px dashed transparent;
+      align-items: center;
+
 
       &.drop {
          border: 2px dashed rgba(255, 255, 255, 0.3);
@@ -27,14 +33,13 @@
       }
 
       > * {
-         width: 75px;
-
+         width: 10.5lvh;
+         min-width: 65px;
          transition: transform 1s ease-out !important;
          animation: card-appear 0.25s ease-in-out;
 
          &:not(:first-child) {
-            margin-left: -70px;
-            filter: drop-shadow(0px 5px 30px rgba(0, 0, 0, 0.1));
+            margin-left: -9lvh;
          }
       }
    }

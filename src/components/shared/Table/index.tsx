@@ -1,6 +1,6 @@
 import Card from "src/components/ui/Card";
 import styles from "./table.module.scss";
-import { Slot as ISlot, useGame } from "src/contexts/GameContext";
+import { ISlot as ISlot, useGame } from "src/contexts/GameContext";
 import { useDroppable } from "@dnd-kit/core";
 
 import Test from "../Test";
@@ -10,7 +10,7 @@ interface SlotProps {
    slot: ISlot;
 }
 
-const Slot = ({ slot }: SlotProps, key:number) => {
+const Slot = ({ slot }: SlotProps, key: number) => {
    const { isOver, setNodeRef } = useDroppable({
       id: `slot-${slot.id}`,
       disabled: !slot.cards.length,
@@ -29,7 +29,7 @@ const Slot = ({ slot }: SlotProps, key:number) => {
                {...card}
                ref={(node: HTMLDivElement | null) => {
                   if (node) {
-                     animationService.tableCardsRef.current[index] = node;
+                     animationService.tableCardsRef.current[`${slot.id}-${index}`] = node;
                   }
                }}
                randomRotate
@@ -44,10 +44,7 @@ const Table = () => {
    const { isOver, setNodeRef } = useDroppable({ id: "table" });
 
    return (
-      <div
-         className={`${styles.wrapper} ${isOver ? styles.drop : ""}`}
-         id="as"
-         ref={setNodeRef}
+      <div className={`${styles.wrapper} ${isOver ? styles.drop : ""}`} ref={setNodeRef}
       >
          <Test />
          {slots.map((slot, index) => (
