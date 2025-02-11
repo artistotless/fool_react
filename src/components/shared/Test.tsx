@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import animationService from "src/contexts/animationService";
+import { useAudio } from "src/contexts/AudioContext";
 import { useGame } from "src/contexts/GameContext";
 import { useSignalR } from "src/contexts/SignalRContext";
 import { testMode } from "src/environments/environment";
@@ -7,31 +8,31 @@ import useAnimateElement, {
    animateElements,
 } from "src/hooks/useAnimateElement";
 import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
-import { clearTableAnimated, moveCardFromDeck } from "src/utils";
+import { clearTableAnimated, moveCardFromDeck, Sounds } from "src/utils";
 
 const Test = () => {
    const { clearTable, slots, addCardToHand, addCardToSlot } = useGame();
    const animate = useAnimateElement();
-
+   const { play } = useAudio();
    const { tableCardsRef } = animationService;
    const { pass } = useSignalR();
    const elementRef = useRef<HTMLDivElement>(null);
 
    return (
-         <div
-            ref={elementRef}
-            style={{
-               position: "fixed",
-               left: "0",
-               display: testMode().testButtons ? 'flex' : 'none',
-               top: "0",
-               zIndex: 2300,
-               background: "white",
-               padding: "10px",
-               flexDirection: "column",
-               gap: "5px",
-            }}
-         >
+      <div
+         ref={elementRef}
+         style={{
+            position: "fixed",
+            left: "0",
+            display: testMode().testButtons ? 'flex' : 'none',
+            top: "0",
+            zIndex: 2300,
+            background: "white",
+            padding: "10px",
+            flexDirection: "column",
+            gap: "5px",
+         }}
+      >
          <button
             onClick={() => {
                if (elementRef.current) {
@@ -41,86 +42,85 @@ const Test = () => {
          >
             Спрятать
          </button>
-            <button
-               onClick={() => {
-                  clearTableAnimated(tableCardsRef, () => {
-                     clearTable();
-                  });
-               }}
-            >
-               Смахнуть карты со стола
-            </button>
-            <button
-               onClick={() => {
-                  animateElements(
-                     tableCardsRef.current,
-                     {
-                        toElement: "playercards",
-                        animationOptions: {
-                           animationDuration: 500,
-                        },
+         <button
+            onClick={() => {
+               clearTableAnimated(tableCardsRef,
+                  () => play(Sounds.CardSlideLeft), clearTable);
+            }}
+         >
+            Смахнуть карты со стола
+         </button>
+         <button
+            onClick={() => {
+               animateElements(
+                  tableCardsRef.current,
+                  {
+                     toElement: "playercards",
+                     animationOptions: {
+                        animationDuration: 500,
                      },
-                     animate
-                  ).then(() => {
-                     slots.forEach((slot) => {
-                        addCardToHand(slot.cards);
-                     });
-                     clearTable();
-                     tableCardsRef.current = {};
+                  },
+                  animate
+               ).then(() => {
+                  slots.forEach((slot) => {
+                     addCardToHand(slot.cards);
                   });
-               }}
-            >
-               Смахнуть карты игроку
-            </button>
-            <button
-               onClick={() => {
-                  moveCardFromDeck(
-                     "playercards",
-                     animationService.deckRef,
-                     400
-                  );
-               }}
-            >
-               Анимация карты из колоды
-            </button>
-            <button
-               onClick={() => {
+                  clearTable();
+                  tableCardsRef.current = {};
+               });
+            }}
+         >
+            Смахнуть карты игроку
+         </button>
+         <button
+            onClick={() => {
+               moveCardFromDeck(
+                  "playercards",
+                  animationService.deckRef,
+                  400
+               );
+            }}
+         >
+            Анимация карты из колоды
+         </button>
+         <button
+            onClick={() => {
 
-                  let randomSuit = Math.floor(Math.random() * 4)
-                  let randomRank = Math.floor(Math.random() * 13)
+               let randomSuit = Math.floor(Math.random() * 4)
+               let randomRank = Math.floor(Math.random() * 13)
 
-                  addCardToHand({
-                     suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
-                     rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
-                     id: Math.floor(Math.random() * 1000),
-                  });
-               }}
-            >
-               Карта в руку
-            </button>
+               addCardToHand({
+                  suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
+                  rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
+                  id: Math.floor(Math.random() * 1000),
+               });
+            }}
+         >
+            Карта в руку
+         </button>
 
-            <button
-               onClick={() => {
+         <button
+            onClick={() => {
 
-                  let randomSuit = Math.floor(Math.random() * 4)
-                  let randomRank = Math.floor(Math.random() * 13)
-                  let randomSlot = Math.floor(Math.random() * 6)
+               let randomSuit = Math.floor(Math.random() * 4)
+               let randomRank = Math.floor(Math.random() * 13)
+               let randomSlot = Math.floor(Math.random() * 6)
 
-                  console.log('randomSlot', randomSlot);
+               console.log('randomSlot', randomSlot);
 
-                  addCardToSlot({
-                     suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
-                     rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
-                     id: Math.floor(Math.random() * 1000),
-                  }, randomSlot);
-               }}
-            >
-               Карта на стол
-            </button>
-            <button onClick={pass}>
-               Пасс
-            </button>
-         </div>
+               addCardToSlot({
+                  suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
+                  rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
+                  id: Math.floor(Math.random() * 1000),
+               }, randomSlot);
+            }}
+         >
+            Карта на стол
+         </button>
+         <button onClick={pass}>
+            Пасс
+         </button>
+      </div>
    );
 };
 

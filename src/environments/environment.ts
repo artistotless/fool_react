@@ -46,5 +46,5 @@ export const testMode = (): {
 export const signalRLoggingEnabled = true;
 export const connPanelEnabled = false;
 // export const gsEndpoint = 'https://localhost:22001';
-export const gsEndpoint = 'http://artistotless:52001';
-export const cardServerUrl = 'http://artistotless:5500/durak_cards';
+export const gsEndpoint = 'http://192.168.0.104:52001';
+export const cardServerUrl = '../src/assets';

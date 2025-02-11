@@ -1,7 +1,8 @@
 import { CSSProperties, RefObject } from "react";
 import back_ic from "src/assets/cards/backs/red.png";
-import { IRank, ISuit, Ranks} from "./types";
+import { IRank, ISuit, Ranks } from "./types";
 import * as env from "./environments/environment";
+import { useAudio } from "./contexts/AudioContext";
 
 export const varibleGap = (
    gapSizes: number[],
@@ -127,23 +128,25 @@ export const moveCardFromDeck = (
  * Смахивает DOM элементы карт со стола, а затем вызывает `callback` функцию.
  *
  * @param {React.MutableRefObject} cardRefs - Ссылки на DOM элементы карт, лежащих на столе
- * @param callback - Callback функция, вызываемая после анимации
+ * @param before - Callback функция, вызываемая до анимации
+ * @param after - Callback функция, вызываемая после анимации
  */
 export const clearTableAnimated = (
    cardRefs: React.MutableRefObject<{
       [id: string]: HTMLElement;
    }>,
-   callback?: () => void
+   before?: () => void,
+   after?: () => void
 ) => {
+   
+   before && before();
    Object.values(cardRefs.current).forEach((element) => {
       const cardElement = element;
       const x = window.innerWidth + 100;
       if (!cardElement) throw new Error("Card element doesn't exist");
-
       cardElement.style.transform = `translateX(${x}px)`;
-
       setTimeout(() => {
-         callback && callback();
+         after && after();
       }, 500);
    });
    cardRefs.current = {};
@@ -161,7 +164,7 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
       // if ([Ranks.Jack, Ranks.King, Ranks.Queen].indexOf(rank.name) != -1) {
       //    extension = '.png'
       // }
-      
+
       // Формируем URL для загрузки карты с удалённого сервера
       const imageUrl = `${serverUrl}/cards/${suit.name.toLowerCase()}/${rank.name.toLowerCase()}${extension}`;
 
@@ -171,6 +174,11 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
       console.error('Ошибка загрузки карты:', error);
    }
 };
+
+export const Sounds = {
+   CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },
+   CardAddedToTable: { id: 2, src: '../src/assets/sounds/card-taking.wav' },
+}
 
 // export const moveFromTable = (
 //    cardRefs: React.MutableRefObject<{

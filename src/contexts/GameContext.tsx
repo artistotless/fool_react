@@ -1,6 +1,6 @@
 import { PlayerProps } from "src/components/ui/Player";
-import { ICard, IGameState, IPersonalState, ISuit } from "src/types";
-import { clearTableAnimated } from "src/utils";
+import { ICard, IGameState, IPersonalState } from "src/types";
+import { clearTableAnimated, Sounds } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import useAnimateElement, {
@@ -18,6 +18,7 @@ import {
    useMemo,
 } from "react";
 import { testMode } from "src/environments/environment";
+import { useAudio } from "./AudioContext";
 
 export interface ISlot {
    id: number;
@@ -69,7 +70,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const [deckCardsCount, setDeckCardsCount] = useState<number>(36);
    const [leftCardsCount, setLeftCardsCount] = useState<number>(0);
    const [rounds, setRounds] = useState<number>(0);
-   const {isConnected, playerId, gameState, personalState, attack, defend } = useSignalR();
+   const { isConnected, playerId, gameState, personalState, attack, defend } = useSignalR();
+   const { play } = useAudio();
    const animate = useAnimateElement();
 
    // Синхронизация gameState с состоянием GameContext
@@ -158,6 +160,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
    const addCardToSlot = useCallback(
       (card: ICard, slotID: number) => {
+         play(Sounds.CardAddedToTable);
          setSlots((prev) => {
             return prev.map((slot) => {
                if (slot.id === slotID) {

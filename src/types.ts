@@ -68,7 +68,7 @@ export interface ICard {
 
 export interface IFoolPlayer {
    id: string;
-   name:string;
+   name: string;
    passed: boolean;
    cardsCount: number;
 }
@@ -110,7 +110,7 @@ export interface IGameState {
    /**
     * The number of rounds played.
     */
-   rounds:number;
+   rounds: number;
 
    /**
     * The current status of the game. Possible values include InProgress, Finished, or Canceled.
