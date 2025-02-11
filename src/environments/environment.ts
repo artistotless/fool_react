@@ -30,7 +30,8 @@ export const testMode = (): {
 } => {
 
     let randomSuit = () => Math.floor(Math.random() * 4)
-    let randomRank = () => Math.floor(Math.random() * 13)
+    let randomRank = () => Math.floor(Math.random() * 9)
+    const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
 
     return {
         useTestCards: true,
@@ -38,7 +39,7 @@ export const testMode = (): {
         testCards: Array(6).fill(null).map((_, index) => ({
             id: index + 1, // Уникальный ID для каждой карточки
             suit: { iconChar: Object.values(SuitsSymbols)[randomSuit()], name: Object.values(Suits)[randomSuit()] },
-            rank: { name: Object.values(Ranks)[randomRank()], value: Object.values(RankValues)[randomRank()] as number, shortName: Object.values(Ranks)[randomRank()] },
+            rank: { name: Object.values(Ranks)[randomRank()], value: numericRankValues[randomRank()] as number, shortName: Object.values(Ranks)[randomRank()] },
         }))
     };
 }

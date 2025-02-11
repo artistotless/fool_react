@@ -1,8 +1,10 @@
 import { CSSProperties, RefObject } from "react";
 import back_ic from "src/assets/cards/backs/red.png";
-import { IRank, ISuit, Ranks } from "./types";
+import { IRank, ISuit, RankValues, SuitsSymbols } from "./types";
 import * as env from "./environments/environment";
-import { useAudio } from "./contexts/AudioContext";
+import cardStyles from "../src/components/ui/Card/card_new.module.scss";
+import queenImage from '../src/assets/cards/clubs/queen.png'
+import { col } from "framer-motion/client";
 
 export const varibleGap = (
    gapSizes: number[],
@@ -138,7 +140,7 @@ export const clearTableAnimated = (
    before?: () => void,
    after?: () => void
 ) => {
-   
+
    before && before();
    Object.values(cardRefs.current).forEach((element) => {
       const cardElement = element;
@@ -174,6 +176,80 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
       console.error('Ошибка загрузки карты:', error);
    }
 };
+
+export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, rotate: number) => {
+
+   const ranksConf = [
+      [3, 0, 3], // 6
+      [3, 1, 3], // 7
+      [3, 2, 3], // 8
+      [4, 1, 4], // 9
+      [4, 2, 4], // 10
+   ];
+
+   const getSuitsRows = (column: number) => {
+      const RANK_OFFSET = 6;
+      let count = ranksConf[rank.value - RANK_OFFSET][column - 1];
+
+      if (count === 0) {
+         return (
+            <div className={`${cardStyles.suit_regular} ${cardStyles.hidden}`}>
+               {suit.iconChar}
+            </div>
+         );
+      }
+
+      let rows = Array.from({ length: count }, (_, index) => (
+         <div key={index} className={`${cardStyles.suit_regular} ${rank.value == RankValues.Seven && column == 2 ? cardStyles.mt_42:''}`}>
+            {suit.iconChar}
+         </div>
+      ));
+
+      return rows;
+   }
+
+   let isRed = suit.iconChar == SuitsSymbols.Diamond || suit.iconChar == SuitsSymbols.Heart;
+
+   return (
+      <div
+         style={{ rotate: `${rotate}deg`, }}
+         className={`${cardStyles.card} ${isRed ?cardStyles.red:''}`}
+         ref={(node) => {
+            if (ref)
+               typeof ref === "function" ? ref(node) : (ref.current = node);
+         }}
+      >
+         {/* Верхний левый угол */}
+         <div className={cardStyles.card_top_left}>
+            <div className={cardStyles.rank}>{rank.name}</div>
+            <div className={cardStyles.suit_small} >{suit.iconChar}</div>
+         </div>
+         {/* Центральная часть с мастями */}
+         {rank.value <= RankValues.Ten ? (
+            <div className={cardStyles.card_suits_container}>
+               <div className={cardStyles.card_suits}>
+                  {getSuitsRows(1)}
+               </div>
+               <div className={`${cardStyles.card_suits}`}>
+                  {getSuitsRows(2)}
+               </div>
+               <div className={cardStyles.card_suits}>
+                  {getSuitsRows(3)}
+               </div>
+            </div>
+         ) : (
+            <div className={`${cardStyles.card_suits_container} ${cardStyles.high_cards_container}`}>
+               <div style={{ backgroundImage: `url(${queenImage})` }}></div>
+            </div>
+         )}
+         {/* Нижний правый угол */}
+         <div className={cardStyles.card_bottom_right} >
+            <div className={cardStyles.rank}> {rank.name} </div>
+            <div className={cardStyles.suit_small} >{suit.iconChar}</div>
+         </div>
+      </div>
+   );
+}
 
 export const Sounds = {
    CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },

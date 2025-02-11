@@ -1,7 +1,8 @@
 import { forwardRef, memo, useEffect, useState } from "react";
-import { ICard } from "src/types";
-import styles from "./card.module.scss";
-import { loadCardImage } from "src/utils";
+import { ICard, RankValues, SuitsSymbols } from "src/types";
+import styles from "./card_new.module.scss";
+// import styles from "./card.module.scss";
+import { createCardElement, loadCardImage } from "src/utils";
 
 interface CardProps extends ICard {
    randomRotate?: boolean;
@@ -13,7 +14,7 @@ const Card = forwardRef(
       const [rotate, setRotate] = useState(0);
       const [src, setSrc] = useState("");
       const [isLoading, setIsLoading] = useState(true);
-      
+
       useEffect(() => {
          loadCardImage(rank, suit, setSrc);
       }, [rank, suit]);
@@ -25,26 +26,27 @@ const Card = forwardRef(
          }
       }, [randomRotate]);
 
-      return (
-         <div
-            ref={(node) => {
-               if (ref) {
-                  typeof ref === "function" ? ref(node) : (ref.current = node);
-               }
-            }}
-            style={{
-               rotate: `${rotate}deg`,
-            }}
-            className={`${styles.card} ${className} ${isLoading && styles.loading
-               }`}
-         >
-            <img
-               onLoad={() => setIsLoading(false)}
-               src={src}
-               alt={`${rank.name} of ${suit.name}`}
-            />
-         </div>
-      );
+      // return (
+      //    <div ref={(node) => {
+      //          if (ref) {
+      //             typeof ref === "function" ? ref(node) : (ref.current = node);
+      //          }
+      //       }}
+      //       style={{
+      //          rotate: `${rotate}deg`,
+      //       }}
+      //       className={`${styles.card} ${className} ${isLoading && styles.loading
+      //          }`}
+      //    >
+      //       <img
+      //          onLoad={() => setIsLoading(false)}
+      //          src={src}
+      //          alt={`${rank.name} of ${suit.name}`}
+      //       />
+      //    </div>
+      // );
+
+      return createCardElement(rank, suit, ref, rotate);;
    }
 );
 

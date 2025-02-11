@@ -33,7 +33,7 @@ const Test = () => {
             gap: "5px",
          }}
       >
-         <button
+         {/* <button
             onClick={() => {
                if (elementRef.current) {
                   elementRef.current.style.display = elementRef.current.style.display == 'none' ? 'flex' : 'none';
@@ -41,7 +41,7 @@ const Test = () => {
             }}
          >
             Спрятать
-         </button>
+         </button> */}
          <button
             onClick={() => {
                clearTableAnimated(tableCardsRef,
@@ -50,7 +50,7 @@ const Test = () => {
          >
             Смахнуть карты со стола
          </button>
-         <button
+         {/* <button
             onClick={() => {
                animateElements(
                   tableCardsRef.current,
@@ -71,8 +71,8 @@ const Test = () => {
             }}
          >
             Смахнуть карты игроку
-         </button>
-         <button
+         </button> */}
+         {/* <button
             onClick={() => {
                moveCardFromDeck(
                   "playercards",
@@ -82,8 +82,8 @@ const Test = () => {
             }}
          >
             Анимация карты из колоды
-         </button>
-         <button
+         </button> */}
+         {/* <button
             onClick={() => {
 
                let randomSuit = Math.floor(Math.random() * 4)
@@ -97,29 +97,32 @@ const Test = () => {
             }}
          >
             Карта в руку
-         </button>
+         </button> */}
 
          <button
             onClick={() => {
 
                let randomSuit = Math.floor(Math.random() * 4)
-               let randomRank = Math.floor(Math.random() * 13)
                let randomSlot = Math.floor(Math.random() * 6)
+               let randomRank = Math.floor(Math.random() * 9)
+               let cards = [5,6,7,8];
+               randomRank = cards[randomSuit]
 
-               console.log('randomSlot', randomSlot);
+               console.log(randomRank)
+               const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
 
                addCardToSlot({
                   suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
-                  rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
+                  rank: { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
                   id: Math.floor(Math.random() * 1000),
                }, randomSlot);
             }}
          >
             Карта на стол
          </button>
-         <button onClick={pass}>
+         {/* <button onClick={pass}>
             Пасс
-         </button>
+         </button> */}
       </div>
    );
 };

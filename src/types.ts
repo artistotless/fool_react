@@ -18,35 +18,27 @@ export enum SuitsSymbols {
 }
 
 export enum Ranks {
-   Ace = "Ace",
-   Queen = "Queen",
-   King = "King",
-   Jack = "Jack",
-   Two = "2",
-   Three = "3",
-   Four = "4",
-   Five = "5",
-   Six = "6",
-   Seven = "7",
-   Eight = "8",
-   Nine = "9",
+   Ace = "A",
+   King = "K",
+   Queen = "Q",
+   Jack = "J",
    Ten = "10",
+   Nine = "9",
+   Eight = "8",
+   Seven = "7",
+   Six = "6",
 }
 
 export enum RankValues {
    Ace = 14,
-   Queen = 13,
-   King = 12,
+   King = 13,
+   Queen = 12,
    Jack = 11,
-   Two = 2,
-   Three = 3,
-   Four = 4,
-   Five = 5,
-   Six = 6,
-   Seven = 7,
-   Eight = 8,
-   Nine = 9,
    Ten = 10,
+   Nine = 9,
+   Eight = 8,
+   Seven = 7,
+   Six = 6,
 }
 
 export interface IRank {

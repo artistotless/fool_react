@@ -33,13 +33,16 @@
       }
 
       > * {
-         width: 10.5lvh;
-         min-width: 65px;
+         // width: 10.5lvh;
+         // min-width: 65px;
+         height: 18lvh;
+         min-height: 90px;
+         width: auto;
          transition: transform 1s ease-out !important;
          animation: card-appear 0.25s ease-in-out;
 
          &:not(:first-child) {
-            margin-left: -9lvh;
+            margin-left: -14lvh;
          }
       }
    }
