@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import animationService from "src/contexts/animationService";
 import { useAudio } from "src/contexts/AudioContext";
 import { useGame } from "src/contexts/GameContext";
@@ -16,6 +16,7 @@ const Test = () => {
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
    const { pass } = useSignalR();
+   const [slot, setSlot] = useState(0);
    const elementRef = useRef<HTMLDivElement>(null);
 
    return (
@@ -101,20 +102,21 @@ const Test = () => {
 
          <button
             onClick={() => {
-
                let randomSuit = Math.floor(Math.random() * 4)
-               let randomSlot = Math.floor(Math.random() * 6)
                let randomRank = Math.floor(Math.random() * 9)
-               let cards = [5,6,7,9];
+               let cards = [5, 6, 7, 8];
                randomRank = cards[randomSuit]
 
-               console.log(randomRank)
+               if (slots[slot].cards) {
+                  setSlot(1 + (slot == 5 ? -1 : slot))
+               }
+
                const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
                addCardToSlot({
                   suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
                   rank: { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
                   id: Math.floor(Math.random() * 1000),
-               }, randomSlot);
+               }, slot);
             }}
          >
             Карта на стол
