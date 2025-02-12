@@ -31,6 +31,10 @@
     }
   }
 
+  .reversed {
+    rotate: 180deg;
+  }
+
   &.dragging {
     z-index: 100;
     filter: drop-shadow(0px 5px 50px rgba(0, 0, 0, 0.4));
@@ -140,7 +144,7 @@
         line-height: 1;
 
         &.mt_42 {
-          margin-top: -42px;
+          margin-top: -42px !important;
         }
 
         &:first-child {
@@ -149,10 +153,6 @@
 
         &:last-child {
           margin-bottom: 15px;
-        }
-
-        &.reversed {
-          rotate: 180deg;
         }
 
         &.hidden {

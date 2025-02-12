@@ -187,11 +187,12 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
       [3, 2, 3], // 8
       [4, 1, 4], // 9
       [4, 2, 4], // 10
+      [0, 1, 0], // A
    ];
 
    const getSuitsRows = (column: number) => {
       const RANK_OFFSET = 6;
-      let count = ranksConf[rank.value - RANK_OFFSET][column - 1];
+      let count = ranksConf[(rank.value == RankValues.Ace ? 11 : rank.value) - RANK_OFFSET][column - 1];
 
       if (count === 0) {
          return (
@@ -231,7 +232,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
             <div className={cardStyles.suit_small} >{suit.iconChar}</div>
          </div>
          {/* Центральная часть с мастями */}
-         {rank.value <= RankValues.Ten ? (
+         {rank.value <= RankValues.Ten || rank.value == RankValues.Ace ? (
             <div className={cardStyles.card_suits_container}>
                <div className={cardStyles.card_suits}>
                   {getSuitsRows(1)}
@@ -247,7 +248,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
             <div className={`${cardStyles.card_suits_container} ${cardStyles.high_cards_container}`}>
                <span className={`${cardStyles.suit_regular_left_top} ${isRed ? cardStyles.red : ''}`}>{suit.iconChar}</span>
                <div style={{ backgroundImage: `url(${highRankImg})` }}></div>
-               <span className={`${cardStyles.suit_regular_right_bottom} ${isRed ? cardStyles.red : ''}`}>{suit.iconChar}</span>
+               <span className={`${cardStyles.suit_regular_right_bottom} ${cardStyles.reversed} ${isRed ? cardStyles.red : ''}`}>{suit.iconChar}</span>
             </div>
          )}
          {/* Нижний правый угол */}
