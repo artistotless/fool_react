@@ -13,31 +13,32 @@
    align-content: center;
    justify-content: center;
 
+
    &.drop {
       border: 2px dashed rgba(255, 255, 255, 0.6);
       border-radius: 8px;
    }
 
    .slot {
-      width: fit-content;
-      height: fit-content;
+      height: 170px;
+      aspect-ratio: 0.7166676282236197;
       display: flex;
       justify-content: center;
       border: 2px dashed transparent;
       align-items: center;
 
-
+      @media (max-width: 400px) {
+         scale: 0.7;
+      }
+   
       &.drop {
          border: 2px dashed rgba(255, 255, 255, 0.3);
          border-radius: 8px;
       }
 
-      > * {
+      >* {
          // width: 10.5lvh;
          // min-width: 65px;
-         height: 18lvh;
-         min-height: 90px;
-         width: auto;
          transition: transform 1s ease-out !important;
          animation: card-appear 0.25s ease-in-out;
 
@@ -54,6 +55,7 @@
       scale: 1.2;
       transform: translateY(-8px);
    }
+
    100% {
       opacity: 1;
       scale: 1;

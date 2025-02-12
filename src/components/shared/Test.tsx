@@ -105,12 +105,11 @@ const Test = () => {
                let randomSuit = Math.floor(Math.random() * 4)
                let randomSlot = Math.floor(Math.random() * 6)
                let randomRank = Math.floor(Math.random() * 9)
-               let cards = [5,6,7,8];
+               let cards = [5,6,7,9];
                randomRank = cards[randomSuit]
 
                console.log(randomRank)
                const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
-
                addCardToSlot({
                   suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
                   rank: { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
