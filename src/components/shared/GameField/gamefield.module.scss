@@ -1,17 +1,13 @@
 .field {
    flex: 1 1 auto;
    position: relative;
-
    padding: 0 15px;
-
-   display: flex;
+   display: flex
+;
    justify-content: flex-start;
    align-items: center;
    flex-direction: column;
-
-   background: url("src/assets/cards/background.png");
-   background-size: 10px;
-   background-repeat: repeat;
+   background: #efefef;
 }
 
 .players {
@@ -20,6 +16,6 @@
    justify-content: center;
    gap: 10px;
    min-height: 84px;
-   height: 15lvh;
+   height: auto;
    padding: 12px 0;
 }

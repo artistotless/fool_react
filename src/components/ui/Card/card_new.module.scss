@@ -1,6 +1,7 @@
 .card {
-  width: 100%;
+  width: 120px;
   height: 100%;
+  aspect-ratio: 0.7166676282;
   touch-action: none;
   user-select: none;
   display: flex;
@@ -10,7 +11,7 @@
   justify-content: space-evenly;
   border: 1px solid #ccc;
   border-bottom-width: 3px;
-  border-radius: 15px;
+  border-radius: 10px;
   box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
 
   .suit_regular,
@@ -60,16 +61,18 @@
   .card_top_left {
     margin-top: 5px;
     text-align: center;
+  }
 
-    .rank {
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-    }
+  .rank {
+    font-family: Arial, sans-serif;
+    font-size: 20px;
 
-    .suit_small {
-      font-size: 0.9rem;
-      margin-top: -10%;
-    }
+  }
+
+  .suit_small {
+    font-size: 0.9rem;
+    margin-top: -9px;
+
   }
 
   // Bottom-right corner
@@ -77,16 +80,6 @@
     margin-bottom: 5px;
     text-align: center;
     rotate: 180deg;
-
-    .rank {
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-    }
-
-    .suit_small {
-      font-size: 0.9rem;
-      margin-top: -10%;
-    }
   }
 
   .high_cards_container {
@@ -125,7 +118,7 @@
         line-height: 1;
 
         &.mt_42 {
-          margin-top: -42px !important;
+          margin-top: -42px;
         }
 
         &:first-child {

@@ -44,12 +44,12 @@ const Table = () => {
    const { isOver, setNodeRef } = useDroppable({ id: "table" });
 
    return (
-      <div className={`${styles.wrapper} ${isOver ? styles.drop : ""}`} ref={setNodeRef}
-      >
-         <Test />
+      <div className={`${styles.table_container} ${isOver ? styles.drop : ""}`} ref={setNodeRef}>
+      <div className={`${styles.table}`}>
          {slots.map((slot, index) => (
             <Slot key={index} slot={slot} />
          ))}
+      </div>
       </div>
    );
 };

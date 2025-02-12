@@ -104,7 +104,7 @@ const Test = () => {
             onClick={() => {
                let randomSuit = Math.floor(Math.random() * 4)
                let randomRank = Math.floor(Math.random() * 9)
-               let cards = [5, 6, 7, 8];
+               let cards = [4, 4, 4, 4];
                randomRank = cards[randomSuit]
 
                if (slots[slot].cards) {
@@ -112,11 +112,10 @@ const Test = () => {
                }
 
                const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
-               addCardToSlot({
-                  suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
-                  rank: { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
-                  id: Math.floor(Math.random() * 1000),
-               }, slot);
+               const suit = { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] };
+               const rank = { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] };
+
+               addCardToSlot({ suit, rank, id: Math.floor(Math.random() * 1000), }, slot);
             }}
          >
             Карта на стол
