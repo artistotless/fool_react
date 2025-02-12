@@ -86,16 +86,39 @@
     width: 70%;
     height: 80%;
     margin: auto 0;
-  }
 
-  .high_cards_container>div {
-    background-size: cover;
-    background-repeat: no-repeat;
-    border: 1px solid black;
-    background-position-x: center;
-    background-position-y: center;
-    height: 100%;
-    width: 100%;
+    .suit_regular_left_top,
+    .suit_regular_right_bottom {
+      position: absolute;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 1.7rem;
+      font-family: "Noto Sans SC", serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .suit_regular_left_top {
+      top: 9px;
+      left: 19px;
+    }
+
+    .suit_regular_right_bottom {
+      bottom: 9px;
+      right: 19px;
+    }
+
+    div {
+      background-size: cover;
+      background-repeat: no-repeat;
+      border: 1px solid black;
+      background-position-x: center;
+      background-position-y: center;
+      height: 100%;
+      width: 100%;
+    }
   }
 
   // Middle suits container
@@ -103,7 +126,6 @@
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
-    height: 100%;
     align-items: center;
 
     .card_suits {

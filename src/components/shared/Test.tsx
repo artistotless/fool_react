@@ -104,8 +104,8 @@ const Test = () => {
             onClick={() => {
                let randomSuit = Math.floor(Math.random() * 4)
                let randomRank = Math.floor(Math.random() * 9)
-               let cards = [4, 4, 4, 4];
-               randomRank = cards[randomSuit]
+               // let cards = [4, 5, 6, 7];
+               // randomRank = cards[randomSuit]
 
                if (slots[slot].cards) {
                   setSlot(1 + (slot == 5 ? -1 : slot))

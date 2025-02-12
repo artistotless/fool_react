@@ -1,6 +1,7 @@
 .table_container {
    margin-top: 1lvh;
    width: 95lvw;
+   max-width: 800px;
    flex-grow: 1;
    height: 50lvh;
    border: 2px dashed transparent;
@@ -13,7 +14,7 @@
    .table {
       position: relative;
       margin: 0 auto;
-      scale: 0.94;
+      scale: 1;
       z-index: 1;
       display: grid;
       grid-template-columns: repeat(3, 0fr);
@@ -30,6 +31,10 @@
 
       @media(max-width:350px) {
          scale: 0.7;
+      }
+      
+      @media(max-height:520px) {
+         scale: 0.6;
       }
 
       .slot {

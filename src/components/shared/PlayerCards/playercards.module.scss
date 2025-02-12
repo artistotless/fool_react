@@ -18,29 +18,27 @@
    padding: 0 60px;
    transition: transform 0.2s ease-out;
 
-   @media (hover: hover) and (pointer: fine) {
-      &:hover {
-         transform: translateY(-40px) !important;
-      }
-   }
-
    >* {
       position: relative;
       width: clamp(100px, 17vh, 220px);
       grid-row-start: 1;
       justify-self: center;
-
       animation: card-slide 0.3s ease-out;
 
-
       // @media (hover: hover) and (pointer: fine) {
-      //    &:not(:active) {
-      //       transition: transform 0.2s ease-out !important;
-      //    }
-      //    &:hover:not(:active) {
+      //    &:hover {
       //       transform: translateY(-40px) !important;
       //    }
       // }
+
+      @media (hover: hover) and (pointer: fine) {
+         &:not(:active) {
+            transition: transform 0.2s ease-out !important;
+         }
+         &:hover:not(:active) {
+            transform: translateY(-40px) !important;
+         }
+      }
    }
 }
 

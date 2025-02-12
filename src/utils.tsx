@@ -3,7 +3,9 @@ import back_ic from "src/assets/cards/backs/red.png";
 import { IRank, ISuit, RankValues, SuitsSymbols } from "./types";
 import * as env from "./environments/environment";
 import cardStyles from "../src/components/ui/Card/card_new.module.scss";
-import queenImage from '../src/assets/cards/clubs/queen.png'
+import queenImg from '../src/assets/cards/queen.png';
+import kingImg from '../src/assets/cards/king.png';
+import jackImg from '../src/assets/cards/jack.png';
 import { col } from "framer-motion/client";
 
 export const varibleGap = (
@@ -149,7 +151,7 @@ export const clearTableAnimated = (
       cardElement.style.transform = `translateX(${x}px)`;
       setTimeout(() => {
          after && after();
-      }, 500);
+      }, 1000);
    });
    cardRefs.current = {};
 };
@@ -200,7 +202,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
       }
 
       let rows = Array.from({ length: count }, (_, index) => (
-         <div key={index} className={`${cardStyles.suit_regular} ${rank.value == RankValues.Seven && column == 2 ? cardStyles.mt_42:''}`}>
+         <div key={index} className={`${cardStyles.suit_regular} ${rank.value == RankValues.Seven && column == 2 ? cardStyles.mt_42 : ''}`}>
             {suit.iconChar}
          </div>
       ));
@@ -209,11 +211,15 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
    }
 
    let isRed = suit.iconChar == SuitsSymbols.Diamond || suit.iconChar == SuitsSymbols.Heart;
+   let highRankImg =
+      rank.value == RankValues.Queen ? queenImg :
+         rank.value == RankValues.King ? kingImg :
+            rank.value == RankValues.Jack ? jackImg : null
 
    return (
       <div
          style={{ rotate: `${rotate}deg`, }}
-         className={`${cardStyles.card} ${isRed ?cardStyles.red:''}`}
+         className={`${cardStyles.card} ${isRed ? cardStyles.red : ''}`}
          ref={(node) => {
             if (ref)
                typeof ref === "function" ? ref(node) : (ref.current = node);
@@ -239,7 +245,9 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
             </div>
          ) : (
             <div className={`${cardStyles.card_suits_container} ${cardStyles.high_cards_container}`}>
-               <div style={{ backgroundImage: `url(${queenImage})` }}></div>
+               <span className={`${cardStyles.suit_regular_left_top} ${isRed ? cardStyles.red : ''}`}>{suit.iconChar}</span>
+               <div style={{ backgroundImage: `url(${highRankImg})` }}></div>
+               <span className={`${cardStyles.suit_regular_right_bottom} ${isRed ? cardStyles.red : ''}`}>{suit.iconChar}</span>
             </div>
          )}
          {/* Нижний правый угол */}
