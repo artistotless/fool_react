@@ -105,13 +105,13 @@
     }
 
     .suit_regular_left_top {
-      top: 9px;
-      left: 19px;
+      top: -3px;
+      left: 2px;
     }
 
     .suit_regular_right_bottom {
-      bottom: 9px;
-      right: 19px;
+      bottom: -3px;
+      right: 2px;
     }
 
     div {
@@ -127,6 +127,7 @@
 
   // Middle suits container
   .card_suits_container {
+    position: relative;
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;

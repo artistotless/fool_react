@@ -1,6 +1,6 @@
 import { CSSProperties, RefObject } from "react";
 import back_ic from "src/assets/cards/backs/red.png";
-import { IRank, ISuit, RankValues, SuitsSymbols } from "./types";
+import { IDraggableData, IRank, ISuit, RankValues, SuitsSymbols } from "./types";
 import * as env from "./environments/environment";
 import cardStyles from "../src/components/ui/Card/card_new.module.scss";
 import queenImg from '../src/assets/cards/queen.png';
@@ -179,7 +179,7 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
    }
 };
 
-export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, rotate: number) => {
+export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, draggableData?: IDraggableData | undefined) => {
 
    const ranksConf = [
       [3, 0, 3], // 6
@@ -219,11 +219,26 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
 
    return (
       <div
-         style={{ rotate: `${rotate}deg`, }}
-         className={`${cardStyles.card} ${isRed ? cardStyles.red : ''}`}
+         {...(draggableData?.elementId && { id: draggableData.elementId })}
+         {...draggableData?.listeners}
+         {...draggableData?.attributes}
+
+         className={`
+            ${cardStyles.card} ${isRed ? cardStyles.red : ''}
+            ${draggableData?.isDragging && cardStyles.dragging} 
+            ${draggableData?.isDraggable && cardStyles.draggable}
+            `}
+
          ref={(node) => {
+            draggableData?.setNodeRef && draggableData.setNodeRef(node);
             if (ref)
                typeof ref === "function" ? ref(node) : (ref.current = node);
+         }}
+
+         style={{
+            transform: draggableData?.transform
+               ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`
+               : undefined,
          }}
       >
          {/* Верхний левый угол */}

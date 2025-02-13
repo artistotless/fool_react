@@ -1,3 +1,6 @@
+import { DraggableAttributes } from "@dnd-kit/core";
+import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+
 export enum GameUpdateTypes {
    GameState = "GameStateDto",
    PersonalState = "PlayerHandStateDto"
@@ -39,6 +42,16 @@ export enum RankValues {
    Eight = 8,
    Seven = 7,
    Six = 6,
+}
+
+export interface IDraggableData {
+   elementId: any,
+   transform: any,
+   isDragging: boolean,
+   isDraggable: boolean,
+   listeners: SyntheticListenerMap | undefined,
+   attributes: DraggableAttributes,
+   setNodeRef: (element: HTMLElement | null) => void
 }
 
 export interface IRank {
