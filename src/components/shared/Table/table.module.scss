@@ -46,10 +46,12 @@
          display: flex;
          justify-content: center;
          border: 2px solid transparent;
+         border-width: 3px;
+         border-radius: 10px;
          align-items: center;
 
          &.drop {
-            border: 2px solid #2AABEE;
+            border: 2px dashed #2AABEE;
             border-width: 3px;
             border-radius: 10px;
          }

@@ -223,12 +223,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          {...draggableData?.listeners}
          {...draggableData?.attributes}
 
-         className={`
-            ${cardStyles.card} ${isRed ? cardStyles.red : ''}
-            ${draggableData?.isDragging && cardStyles.dragging} 
-            ${draggableData?.isDraggable && cardStyles.draggable}
-            `}
-
+         className={`${cardStyles.card} ${isRed ? cardStyles.red : ''}${draggableData?.isDragging ? cardStyles.dragging : ''}${draggableData?.isDraggable ? cardStyles.draggable : ''}`}
          ref={(node) => {
             draggableData?.setNodeRef && draggableData.setNodeRef(node);
             if (ref)

@@ -1,5 +1,5 @@
 .card {
-  width: 120px;
+  width: 122px;
   height: 100%;
   aspect-ratio: 0.7166676282;
   touch-action: none;
@@ -74,6 +74,7 @@
   }
 
   .suit_small {
+    // font-size: clamp(0.9rem, 1.657vh, 1.776rem);
     font-size: 0.9rem;
     margin-top: -9px;
 
@@ -97,6 +98,7 @@
       border: none;
       outline: none;
       font-family: inherit;
+      // font-size: clamp(1.7rem, 3.131vh, 3rem);
       font-size: 1.7rem;
       font-family: "Noto Sans SC", serif;
       font-optical-sizing: auto;
@@ -142,6 +144,7 @@
 
       .suit_regular {
         font-size: 1.52rem;
+        // font-size: clamp(1.52rem, 3vh, 3rem);
         line-height: 1;
 
         &.mt_42 {
