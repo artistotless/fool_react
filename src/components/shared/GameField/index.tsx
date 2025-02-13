@@ -7,7 +7,7 @@ import Test from "../Test";
 import { IFoolPlayer } from "src/types";
 
 const GameField = () => {
-   const { state} = useGame();
+   const { state, hand } = useGame();
    return (
       <div className={styles.field}>
          <div className={styles.players}>
@@ -17,7 +17,7 @@ const GameField = () => {
          </div>
 
          <Table />
-         <PlayerCards />
+         <PlayerCards cards={hand} />
       </div>
    );
 };

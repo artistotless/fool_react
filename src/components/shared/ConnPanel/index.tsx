@@ -3,8 +3,9 @@ import styles from "./connPanel.module.scss";
 import * as env from "../../../environments/environment";
 import { motion } from "framer-motion";
 import { useUser } from "src/contexts/UserContext";
+import { IUserToken } from "src/types";
 
-const ConnPanel = ({ startConnection }: any) => {
+const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, token: IUserToken, subs: string[]) => void }) => {
 
   const [matchId, setMatchId] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState("");
@@ -21,7 +22,7 @@ const ConnPanel = ({ startConnection }: any) => {
   // Обработчик клика на кнопку "Connect to match"
   const handleConnect = () => {
     if (token && matchId) {
-      startConnection(`${env.gsEndpoint}/matches/${matchId}`, token);
+      startConnection(`${env.gsEndpoint}/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
     } else {
       alert("Please select a player and enter a match ID.");
     }

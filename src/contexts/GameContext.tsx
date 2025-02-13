@@ -42,9 +42,7 @@ const getInitialValue = () => ({
    slots: Array(6)
       .fill(null)
       .map((_, index) => ({ id: index, cards: [] })),
-   hand: testMode().useTestCards ? testMode().testCards :
-      Array(6)
-         .fill(null),
+   hand: testMode().useTestCards ? testMode().testCards : [],
    gameState: {
       attackerId: null,
       defenderId: null,
@@ -98,6 +96,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          }
       }
    }, [data]);
+
+   useEffect(() => {
+      if (isConnected)
+         sendData("GetUpdate");
+   }, [isConnected]);
 
    const handleGameState = (newState: IGameState): void => {
 

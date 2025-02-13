@@ -82,7 +82,11 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
    const sendData = useCallback(async (action: string, ...parameters: any[]) => {
       if (isConnected) {
          try {
-            await connection?.invoke(action, parameters);
+            if (parameters?.length)
+               await connection?.invoke(action, parameters);
+            else
+               await connection?.invoke(action);
+
          } catch (err) {
             error(`Error invoking ${action}:`, err);
          }
@@ -105,7 +109,7 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
       sendData,
       data,
       isConnected,
-   }), [isConnected]);
+   }), [isConnected, data]);
 
    return (
       <SignalRContext.Provider value={contextValue}>

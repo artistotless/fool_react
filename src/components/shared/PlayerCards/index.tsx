@@ -1,17 +1,17 @@
 import styles from "./playercards.module.scss";
-import { useGame } from "src/contexts/GameContext";
 import DraggableCard from "src/components/ui/Card/DraggableCard";
 import { CSSProperties } from "react";
+import { ICard } from "src/types";
 
 interface PlayerCardsProps {
    isDraggingEnabled?: boolean;
+   cards: ICard[]
 }
 
-const PlayerCards = ({ isDraggingEnabled = true }: PlayerCardsProps) => {
-   const { hand } = useGame();
-
+const PlayerCards = (props: PlayerCardsProps) => {
    let gap = 154;
-   const length = hand.length;
+   const length = props.cards.length;
+   const cards = props.cards && props.cards.length ? props.cards : []
 
    if (length >= 30) gap = 154;
    else if (length >= 20) gap = 152;
@@ -33,11 +33,11 @@ const PlayerCards = ({ isDraggingEnabled = true }: PlayerCardsProps) => {
                } as CSSProperties
             }
          >
-            {hand.map((card, index) => (
+            {cards.map((card, index) => (
                <DraggableCard
                   index={index}
                   elementId={`playercard-${card.id}`}
-                  draggable={isDraggingEnabled}
+                  draggable={props.isDraggingEnabled}
                   {...card}
                   key={index}
                />

@@ -46,14 +46,14 @@ export const testMode = (): {
     })
 
     return {
-        useTestCards: true,
-        testButtons: true,
+        useTestCards: false,
+        testButtons: false,
         testCards: cards
     };
 }
 
 export const signalRLoggingEnabled = true;
-export const connPanelEnabled = false;
+export const connPanelEnabled = true;
 // export const gsEndpoint = 'https://localhost:22001';
-export const gsEndpoint = 'http://192.168.0.104:52001';
+export const gsEndpoint = 'http://192.168.0.50:52001';
 export const cardServerUrl = '../src/assets';

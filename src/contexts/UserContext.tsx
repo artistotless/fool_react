@@ -34,7 +34,7 @@ export const UserProvider = ({ children, initialToken }: { children: ReactNode, 
     user,
     token,
     setToken
-  }), []);
+  }), [token]);
 
   return (
     <UserContext.Provider value={contextValue}>
