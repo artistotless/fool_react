@@ -1,17 +1,13 @@
 import { createContext, useState, useEffect, useContext, ReactNode, useMemo, useCallback } from "react";
 import * as signalR from "@microsoft/signalr";
-import { GameStatus, GameUpdateTypes, IGameState, IPersonalState } from "src/types";
 import { signalRLoggingEnabled } from "src/environments/environment";
 
 interface SignalRContext {
-   gameState: IGameState,
-   personalState: IPersonalState,
-   playerId: string | null,
+   data: any | null,
    isConnected: boolean,
-   startConnection: (url: string, token: any) => void,
-   attack: (cardIndex: number) => void,
-   defend: (cardDefendingIndex: number, cardAttackingIndex: number) => void,
-   pass: () => void,
+   sendData: (action: string, ...parameters: any[]) => void,
+   startConnection: (url: string, token: any, subs: string[]) => void,
+   stopConnection: () => void,
 }
 
 // Создаем контекст
@@ -27,22 +23,6 @@ export const useSignalR = () => {
 
    return context;
 };
-
-const getInitialValue = () => ({
-   gameState: {
-      attackerId: null,
-      defenderId: null,
-      tableCards: [],
-      rounds:0,
-      trumpCard: null,
-      deckCardsCount: 0,
-      status: 'ReadyToBegin' as GameStatus,
-      players: [],
-   },
-   personalState: {
-      cardsInHand: [],
-   },
-});
 
 const log = (value: string): void => {
    if (!signalRLoggingEnabled)
@@ -62,12 +42,14 @@ const error = (value: string, err: any): void => {
 export const SignalRProvider = ({ children }: { children: ReactNode }) => {
    const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
    const [isConnected, setIsConnected] = useState(false);
-   const [gameState, setGameState] = useState<IGameState>(getInitialValue().gameState);
-   const [playerId, setPlayerId] = useState<string | null>(null);
-   const [personalState, setPersonalState] = useState<IPersonalState>(getInitialValue().personalState);
+   const [data, setData] = useState<any | null>(null);
+
+   const stopConnection = useCallback(() => {
+      connection?.stop();
+   }, []);
 
    // Функция для создания подключения к хабу SignalR
-   const startConnection = useCallback(async (url: string, token: any) => {
+   const startConnection = useCallback(async (url: string, token: any, subs: string[]) => {
       const conn = new signalR.HubConnectionBuilder()
          .withUrl(url, {
             skipNegotiation: true,
@@ -78,17 +60,11 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
          .configureLogging(signalR.LogLevel.Error)
          .build();
 
-      setPlayerId(token.userId)
-
-      conn.on("onGameUpdated", (state) => {
-
-         if (state.updateType === GameUpdateTypes.GameState)
-            setGameState(state.state);
-
-         else if (state.updateType === GameUpdateTypes.PersonalState)
-            setPersonalState(state.state);
-
-         log(state);
+      subs.forEach(sub => {
+         conn.on(sub, (state) => {
+            setData(state);
+            log(state);
+         });
       });
 
       try {
@@ -96,48 +72,22 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
          log("SignalR connected");
          setConnection(conn);
          setIsConnected(true);
-         conn.invoke("GetUpdate")
       } catch (err) {
          error("Error connecting to SignalR:", err);
          setIsConnected(false);
       }
    }, []);  // Мемоизация функции
 
-   // Функция для отправки атаки
-   const attack = useCallback(async (cardIndex: number) => {
-      if (connection) {
-         try {
-            await connection.invoke("Attack", cardIndex);
-            log(`Attacked with card index ${cardIndex}`);
-         } catch (err) {
-            error("Error invoking Attack:", err);
-         }
-      }
-   }, [connection]);  // Мемоизация с зависимостью от connection
-
    // Функция для отправки защиты
-   const defend = useCallback(async (cardDefendingIndex: number, cardAttackingIndex: number) => {
-      if (connection) {
+   const sendData = useCallback(async (action: string, ...parameters: any[]) => {
+      if (isConnected) {
          try {
-            await connection.invoke("Defend", cardDefendingIndex, cardAttackingIndex);
-            log(`Defended with card ${cardDefendingIndex} against card ${cardAttackingIndex}`);
+            await connection?.invoke(action, parameters);
          } catch (err) {
-            error("Error invoking Defend:", err);
+            error(`Error invoking ${action}:`, err);
          }
       }
-   }, [connection]);  // Мемоизация с зависимостью от connection
-
-   // Функция для передачи хода 
-   const pass = useCallback(async () => {
-      if (connection) {
-         try {
-            await connection.invoke("Pass");
-            log("Passed the turn");
-         } catch (err) {
-            error("Error invoking Pass:", err);
-         }
-      }
-   }, [connection]);  // Мемоизация с зависимостью от connection
+   }, [isConnected]);  // Мемоизация с зависимостью от connection
 
    // Очистка при размонтировании компонента
    useEffect(() => {
@@ -151,14 +101,11 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
 
    const contextValue = useMemo(() => ({
       startConnection,
-      attack,
-      defend,
-      pass,
-      playerId,
-      gameState,
-      personalState,
+      stopConnection,
+      sendData,
+      data,
       isConnected,
-   }), [startConnection, attack, defend, pass, gameState, isConnected, personalState, playerId]);
+   }), [isConnected]);
 
    return (
       <SignalRContext.Provider value={contextValue}>

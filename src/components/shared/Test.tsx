@@ -2,20 +2,18 @@ import { useRef, useState } from "react";
 import animationService from "src/contexts/animationService";
 import { useAudio } from "src/contexts/AudioContext";
 import { useGame } from "src/contexts/GameContext";
-import { useSignalR } from "src/contexts/SignalRContext";
 import { testMode } from "src/environments/environment";
-import useAnimateElement, {
-   animateElements,
-} from "src/hooks/useAnimateElement";
+// import useAnimateElement, {
+//    animateElements,
+// } from "src/hooks/useAnimateElement";
 import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
-import { clearTableAnimated, moveCardFromDeck, Sounds } from "src/utils";
+import { clearTableAnimated, Sounds } from "src/utils";
 
 const Test = () => {
-   const { clearTable, slots, addCardToHand, addCardToSlot } = useGame();
-   const animate = useAnimateElement();
+   const { clearTable, slots, addCardToSlot } = useGame();
+   // const animate = useAnimateElement();
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
-   const { pass } = useSignalR();
    const [slot, setSlot] = useState(0);
    const elementRef = useRef<HTMLDivElement>(null);
 

@@ -1,19 +1,10 @@
 import { CSSProperties, memo } from "react";
 import styles from "./player.module.scss";
-
-export interface PlayerProps {
-   name?: string;
-   avatar?: string;
-   id: string;
-   cardsCount: number;
-   passed: boolean;
-}
-
-import red_back from "src/assets/cards/backs/red.png";
 import Avatar from "../Avatar";
 import { varibleGap } from "src/utils";
+import { IFoolPlayer } from "src/types";
 
-export const Player = memo(({ name, avatar, cardsCount, id }: PlayerProps) => {
+export const Player = memo(({ name, avatar, cardsCount, id }: IFoolPlayer) => {
    const gap = varibleGap(
       [5, 7, 10, 15, 19],
       [18, 20, 26, 27, 29, 34],

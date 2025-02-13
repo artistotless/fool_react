@@ -74,8 +74,21 @@ export interface ICard {
 export interface IFoolPlayer {
    id: string;
    name: string;
+   avatar: string;
    passed: boolean;
    cardsCount: number;
+}
+
+export interface IUser {
+   id: string;
+   name: string;
+   avatar: string;
+}
+
+export interface IUserToken {
+   userId: string;
+   nickName: string;
+   scopes: string[];
 }
 
 export type GameStatus = 'ReadyToBegin' | 'InProgress' | 'Finished' | 'Canceled';
@@ -131,4 +144,8 @@ export interface IGameState {
 
 export interface IPersonalState {
    cardsInHand: ICard[];
+}
+
+export interface IWinnersInfo {
+   winners: string[];
 }

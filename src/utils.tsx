@@ -6,7 +6,7 @@ import cardStyles from "../src/components/ui/Card/card_new.module.scss";
 import queenImg from '../src/assets/cards/queen.png';
 import kingImg from '../src/assets/cards/king.png';
 import jackImg from '../src/assets/cards/jack.png';
-import { col } from "framer-motion/client";
+// import { col } from "framer-motion/client";
 
 export const varibleGap = (
    gapSizes: number[],

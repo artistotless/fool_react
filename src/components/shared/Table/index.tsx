@@ -3,7 +3,7 @@ import styles from "./table.module.scss";
 import { ISlot as ISlot, useGame } from "src/contexts/GameContext";
 import { useDroppable } from "@dnd-kit/core";
 import animationService from "src/contexts/animationService";
-import { useSignalR } from "src/contexts/SignalRContext";
+import { useUser } from "src/contexts/UserContext";
 
 interface SlotProps {
    slot: ISlot;
@@ -40,15 +40,15 @@ const Slot = ({ slot, playerId, defenderId }: SlotProps, key: number) => {
 };
 
 const Table = () => {
-   const { slots, defenderId } = useGame();
-   const { playerId } = useSignalR();
+   const { slots, state} = useGame();
    const { isOver, setNodeRef } = useDroppable({ id: "table" });
+   const {user} = useUser();
 
    return (
-      <div className={`${styles.table_container} ${isOver && playerId != defenderId ? styles.drop : ""}`} ref={setNodeRef}>
+      <div className={`${styles.table_container} ${isOver && user.id != state.defenderId ? styles.drop : ""}`} ref={setNodeRef}>
          <div className={`${styles.table}`}>
             {slots.map((slot, index) => (
-               <Slot key={index} slot={slot} defenderId={defenderId} playerId={playerId} />
+               <Slot key={index} slot={slot} defenderId={state.defenderId} playerId={user.id} />
             ))}
          </div>
       </div>

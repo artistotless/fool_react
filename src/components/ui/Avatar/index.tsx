@@ -9,13 +9,13 @@ interface AvatarProps {
 }
 
 const Avatar = ({ src, name, playerId }: AvatarProps) => {
-   const { attackerId, defenderId } = useGame();
+   const { state } = useGame();
    // Определяем, какой класс добавить в зависимости от playerId
    const borderColor =
-      playerId === attackerId ? "#ff0000bf" :
-         playerId === defenderId ? "#0000ffb0"
+      playerId === state.attackerId ? "#ff0000bf" :
+         playerId === state.defenderId ? "#0000ffb0"
             : '';
-            
+
    return (
       <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
          {src && <img src={src} className={styles.image} />}
