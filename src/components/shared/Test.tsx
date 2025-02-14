@@ -10,7 +10,7 @@ import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
 import { clearTableAnimated, Sounds } from "src/utils";
 
 const Test = () => {
-   const { clearTable, slots, addCardToSlot } = useGame();
+   const { clearTable, slots, addCardToSlot, pass } = useGame();
    // const animate = useAnimateElement();
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
@@ -116,9 +116,9 @@ const Test = () => {
          >
             Карта на стол
          </button>
-         {/* <button onClick={pass}>
+         <button onClick={pass}>
             Пасс
-         </button> */}
+         </button>
       </div>
    );
 };

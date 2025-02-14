@@ -5,7 +5,7 @@ import { signalRLoggingEnabled } from "src/environments/environment";
 interface SignalRContext {
    data: any | null,
    isConnected: boolean,
-   sendData: (action: string, ...parameters: any[]) => void,
+   sendData: (action: string, ...args: any[]) => void,
    startConnection: (url: string, token: any, subs: string[]) => void,
    stopConnection: () => void,
 }
@@ -78,20 +78,15 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
       }
    }, []);  // Мемоизация функции
 
-   // Функция для отправки защиты
-   const sendData = useCallback(async (action: string, ...parameters: any[]) => {
+   const sendData = useCallback(async (action: string, ...args: any[]) => {
       if (isConnected) {
          try {
-            if (parameters?.length)
-               await connection?.invoke(action, parameters);
-            else
-               await connection?.invoke(action);
-
+            await connection?.invoke(action, ...args);
          } catch (err) {
             error(`Error invoking ${action}:`, err);
          }
       }
-   }, [isConnected]);  // Мемоизация с зависимостью от connection
+   }, [connection])
 
    // Очистка при размонтировании компонента
    useEffect(() => {

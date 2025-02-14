@@ -45,29 +45,6 @@ const DraggableCard = forwardRef(
       };
 
       return createCardElement(rank, suit, ref, draggableData)
-      // return (
-      //    <div
-      //       id={elementId}
-      //       ref={(node) => {
-      //          setNodeRef(node);
-      //          if (ref) {
-      //             typeof ref === "function" ? ref(node) : (ref.current = node);
-      //          }
-      //       }}
-      //       className={`${styles.card} ${isDragging && styles.dragging} ${draggable && styles.draggable
-      //          } ${className} ${isLoading && styles.loading}`}
-      //       {...listeners}
-      //       {...attributes}
-      //       style={{
-      //          transform: transform
-      //             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      //             : undefined,
-      //          rotate: `${rotate}deg`,
-      //       }}
-      //    >
-      //       <img onLoad={() => setIsLoading(false)} src={src} />
-      //    </div>
-      // );
    }
 );
 

@@ -47,7 +47,7 @@ export const testMode = (): {
 
     return {
         useTestCards: false,
-        testButtons: false,
+        testButtons: true,
         testCards: cards
     };
 }

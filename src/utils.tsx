@@ -238,7 +238,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
       >
          {/* Верхний левый угол */}
          <div className={cardStyles.card_top_left}>
-            <div className={cardStyles.rank}>{rank.name}</div>
+            <div className={cardStyles.rank}>{rank.shortName}</div>
             <div className={cardStyles.suit_small} >{suit.iconChar}</div>
          </div>
          {/* Центральная часть с мастями */}
@@ -263,7 +263,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          )}
          {/* Нижний правый угол */}
          <div className={cardStyles.card_bottom_right} >
-            <div className={cardStyles.rank}> {rank.name} </div>
+            <div className={cardStyles.rank}> {rank.shortName} </div>
             <div className={cardStyles.suit_small} >{suit.iconChar}</div>
          </div>
       </div>

@@ -103,14 +103,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    }, [isConnected]);
 
    const handleGameState = (newState: IGameState): void => {
-
       const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
       const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
       const currentLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
       const { tableCardsRef } = animationService;
 
       // If the round ends with the defender beaten all cards
-      if (currentLeftCardsCount > leftCardsCount) {
+      if (leftCardsCount && (currentLeftCardsCount > leftCardsCount)) {
 
          clearTableAnimated(tableCardsRef, () => {
             clearTable();
@@ -118,7 +117,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // If the round ends with the defender taking cards from the table
-      else if (newState.rounds > state.rounds && currentLeftCardsCount === leftCardsCount) {
+      else if (state.rounds && (newState.rounds > state.rounds) && (currentLeftCardsCount === leftCardsCount)) {
 
          const toElement = state.defenderId === user.id ? "playercards" : `cards-${state.defenderId}`;
 
@@ -261,7 +260,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       addCardToSlot,
       removeCardFromHand,
       clearTable
-   }), [slots, hand]);
+   }), [slots, personalState, hand]);
 
    return (
       <GameContext.Provider value={contextValue}      >

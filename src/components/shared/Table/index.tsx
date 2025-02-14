@@ -40,9 +40,9 @@ const Slot = ({ slot, playerId, defenderId }: SlotProps, key: number) => {
 };
 
 const Table = () => {
-   const { slots, state} = useGame();
+   const { slots, state } = useGame();
    const { isOver, setNodeRef } = useDroppable({ id: "table" });
-   const {user} = useUser();
+   const { user } = useUser();
 
    return (
       <div className={`${styles.table_container} ${isOver && user.id != state.defenderId ? styles.drop : ""}`} ref={setNodeRef}>
