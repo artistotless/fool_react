@@ -27,7 +27,6 @@ export interface ISlot {
 
 interface GameContext {
    slots: ISlot[];
-   hand: ICard[];
    winnersIds: string[] | null;
    state: IGameState;
    personalState: IPersonalState;
@@ -71,8 +70,8 @@ const GameContext = createContext<GameContext | null>(null);
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
    const [slots, setSlots] = useState<ISlot[]>(getInitialValue().slots);
-   const [hand, setHand] = useState<ICard[]>(getInitialValue().hand);
    const [leftCardsCount, setLeftCardsCount] = useState<number>(0);
+   const [isReloaded, setIsReloaded] = useState<boolean | null>(null);
    const [winnersIds, setWinnersIds] = useState<string[] | null>(null);
    const [state, setGameState] = useState<IGameState>(getInitialValue().gameState);
    const [personalState, setPersonalState] = useState<IPersonalState>(getInitialValue().personalState);
@@ -88,7 +87,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             setGameState(data.state)
          }
          else if (data.updateType === GameUpdateTypes.PersonalState) {
-            handlePlayerState(data.state);
             setPersonalState(data.state)
          }
          else if (data.winners) {
@@ -105,19 +103,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const handleGameState = (newState: IGameState): void => {
       const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
       const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
-      const currentLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
+      const newLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
       const { tableCardsRef } = animationService;
 
-      // If the round ends with the defender beaten all cards
-      if (leftCardsCount && (currentLeftCardsCount > leftCardsCount)) {
+      setIsReloaded(isReloaded === null && state.tableCards.length === 0);
 
-         clearTableAnimated(tableCardsRef, () => {
-            clearTable();
-         });
+      if (isReloaded) {
+         setSlots(newState.tableCards.map(tc => ({
+            id: tc.slotIndex,
+            cards: [tc.card, ...(tc.defendingCard ? [tc.defendingCard] : [])]
+         })));
+      }
+
+      // If the round ends with the defender beaten all cards
+      else if (leftCardsCount && (newLeftCardsCount > leftCardsCount)) {
+         clearTableAnimated(tableCardsRef,
+            () => play(Sounds.CardSlideLeft), clearTable);
       }
 
       // If the round ends with the defender taking cards from the table
-      else if (state.rounds && (newState.rounds > state.rounds) && (currentLeftCardsCount === leftCardsCount)) {
+      else if (state.rounds && (newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
 
          const toElement = state.defenderId === user.id ? "playercards" : `cards-${state.defenderId}`;
 
@@ -135,26 +140,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             tableCardsRef.current = {};
          });
       }
+      // Player puts a card on the table
       else {
-         // Преобразуем tableCards из gameState в формат Slots[]
-         const transformedSlots: ISlot[] = newState.tableCards.map(tc => ({
-            id: tc.slotIndex,
-            cards: [tc.card, ...(tc.defendingCard ? [tc.defendingCard] : [])]
-         }));
-         setSlots(transformedSlots); // Обновляем слоты карт на столе
+         newState.tableCards.forEach(tc => {
+            if (tc.defendingCard) {
+               addCardToSlot(tc.card, tc.slotIndex);
+               addCardToSlot(tc.defendingCard, tc.slotIndex);
+            } else {
+               addCardToSlot(tc.card, tc.slotIndex);
+            }
+         });
       }
 
-      setLeftCardsCount(currentLeftCardsCount);
+      setLeftCardsCount(newLeftCardsCount);
    };
-
-   const handlePlayerState = (state: IPersonalState): void => {
-      setHand(state.cardsInHand.map((c, index) => ({
-         rank: c.rank,
-         suit: c.suit,
-         id: index + 1
-      })) || []); // Обновляем карты в руке текущего игрока
-   };
-
 
    const handleWinners = (info: IWinnersInfo): void => {
       setWinnersIds(info.winners);
@@ -179,19 +178,28 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const addCardToHand = useCallback(
       (card: ICard | ICard[]) => {
          if (Array.isArray(card)) {
-            setHand((prevHand) => [...prevHand, ...card]);
+            setPersonalState((prevPersonalState) => ({
+               ...prevPersonalState,
+               cardsInHand: [...prevPersonalState.cardsInHand, ...card]
+            }));
          } else {
-            setHand((prevHand) => [...prevHand, card]);
+            setPersonalState((prevPersonalState) => ({
+               ...prevPersonalState,
+               cardsInHand: [...prevPersonalState.cardsInHand, card]
+            }));
          }
       },
-      [setHand]
+      [setPersonalState]
    );
 
    const removeCardFromHand = useCallback(
-      (card_id: number) => {
-         setHand((prev) => prev.filter(({ id }) => card_id !== id));
+      (idx: number) => {
+         setPersonalState((prevPersonalState) => ({
+            ...prevPersonalState,
+            cardsInHand: prevPersonalState.cardsInHand.filter((_, index) => index !== idx)
+         }));
       },
-      [setHand]
+      [setPersonalState]
    );
 
    const clearTable = useCallback(() => {
@@ -253,14 +261,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       state,
       personalState,
       slots,
-      hand,
       winnersIds,
       pass,
       addCardToHand,
       addCardToSlot,
       removeCardFromHand,
       clearTable
-   }), [slots, personalState, hand]);
+   }), [slots, personalState, state]);
 
    return (
       <GameContext.Provider value={contextValue}      >

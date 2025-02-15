@@ -36,7 +36,7 @@ const PlayerCards = (props: PlayerCardsProps) => {
             {cards.map((card, index) => (
                <DraggableCard
                   index={index}
-                  elementId={`playercard-${card.id}`}
+                  elementId={`playercard-${index}`}
                   draggable={props.isDraggingEnabled}
                   {...card}
                   key={index}

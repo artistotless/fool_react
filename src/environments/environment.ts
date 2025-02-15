@@ -55,5 +55,5 @@ export const testMode = (): {
 export const signalRLoggingEnabled = true;
 export const connPanelEnabled = true;
 // export const gsEndpoint = 'https://localhost:22001';
-export const gsEndpoint = 'http://192.168.0.50:52001';
+export const gsEndpoint = 'http://redmi:52001';
 export const cardServerUrl = '../src/assets';

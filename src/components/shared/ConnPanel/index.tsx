@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./connPanel.module.scss";
 import * as env from "../../../environments/environment";
 import { motion } from "framer-motion";
@@ -7,9 +7,22 @@ import { IUserToken } from "src/types";
 
 const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, token: IUserToken, subs: string[]) => void }) => {
 
-  const [matchId, setMatchId] = useState<string>('');
-  const [selectedPlayer, setSelectedPlayer] = useState("");
+  const [matchId, setMatchId] = useState<string>(() => {
+    return localStorage.getItem('lastMatchId') || '';
+  });
+  const [selectedPlayer, setSelectedPlayer] = useState(() => {
+    return localStorage.getItem('lastSelectedPlayer') || '';
+  });
   const { token, setToken } = useUser();
+
+  // Загрузка сохраненных данных при монтировании компонента
+  useEffect(() => {
+    const savedPlayer = localStorage.getItem('lastSelectedPlayer');
+    if (savedPlayer) {
+      setSelectedPlayer(savedPlayer);
+      setToken(env.tokens[parseInt(savedPlayer)]);
+    }
+  }, []);
 
   // Обработчик для выбора игрока
   const handlePlayerSelect = (event: any) => {
@@ -17,16 +30,25 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
     console.log(`selected player : ${env.tokens[playerIndex].nickName}`)
     setSelectedPlayer(playerIndex);
     setToken(env.tokens[playerIndex]);
+    localStorage.setItem('lastSelectedPlayer', playerIndex);
   };
 
   // Обработчик клика на кнопку "Connect to match"
   const handleConnect = () => {
     if (token && matchId) {
+      localStorage.setItem('lastMatchId', matchId);
       startConnection(`${env.gsEndpoint}/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
     } else {
       alert("Please select a player and enter a match ID.");
     }
   };
+
+  // Обработчик изменения matchId
+  const handleMatchIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMatchId = e.target.value;
+    setMatchId(newMatchId);
+  };
+
   return (
     <motion.div
       className={styles.connPanel}
@@ -119,7 +141,7 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
           <h1>Durak Game</h1>
           <input
             value={matchId}
-            onChange={(e) => setMatchId(e.target.value)}
+            onChange={handleMatchIdChange}
             type="text"
             placeholder="matchId (Example: 60b59ce0-e2c0-4777-9c94-6b7d7c9b17df)"
             name="matchId"

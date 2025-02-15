@@ -3,21 +3,21 @@ import { Player } from "../../ui/Player";
 import PlayerCards from "../PlayerCards";
 import Table from "../Table";
 import styles from "./gamefield.module.scss";
-import Test from "../Test";
 import { IFoolPlayer } from "src/types";
+import { useUser } from "src/contexts/UserContext";
 
 const GameField = () => {
-   const { state, hand } = useGame();
+   const { state, personalState } = useGame();
+   const { user } = useUser();
+   
    return (
       <div className={styles.field}>
          <div className={styles.players}>
-            <Test />
             {state.players.map((value: IFoolPlayer, index) =>
-               <Player {...value} key={index} />)}
+               value.id !== user.id && <Player {...value} key={index} />)}
          </div>
-
          <Table />
-         <PlayerCards cards={hand} />
+         <PlayerCards cards={personalState.cardsInHand} />
       </div>
    );
 };

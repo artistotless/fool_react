@@ -68,7 +68,7 @@ export interface ISuit {
 export interface ICard {
    suit: ISuit;
    rank: IRank;
-   id: number;
+   // id: number;
 }
 
 export interface IFoolPlayer {

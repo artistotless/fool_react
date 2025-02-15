@@ -14,6 +14,10 @@
   border-radius: 10px;
   box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
 
+  &.red {
+    color: red;
+  }
+
   .suit_regular,
   .suit_small {
     font-family: "Noto Sans SC", serif;
@@ -55,10 +59,6 @@
       animation: pulse 1.5s infinite;
       visibility: visible;
     }
-  }
-
-  &.red {
-    color: red;
   }
 
   // Top-left corner

@@ -9,7 +9,7 @@ interface CardProps extends ICard {
    draggable?: boolean;
    className?: string;
    elementId?: string;
-   index: number
+   index: number;
 }
 
 const DraggableCard = forwardRef(
@@ -19,18 +19,14 @@ const DraggableCard = forwardRef(
          suit,
          rank,
          draggable = true,
-         id,
          index,
       }: CardProps,
       ref
    ) => {
-
-      if (!id) id = Math.floor(Math.random() * 360);
-
       const { attributes, listeners, setNodeRef, transform, isDragging } =
          useDraggable({
-            id,
-            data: { suit, rank, id, index },
+            id: index,
+            data: { suit, rank, id: index, index },
             disabled: !draggable,
          });
 
