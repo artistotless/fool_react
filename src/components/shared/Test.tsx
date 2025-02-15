@@ -103,6 +103,7 @@ const Test = () => {
                let randomSuit = Math.floor(Math.random() * 4)
                let randomRank = Math.floor(Math.random() * 9)
 
+
                if (slots[slot].cards) {
                   setSlot(1 + (slot == 5 ? -1 : slot))
                }
@@ -111,7 +112,7 @@ const Test = () => {
                const suit = { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] };
                const rank = { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] };
 
-               addCardToSlot({ suit, rank, id: Math.floor(Math.random() * 1000), }, slot);
+               addCardToSlot({ suit, rank}, slot);
             }}
          >
             Карта на стол

@@ -23,7 +23,7 @@ export const tokens = [
     }
 ];
 
-export const testMode = (): {
+export const testMode = (): {   
     testButtons: boolean;
     useTestCards: boolean
     testCards: ICard[]
@@ -55,5 +55,4 @@ export const testMode = (): {
 export const signalRLoggingEnabled = true;
 export const connPanelEnabled = true;
 // export const gsEndpoint = 'https://localhost:22001';
-export const gsEndpoint = 'http://redmi:52001';
 export const cardServerUrl = '../src/assets';

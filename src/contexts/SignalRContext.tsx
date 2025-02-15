@@ -43,6 +43,7 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
    const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
    const [isConnected, setIsConnected] = useState(false);
    const [data, setData] = useState<any | null>(null);
+   const [dataQueue, setDataQueue] = useState<any[]>([]);
 
    const stopConnection = useCallback(() => {
       connection?.stop();
@@ -59,14 +60,12 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
          .withAutomaticReconnect()
          .configureLogging(signalR.LogLevel.Error)
          .build();
-
-      subs.forEach(sub => {
-         conn.on(sub, (state) => {
-            setData(state);
-            log(state);
+         subs.forEach(sub => {
+            conn.on(sub, (state) => {
+               setData(state);
+               log(state);
+            });
          });
-      });
-
       try {
          await conn.start();
          log("SignalR connected");
@@ -97,6 +96,14 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
          }
       };
    }, [connection]);
+
+   useEffect(() => {
+      if (dataQueue.length > 0) {
+         const currentData = dataQueue[0];
+         setData(currentData);
+         setDataQueue(prev => prev.slice(1));
+      }
+   }, [dataQueue]);
 
    const contextValue = useMemo(() => ({
       startConnection,

@@ -37,7 +37,7 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
   const handleConnect = () => {
     if (token && matchId) {
       localStorage.setItem('lastMatchId', matchId);
-      startConnection(`${env.gsEndpoint}/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
+      startConnection(`http://${window.location.hostname}:52001/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
     } else {
       alert("Please select a player and enter a match ID.");
     }

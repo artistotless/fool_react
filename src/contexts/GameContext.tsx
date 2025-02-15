@@ -41,7 +41,6 @@ const getInitialValue = () => ({
    slots: Array(6)
       .fill(null)
       .map((_, index) => ({ id: index, cards: [] })),
-   hand: testMode().useTestCards ? testMode().testCards : [],
    gameState: {
       attackerId: null,
       defenderId: null,
@@ -53,7 +52,7 @@ const getInitialValue = () => ({
       players: [],
    },
    personalState: {
-      cardsInHand: [],
+      cardsInHand: testMode().useTestCards ? testMode().testCards : [],
    },
    players: Array(3)
       .fill(null)
@@ -93,7 +92,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             handleWinners(data.winners)
          }
       }
-   }, [data]);
+   }, [data, isConnected]);
 
    useEffect(() => {
       if (isConnected)
@@ -106,9 +105,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const newLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
       const { tableCardsRef } = animationService;
 
-      setIsReloaded(isReloaded === null && state.tableCards.length === 0);
+      const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
+      setIsReloaded(isReloadedPage);
 
-      if (isReloaded) {
+
+      if (isReloadedPage) {
          setSlots(newState.tableCards.map(tc => ({
             id: tc.slotIndex,
             cards: [tc.card, ...(tc.defendingCard ? [tc.defendingCard] : [])]
@@ -116,7 +117,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // If the round ends with the defender beaten all cards
-      else if (leftCardsCount && (newLeftCardsCount > leftCardsCount)) {
+      else if (!isReloadedPage && (newLeftCardsCount > leftCardsCount)) {
          clearTableAnimated(tableCardsRef,
             () => play(Sounds.CardSlideLeft), clearTable);
       }
@@ -144,7 +145,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       else {
          newState.tableCards.forEach(tc => {
             if (tc.defendingCard) {
-               addCardToSlot(tc.card, tc.slotIndex);
                addCardToSlot(tc.defendingCard, tc.slotIndex);
             } else {
                addCardToSlot(tc.card, tc.slotIndex);
@@ -172,7 +172,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             });
          });
       },
-      [setSlots]
+      [setSlots, play]
    );
 
    const addCardToHand = useCallback(
