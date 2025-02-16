@@ -4,12 +4,6 @@
    max-width: 800px;
    flex-grow: 1;
    height: 50lvh;
-   border: 2px dashed transparent;
-
-   &.drop {
-      border: 2px dashed #8c8c8c61;
-      border-radius: 10px;
-   }
 
    .table {
       position: relative;

@@ -26,7 +26,7 @@ const DraggableCard = forwardRef(
       const { attributes, listeners, setNodeRef, transform, isDragging } =
          useDraggable({
             id: index,
-            data: { suit, rank, id: index, index },
+            data: { elementId, card: { suit, rank, id: index, index } },
             disabled: !draggable,
          });
 

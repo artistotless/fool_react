@@ -62,7 +62,7 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
          .build();
          subs.forEach(sub => {
             conn.on(sub, (state) => {
-               setData(state);
+               setDataQueue(prev => [...prev, state]);
                log(state);
             });
          });

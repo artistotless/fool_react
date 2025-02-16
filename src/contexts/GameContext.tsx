@@ -70,8 +70,8 @@ const GameContext = createContext<GameContext | null>(null);
 export const GameProvider = ({ children }: { children: ReactNode }) => {
    const [slots, setSlots] = useState<ISlot[]>(getInitialValue().slots);
    const [leftCardsCount, setLeftCardsCount] = useState<number>(0);
-   const [isReloaded, setIsReloaded] = useState<boolean | null>(null);
    const [winnersIds, setWinnersIds] = useState<string[] | null>(null);
+   const [isReloaded, setIsReloaded] = useState<boolean | null>(null);
    const [state, setGameState] = useState<IGameState>(getInitialValue().gameState);
    const [personalState, setPersonalState] = useState<IPersonalState>(getInitialValue().personalState);
    const { isConnected, data, sendData } = useSignalR();
@@ -110,22 +110,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
 
       if (isReloadedPage) {
-         setSlots(newState.tableCards.map(tc => ({
-            id: tc.slotIndex,
-            cards: [tc.card, ...(tc.defendingCard ? [tc.defendingCard] : [])]
-         })));
+         let newSlots = slots.map(slot => {
+            const tableCard = newState.tableCards.find(tc => tc.slotIndex === slot.id);
+            return {
+               ...slot,
+               cards: tableCard ? [tableCard.card, ...(tableCard.defendingCard ? [tableCard.defendingCard] : [])] : slot.cards
+            }
+         });
+
+         setSlots(newSlots);
       }
 
       // If the round ends with the defender beaten all cards
-      else if (!isReloadedPage && (newLeftCardsCount > leftCardsCount)) {
+      else if ((newLeftCardsCount > leftCardsCount)) {
          clearTableAnimated(tableCardsRef,
             () => play(Sounds.CardSlideLeft), clearTable);
       }
 
       // If the round ends with the defender taking cards from the table
       else if (state.rounds && (newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
-
-         const toElement = state.defenderId === user.id ? "playercards" : `cards-${state.defenderId}`;
+         const toElement = state.defenderId === user.id ? "playercards" : `player-${state.defenderId}`;
 
          animateElements(
             tableCardsRef.current,
@@ -144,10 +148,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Player puts a card on the table
       else {
          newState.tableCards.forEach(tc => {
-            if (tc.defendingCard) {
-               addCardToSlot(tc.defendingCard, tc.slotIndex);
-            } else {
+            const existingSlot = slots.find(s => s.id === tc.slotIndex);
+
+            if (existingSlot?.cards.length == 0) {
                addCardToSlot(tc.card, tc.slotIndex);
+            }
+
+            else if (existingSlot?.cards.length == 1 && tc.defendingCard) {
+               addCardToSlot(tc.defendingCard, tc.slotIndex);
             }
          });
       }
@@ -245,29 +253,39 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    };
 
    const handleDragEnd = (event: DragEndEvent) => {
-      const { current } = event.active.data;
-
-      if (event.over?.id === "table" && current) {
-         onDroppedToDropZone(current as ICard, current.index as number);
-      }
+      const card = event.active.data.current?.card;
 
       if (String(event.over?.id).startsWith("slot")) {
          const id = Number(String(event.over?.id).split("-")[1]);
-         onDroppedToTableSlot(current as ICard, current?.index as number, id);
+         onDroppedToTableSlot(card as ICard, card?.index as number, id);
+      }
+      else if (card) {
+         const offset = 50;
+         const middleOfDropZone = (window.innerHeight / 2) + offset;
+         const activeRect = event.active.rect.current.translated;
+
+         if (!activeRect?.top)
+            return;
+
+         // Проверяем, находится ли точка дропа выше середины зоны
+         const isAfterMiddle = middleOfDropZone >= activeRect?.top;
+         if (isAfterMiddle) {
+            onDroppedToDropZone(card as ICard, card.index as number);
+         }
       }
    };
 
    const contextValue = useMemo(() => ({
       state,
       personalState,
-      slots,
       winnersIds,
+      slots,
       pass,
       addCardToHand,
       addCardToSlot,
       removeCardFromHand,
       clearTable
-   }), [slots, personalState, state]);
+   }), [slots, personalState, state, winnersIds]);
 
    return (
       <GameContext.Provider value={contextValue}      >

@@ -13,6 +13,7 @@ export const Player = memo(({ name, avatar, cardsCount, id }: IFoolPlayer) => {
 
    return (
       <div
+         id={`player-${id}`}
          className={styles.player}
          style={
             {
@@ -20,7 +21,7 @@ export const Player = memo(({ name, avatar, cardsCount, id }: IFoolPlayer) => {
             } as CSSProperties
          }
       >
-         <Avatar src={avatar} name={name} playerId={id} />
+         <Avatar src={avatar} name={name} playerId={id}/>
       </div>
    );
 });

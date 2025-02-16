@@ -1,11 +1,19 @@
 .game_over_panel {
    flex: 1 1 auto;
-   position: relative;
+   position: absolute !important;
+   width: 100vw;
+   height: 100vh;
+   top: 0;
+   z-index: 1000;
+   left: 0;
    padding: 0 15px;
-   display: flex
-;
-   justify-content: flex-start;
+   display: none;
+   justify-content: center;
    align-items: center;
    flex-direction: column;
-   background: #efefef;
+   background: #2f2f2f;
+
+   &.active {
+      display: flex;
+   }
 }

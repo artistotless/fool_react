@@ -17,9 +17,11 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
             : '';
 
    return (
-      <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
-         {src && <img src={src} className={styles.image} />}
-         {name && <span className={styles.name}>{name}</span>}
+      <div className={styles.avatar_container}>
+         <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
+            {src && <img src={src} className={styles.image} />}
+         </div>
+         {name && <span className={styles.name} style={{ 'color': borderColor }}>{name} </span>}
       </div>
    );
 };
