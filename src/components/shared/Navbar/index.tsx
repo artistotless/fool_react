@@ -7,12 +7,21 @@ const Navbar = ({ }) => {
    const { user } = useUser();
    const { pass, state } = useGame();
 
+   const allBeaten = state.tableCards.every(slot => slot.defendingCard);
    const defender = state.players.find(player => player.id == state.defenderId);
-   const passBtnTitle = state.defenderId == user.id ? 'Беру' : (state.attackerId == user.id && !defender?.passed) ? 'Бито' : 'Пасс';
-   const passBtnActive =
-      (state.attackerId == user.id && state.tableCards?.length > 0 || state.defenderId != user.id && defender?.passed)
-         || (state.tableCards.length > 0 && state.defenderId == user.id)
-         ? 'block' : 'none';
+
+   let passBtnTitle = '';
+
+   if (state.tableCards.length == 0)
+      passBtnTitle = ''
+   else if (user.id == state.defenderId && !allBeaten)
+      passBtnTitle = 'Беру'
+   else if (user.id != state.defenderId && allBeaten)
+      passBtnTitle = 'Бито'
+   else if (user.id != state.defenderId && !allBeaten && defender?.passed)
+      passBtnTitle = 'Пасс'
+
+   const passBtnActive = passBtnTitle == '' ? 'none' : 'block';
 
    return <div className={styles.navbar}>
       <div className={styles.trump}>

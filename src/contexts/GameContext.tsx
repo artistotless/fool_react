@@ -128,7 +128,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // If the round ends with the defender taking cards from the table
-      else if (state.rounds && (newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
+      else if ((newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
          const toElement = state.defenderId === user.id ? "playercards" : `player-${state.defenderId}`;
 
          animateElements(

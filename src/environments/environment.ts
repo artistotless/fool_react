@@ -52,7 +52,8 @@ export const testMode = (): {
     };
 }
 
-export const signalRLoggingEnabled = true;
 export const connPanelEnabled = true;
-// export const gsEndpoint = 'https://localhost:22001';
+export const signalRLoggingEnabled = true;
+// export const gsEndpoint = 'http://62.60.156.232:52001';
+export const gsEndpoint = null;
 export const cardServerUrl = '../src/assets';
