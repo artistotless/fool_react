@@ -1,6 +1,7 @@
 import { useUser } from "src/contexts/UserContext";
 import styles from "./navbar.module.scss";
 import { useGame } from "src/contexts/GameContext";
+import Timer from "src/components/ui/Timer";
 
 const Navbar = ({ }) => {
 
@@ -33,6 +34,7 @@ const Navbar = ({ }) => {
       <div className={styles.pass_btn}>
          <button onClick={() => pass()} style={{ display: passBtnActive }}>{passBtnTitle}</button>
       </div>
+      {state.moveTime && state.movedAt && state.rounds > 0 && <Timer moveTime={state.moveTime} movedAt={state.movedAt} />}
    </div>;
 };
 

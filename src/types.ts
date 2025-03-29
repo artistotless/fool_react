@@ -3,7 +3,8 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export enum GameUpdateTypes {
    GameState = "GameStateDto",
-   PersonalState = "PlayerHandStateDto"
+   PersonalState = "PlayerHandStateDto",
+   PassedState = "PlayerPassNotificationDto"
 }
 
 export enum Suits {
@@ -139,6 +140,16 @@ export interface IGameState {
     * represented by FoolPlayerDto objects containing player-specific information.
     */
    players: IFoolPlayer[];
+
+   /**
+    * The date and time when the move was made.
+    */
+   movedAt: string | null;
+
+   /**
+    * The time allowed for the move.
+    */
+   moveTime: string | null;
 }
 
 export interface IPersonalState {

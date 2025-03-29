@@ -35,6 +35,7 @@ interface GameContext {
    addCardToSlot: (card: ICard, slotID: number) => void;
    removeCardFromHand: (card_id: number) => void;
    clearTable: () => void;
+   passedPlayerId: string | null;
 }
 
 const getInitialValue = () => ({
@@ -42,6 +43,8 @@ const getInitialValue = () => ({
       .fill(null)
       .map((_, index) => ({ id: index, cards: [] })),
    gameState: {
+      movedAt: null,
+      moveTime: null,
       attackerId: null,
       defenderId: null,
       tableCards: [],
@@ -78,6 +81,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const { play } = useAudio();
    const { user } = useUser();
    const animate = useAnimateElement();
+   const [passedPlayerId, setPassedPlayerId] = useState<string | null>(null);
 
    useEffect(() => {
       if (data && isConnected) {
@@ -87,6 +91,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          }
          else if (data.updateType === GameUpdateTypes.PersonalState) {
             setPersonalState(data.state)
+         }
+         else if (data.updateType === GameUpdateTypes.PassedState) {
+            handlePassed(data.state)
          }
          else if (data.winners) {
             handleWinners(data.winners)
@@ -275,6 +282,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
    };
 
+   const handlePassed = (state: { playerId: string }): void => {
+      setPassedPlayerId(state.playerId);
+      console.log('passedPlayerId', state.playerId);
+      // Очищаем состояние через 2 секунды
+      setTimeout(() => {
+         setPassedPlayerId(null);
+      }, 2000);
+   };
+
    const contextValue = useMemo(() => ({
       state,
       personalState,
@@ -284,8 +300,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       addCardToHand,
       addCardToSlot,
       removeCardFromHand,
-      clearTable
-   }), [slots, personalState, state, winnersIds]);
+      clearTable,
+      passedPlayerId
+   }), [slots, personalState, state, winnersIds, passedPlayerId]);
 
    return (
       <GameContext.Provider value={contextValue}      >

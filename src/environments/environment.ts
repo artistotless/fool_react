@@ -54,6 +54,7 @@ export const testMode = (): {
 
 export const connPanelEnabled = true;
 export const signalRLoggingEnabled = true;
-// export const gsEndpoint = 'http://62.60.156.232:52001';
-export const gsEndpoint = null;
+// export const gsEndpoint = null;
 export const cardServerUrl = '../src/assets';
+export const gsEndpoint = 'http://192.168.0.50:52001';
+// export const cardServerUrl = 'http://192.168.0.50:5500/durak_cards';

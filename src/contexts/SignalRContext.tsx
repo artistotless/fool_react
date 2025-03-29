@@ -58,23 +58,26 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
             accessTokenFactory: () => btoa(JSON.stringify(token)),
          })
          .withAutomaticReconnect()
-         .configureLogging(signalR.LogLevel.Error)
+         .configureLogging(signalR.LogLevel.Trace)
          .build();
-         subs.forEach(sub => {
-            conn.on(sub, (state) => {
-               setDataQueue(prev => [...prev, state]);
-               log(state);
-            });
+      subs.forEach(sub => {
+         conn.on(sub, (state) => {
+            setDataQueue(prev => [...prev, state]);
+            log(state);
          });
-      try {
-         await conn.start();
-         log("SignalR connected");
-         setConnection(conn);
-         setIsConnected(true);
-      } catch (err) {
-         error("Error connecting to SignalR:", err);
-         setIsConnected(false);
-      }
+      });
+
+      conn.start()
+         .then(() => {
+            log("SignalR connected");
+            setConnection(conn);
+            setIsConnected(true);
+         })
+         .catch(err => {
+            alert(err)
+            error("Error connecting to SignalR:", err);
+            setIsConnected(false);
+         });
    }, []);  // Мемоизация функции
 
    const sendData = useCallback(async (action: string, ...args: any[]) => {
