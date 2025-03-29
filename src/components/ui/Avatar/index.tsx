@@ -10,7 +10,7 @@ interface AvatarProps {
 }
 
 const Avatar = ({ src, name, playerId }: AvatarProps) => {
-   const { state, passedPlayerId } = useGame();
+   const { state, passData } = useGame();
    // Определяем, какой класс добавить в зависимости от playerId
    const borderColor =
       playerId === state.attackerId ? "#931616" :
@@ -22,17 +22,22 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
          <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
             {src && <img src={src} className={styles.image} />}
          </div>
-         {name && <span className={styles.name} style={{ 'color': borderColor }}>{name} </span>}
-         <AnimatePresence>
-            {passedPlayerId === playerId && (
-               <motion.div 
+         {name && <span className={styles.name}>{name} </span>}
+         {/* <div
                   className={styles.passed_badge}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.3 }}
                >
                   Беру
+               </div> */}
+         <AnimatePresence>
+            {passData?.playerId === playerId && (
+               <motion.div 
+                  className={styles.passed_badge}
+                  initial={{ opacity: 0, top:50}}
+                  animate={{ opacity: 1,  top:100}}
+                  exit={{ opacity: 0, top:100 }}
+                  transition={{ duration: 0.3 }}
+               >
+                  {passData?.playerId === passData?.defenderId ? 'Беру' : (passData?.allCardsBeaten ? 'Бито' : 'Пасс')}
                </motion.div>
             )}
          </AnimatePresence>

@@ -58,7 +58,7 @@ export const SignalRProvider = ({ children }: { children: ReactNode }) => {
             accessTokenFactory: () => btoa(JSON.stringify(token)),
          })
          .withAutomaticReconnect()
-         .configureLogging(signalR.LogLevel.Trace)
+         .configureLogging(signalR.LogLevel.Error)
          .build();
       subs.forEach(sub => {
          conn.on(sub, (state) => {

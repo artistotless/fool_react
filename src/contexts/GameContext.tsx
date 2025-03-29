@@ -35,7 +35,7 @@ interface GameContext {
    addCardToSlot: (card: ICard, slotID: number) => void;
    removeCardFromHand: (card_id: number) => void;
    clearTable: () => void;
-   passedPlayerId: string | null;
+   passData: { playerId: string, defenderId: string, allCardsBeaten: boolean } | null;
 }
 
 const getInitialValue = () => ({
@@ -81,7 +81,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const { play } = useAudio();
    const { user } = useUser();
    const animate = useAnimateElement();
-   const [passedPlayerId, setPassedPlayerId] = useState<string | null>(null);
+   const [passData, setPassData] = useState<{ playerId: string, defenderId: string, allCardsBeaten: boolean } | null>(null);
 
    useEffect(() => {
       if (data && isConnected) {
@@ -282,12 +282,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
    };
 
-   const handlePassed = (state: { playerId: string }): void => {
-      setPassedPlayerId(state.playerId);
-      console.log('passedPlayerId', state.playerId);
+   const handlePassed = (passedState: { playerId: string, defenderId: string, allCardsBeaten: boolean }): void => {
+      setPassData(passedState);
       // Очищаем состояние через 2 секунды
       setTimeout(() => {
-         setPassedPlayerId(null);
+         setPassData(null);
       }, 2000);
    };
 
@@ -301,8 +300,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       addCardToSlot,
       removeCardFromHand,
       clearTable,
-      passedPlayerId
-   }), [slots, personalState, state, winnersIds, passedPlayerId]);
+      passData
+   }), [slots, personalState, state, winnersIds, passData]);
 
    return (
       <GameContext.Provider value={contextValue}      >
