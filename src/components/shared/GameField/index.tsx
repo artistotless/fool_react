@@ -5,7 +5,7 @@ import Table from "../Table";
 import styles from "./gamefield.module.scss";
 import { IFoolPlayer } from "src/types";
 import { useUser } from "src/contexts/UserContext";
-import userImg from "src/assets/img/user.png";
+import userImg from "src/assets/img/user.svg";
 
 const GameField = () => {
    const { state, personalState } = useGame();
