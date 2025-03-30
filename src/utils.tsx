@@ -273,6 +273,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
 export const Sounds = {
    CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },
    CardAddedToTable: { id: 2, src: '../src/assets/sounds/card-taking.wav' },
+   Toast: { id: 3, src: '../src/assets/sounds/toast_sound.mp3' }
 }
 
 // export const moveFromTable = (
