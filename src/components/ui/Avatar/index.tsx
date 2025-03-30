@@ -1,14 +1,16 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useMemo } from "react";
 import styles from "./avatar.module.scss";
 import { useGame } from "src/contexts/GameContext";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAudio } from "src/contexts/AudioContext";
 import { Sounds } from "src/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import ProgressTimer from "../ProgressTimer";
+import { useUser } from "src/contexts/UserContext";
 
 interface AvatarProps {
-   src?: string;
-   name?: string;
-   playerId?: string
+   src: string;
+   name: string;
+   playerId: string;
 }
 
 const Avatar = ({ src, name, playerId }: AvatarProps) => {
@@ -28,23 +30,39 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
       }
    }, [passData, playerId, play]);
 
-   // Определяем, какой класс добавить в зависимости от playerId
-   const borderColor =
-      playerId === state.attackerId ? "#931616" :
-         playerId === state.defenderId ? "#169363"
-            : '';
+   const isActivePlayer = state.defenderId === playerId || state.attackerId === playerId;
+   
+   // Определяем цвет рамки для аватара
+   const borderColor = useMemo(() => {
+      // Если это защищающийся игрок
+      if (state.defenderId === playerId) {
+         return "#4caf50"; // Красный для текущего игрока, оранжевый для противников
+      }
+      // Если это атакующий игрок
+      else if (state.attackerId === playerId) {
+         return  "#f44336"; // Красный для текущего игрока, зеленый для противников
+      }
+      return "transparent"; // Прозрачный для неактивных игроков
+   }, [state.defenderId, state.attackerId, playerId]);
+
+   // Тестовые значения для проверки таймера
+   const TEST_MODE = false;
+   const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
+   const testMovedAt = new Date().toISOString();
 
    return (
       <div className={styles.avatar_container}>
          <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
             {src && <img src={src} className={styles.image} />}
+            {isActivePlayer && (TEST_MODE || (state.moveTime && state.movedAt)) && (
+               <ProgressTimer 
+                  moveTime={TEST_MODE ? testMoveTime : (state.moveTime ?? "00:00:30")} 
+                  movedAt={TEST_MODE ? testMovedAt : (state.movedAt ?? new Date().toISOString())}
+                  className={styles.progress}
+               />
+            )}
          </div>
-         {name && <span className={styles.name}>{name} </span>}
-         {/* <div
-                  className={styles.passed_badge}
-               >
-                  Беру
-               </div> */}
+         {name && <span className={styles.name}>{name}</span>}
          <AnimatePresence>
             {passData?.playerId === playerId && (
                <motion.div 

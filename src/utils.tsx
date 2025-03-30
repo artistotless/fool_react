@@ -2,7 +2,8 @@ import { CSSProperties, RefObject } from "react";
 import back_ic from "src/assets/cards/backs/red.png";
 import { IDraggableData, IRank, ISuit, RankValues, SuitsSymbols } from "./types";
 import * as env from "./environments/environment";
-import cardStyles from "../src/components/ui/Card/card_new.module.scss";
+import playerCardStyles from "../src/components/ui/Card/playerCard.module.scss";
+import tableCardStyles from "../src/components/ui/Card/tableCard.module.scss";
 import queenImg from '../src/assets/cards/queen.png';
 import kingImg from '../src/assets/cards/king.png';
 import jackImg from '../src/assets/cards/jack.png';
@@ -179,7 +180,9 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
    }
 };
 
-export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, draggableData?: IDraggableData | undefined) => {
+export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, tableCard: boolean, draggableData?: IDraggableData | undefined) => {
+
+   const cardStyles = tableCard ? tableCardStyles : playerCardStyles;
 
    const ranksConf = [
       [3, 0, 3], // 6
@@ -270,7 +273,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          </div>
       </div>
    );
-}
+}     
 
 export const Sounds = {
    CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },

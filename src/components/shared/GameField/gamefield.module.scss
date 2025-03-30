@@ -15,7 +15,13 @@
    display: flex;
    justify-content: center;
    gap: 10px;
-   min-height: 84px;
-   height: auto;
-   padding: 12px 0;
+   height: fit-content;
+
+   @media(max-width:500px) {
+      scale: 0.7;
+   }
+
+   @media(max-height:400px) {
+      scale: 0.7;
+   }
 }

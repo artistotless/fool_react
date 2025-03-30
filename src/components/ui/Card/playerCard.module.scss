@@ -9,7 +9,7 @@
   color: black;
   font-weight: bold;
   justify-content: space-evenly;
-  border: 1px solid #ccc;
+  border:   0.2px solid #e1e1e1;
   border-bottom-width: 3px;
   border-radius: 10px;
   box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
@@ -42,7 +42,6 @@
   &.dragging {
     z-index: 100;
     filter: drop-shadow(0 10px 15px 1px rgba(0, 0, 0, 0.15));
-    // scale: 1.05;
   }
 
   &.loading {
@@ -74,10 +73,8 @@
   }
 
   .suit_small {
-    // font-size: clamp(0.9rem, 1.657vh, 1.776rem);
     font-size: 0.9rem;
     margin-top: -9px;
-
   }
 
   // Bottom-right corner
@@ -144,7 +141,6 @@
 
       .suit_regular {
         font-size: 1.52rem;
-        // font-size: clamp(1.52rem, 3vh, 3rem);
         line-height: 1;
 
         &.mt_42 {

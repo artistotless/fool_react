@@ -56,7 +56,6 @@ const PlayerCards = (props: PlayerCardsProps) => {
                   rotation={calculateRotation(index, cards.length)}
                   {...card}
                   key={index}
-                  // style={{ transform: `rotate(${calculateRotation(index, cards.length)}deg)` }}
                />
             ))}
          </div>

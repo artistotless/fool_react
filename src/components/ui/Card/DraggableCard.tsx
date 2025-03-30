@@ -43,7 +43,7 @@ const DraggableCard = forwardRef(
          rotation,
       };
 
-      return createCardElement(rank, suit, ref, draggableData)
+      return createCardElement(rank, suit, ref,false, draggableData)
    }
 );
 

@@ -8,6 +8,17 @@
 
    flex: 0 0 auto;
    width: 100px;
+   transition: transform 0.3s ease;
+   
+   // Подсветка текущего игрока
+   &.current_user {
+      transform: scale(1.05);
+      
+      // Можно добавить свечение вокруг аватара текущего игрока
+      .avatar_container .avatar {
+         box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+      }
+   }
 
    .cards {
       display: flex;

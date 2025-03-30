@@ -1,4 +1,4 @@
-import { GameStatus, GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo } from "src/types";
+import { GameStatus, GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo, IFoolPlayer } from "src/types";
 import { clearTableAnimated, Sounds } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
@@ -52,7 +52,29 @@ const getInitialValue = () => ({
       trumpCard: null,
       deckCardsCount: 0,
       status: 'ReadyToBegin' as GameStatus,
-      players: [],
+      players: [
+         {
+            name: "Player 1",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
+            id: "player1",
+            passed: false,
+            cardsCount: 6
+         },
+         {
+            name: "Player 2", 
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
+            id: "player2",
+            passed: false,
+            cardsCount: 6
+         },
+         {
+            name: "Player 3",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3", 
+            id: "player3",
+            passed: false,
+            cardsCount: 6
+         }
+      ],
    },
    personalState: {
       cardsInHand: testMode().useTestCards ? testMode().testCards : [],
@@ -253,10 +275,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута на слот ${slotId}`
       );
 
-      if (state.defenderId != user.id)
-         return;
-
-      defend(cardIndex, slotId);
+      if (state.defenderId === user.id) {
+         defend(cardIndex, slotId);
+      } else {
+         attack(cardIndex);
+      }
    };
 
    const handleDragEnd = (event: DragEndEvent) => {
