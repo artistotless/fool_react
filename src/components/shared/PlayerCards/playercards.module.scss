@@ -4,6 +4,18 @@
    left: 0;
    width: 100%;
    bottom: -3lvh;
+
+   @media(max-width:350px) {
+      scale: 0.75;
+   }
+
+   @media(max-height:520px) and (max-width:350px) {
+      scale: 0.75;
+   }
+
+   @media(min-width:768px) and (min-height:790px) {
+      scale: 1;
+   }
 }
 
 .root {
@@ -23,20 +35,13 @@
       grid-row-start: 1;
       justify-self: center;
       animation: card-slide 0.3s ease-out;
-
-      // @media (hover: hover) and (pointer: fine) {
-      //    &:hover {
-      //       transform: translateY(-40px) !important;
-      //    }
-      // }
+      transform-origin: bottom center;
+      transition: transform 0.2s;
 
       @media (hover: hover) and (pointer: fine) {
          &:not(:active) {
             transition: transform 0.2s ease-out !important;
          }
-         // &:hover:not(:active) {
-         //    transform: translateY(-40px) !important;
-         // }
       }
    }
 }

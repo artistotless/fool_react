@@ -52,7 +52,8 @@ export interface IDraggableData {
    isDraggable: boolean,
    listeners: SyntheticListenerMap | undefined,
    attributes: DraggableAttributes,
-   setNodeRef: (element: HTMLElement | null) => void
+   setNodeRef: (element: HTMLElement | null) => void,
+   rotation?: number
 }
 
 export interface IRank {
@@ -83,6 +84,7 @@ export interface IUser {
    id: string;
    name: string;
    avatar: string;
+   photoURL?: string;
 }
 
 export interface IUserToken {

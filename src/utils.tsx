@@ -233,7 +233,9 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          style={{
             transform: draggableData?.transform
                ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`
-               : undefined,
+               : draggableData?.rotation !== undefined 
+                 ? `rotate(${draggableData.rotation}deg)` 
+                 : undefined,
          }}
       >
          {/* Верхний левый угол */}

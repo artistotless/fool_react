@@ -22,6 +22,21 @@ const PlayerCards = (props: PlayerCardsProps) => {
    else if (length >= 3) gap = 90;
    else if (length >= 2) gap = 40;
 
+   // Функция для расчета угла наклона карты
+   const calculateRotation = (index: number, totalCards: number) => {
+      // Общий угол веера (уменьшим для небольшого количества карт)
+      const totalAngle = Math.min(40, totalCards * 2.5);
+      
+      // Вычисляем угол от -totalAngle/2 до +totalAngle/2
+      const startAngle = -totalAngle / 2;
+      
+      // Равномерное распределение углов между всеми картами
+      let step = totalCards > 1 ? totalAngle / (totalCards - 1) : 0;
+      
+      // Результирующий угол для данной карты
+      return startAngle + index * step;
+   };
+
    return (
       <div className={styles.cards_wrapper}>
          <div
@@ -38,8 +53,10 @@ const PlayerCards = (props: PlayerCardsProps) => {
                   index={index}
                   elementId={`playercard-${index}`}
                   draggable={props.isDraggingEnabled}
+                  rotation={calculateRotation(index, cards.length)}
                   {...card}
                   key={index}
+                  // style={{ transform: `rotate(${calculateRotation(index, cards.length)}deg)` }}
                />
             ))}
          </div>
