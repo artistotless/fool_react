@@ -3,13 +3,7 @@
    z-index: 20;
    left: 0;
    width: 100%;
-   bottom: -8lvh;
-
-   @media(max-height:400px) {
-      transform: scale(0.7);
-      transform-origin: bottom center;
-      bottom: 11lvh;
-   }
+   bottom: -10px;
 }
 
 .root {

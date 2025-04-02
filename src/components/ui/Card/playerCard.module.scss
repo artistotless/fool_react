@@ -1,5 +1,11 @@
 .card {
-  width: 122px;
+  --card-width: 122px;  // базовый размер карты
+  --card-font-size: 20px;  // базовый размер шрифта
+  --suit-small-size: 0.9rem;  // базовый размер для маленьких мастей
+  --suit-regular-size: 1.52rem;  // базовый размер для обычных мастей
+  --suit-corner-size: 1.7rem;  // базовый размер для мастей в углах высоких карт
+  
+  width: var(--card-width);
   height: 100%;
   aspect-ratio: 0.7166676282;
   touch-action: none;
@@ -13,6 +19,7 @@
   border-bottom-width: 3px;
   border-radius: 10px;
   box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
+  position: relative;
 
   &.red {
     color: red;
@@ -24,6 +31,10 @@
     font-optical-sizing: auto;
     font-weight: 400;
     font-style: normal;
+  }
+
+  .suit_regular {
+    font-size: var(--suit-regular-size);
   }
 
   &.draggable {
@@ -68,12 +79,11 @@
 
   .rank {
     font-family: Arial, sans-serif;
-    font-size: 20px;
-
+    font-size: var(--card-font-size);
   }
 
   .suit_small {
-    font-size: 0.9rem;
+    font-size: var(--suit-small-size);
     margin-top: -9px;
   }
 
@@ -95,8 +105,7 @@
       border: none;
       outline: none;
       font-family: inherit;
-      // font-size: clamp(1.7rem, 3.131vh, 3rem);
-      font-size: 1.7rem;
+      font-size: var(--suit-corner-size);
       font-family: "Noto Sans SC", serif;
       font-optical-sizing: auto;
       font-weight: 400;
@@ -140,7 +149,7 @@
       align-items: center;
 
       .suit_regular {
-        font-size: 1.52rem;
+        font-size: var(--suit-regular-size);
         line-height: 1;
 
         &.mt_42 {
@@ -160,5 +169,128 @@
         }
       }
     }
+  }
+
+  /* Адаптивный дизайн для разных размеров экранов */
+  
+  /* Планшеты */
+  @media (max-width: 768px) {
+    --card-width: 100px;
+    --card-font-size: 16px;
+    --suit-small-size: 0.8rem;
+    --suit-regular-size: 1.3rem;
+    --suit-corner-size: 1.4rem;
+    
+    border-radius: 8px;
+    border-bottom-width: 2px;
+    
+    .card_top_left, .card_bottom_right {
+      margin-top: 3px;
+      margin-bottom: 3px;
+    }
+    
+    .card_suits_container .card_suits .suit_regular {
+      &:first-child {
+        margin-top: 10px;
+      }
+      
+      &:last-child {
+        margin-bottom: 10px;
+      }
+      
+      &.mt_42 {
+        margin-top: -30px !important;
+      }
+    }
+  }
+  
+  /* Мобильные устройства */
+  @media (max-width: 500px) {
+    --card-width: 100px;
+    --card-font-size: 16px;
+    --suit-small-size: 0.8rem;
+    --suit-regular-size: 1.25rem;
+    --suit-corner-size: 1.35rem;
+    
+    border-radius: 7px;
+    box-shadow: 0 5px 12px 1px rgba(0, 0, 0, 0.15);
+    
+    .suit_small {
+      margin-top: -6px;
+    }
+    
+    .card_suits_container .card_suits .suit_regular {
+      &:first-child {
+        margin-top: 8px;
+      }
+      
+      &:last-child {
+        margin-bottom: 8px;
+      }
+      
+      &.mt_42 {
+        margin-top: -28px !important;
+      }
+    }
+    
+    .high_cards_container {
+      .suit_regular_left_top {
+        top: -2px;
+        left: 1px;
+      }
+      
+      .suit_regular_right_bottom {
+        bottom: -2px;
+        right: 1px;
+      }
+    }
+  }
+  
+  /* Низкие экраны */
+  @media (max-height: 400px) {
+    --card-width: 75px;
+    --card-font-size: 13px;
+    --suit-small-size: 0.65rem;
+    --suit-regular-size: 1rem;
+    --suit-corner-size: 1.1rem;
+  }
+  
+  /* Очень маленькие экраны */
+  @media (max-width: 340px) and (max-height: 340px) {
+    --card-width: 60px;
+    --card-font-size: 10px;
+    --suit-small-size: 0.5rem;
+    --suit-regular-size: 0.8rem;
+    --suit-corner-size: 0.9rem;
+    
+    border-bottom-width: 1px;
+    box-shadow: 0 3px 6px 1px rgba(0, 0, 0, 0.15);
+    
+    .card_suits_container .card_suits .suit_regular {
+      &:first-child {
+        margin-top: 3px;
+      }
+      
+      &:last-child {
+        margin-bottom: 3px;
+      }
+      
+      &.mt_42 {
+        margin-top: -15px !important;
+      }
+    }
+  }
+}
+
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.6;
   }
 }
