@@ -52,7 +52,7 @@ export const testMode = (): {
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;
