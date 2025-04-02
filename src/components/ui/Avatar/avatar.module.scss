@@ -2,68 +2,102 @@
    display: flex;
    flex-direction: column;
    align-items: center;
-   justify-content: center;
-   font-size: 12px;
+   gap: 5px;
    position: relative;
+}
 
-   .avatar {
-      width: 60px;
-      aspect-ratio: 1;
-      border-radius: 100%;
-      overflow: hidden;
-      border: 4px solid transparent;
-      position: relative;
-      transition: all 0.3s ease;
-
-      &[style*="borderColor: #f44336"] {
-         animation: pulse-border 1.5s infinite;
-      }
-
-      .image {
-         width: 100%;
-         height: 100%;
-         position: absolute;
-         object-fit: cover;
-      }
-   }
-
-   .name {
-      margin-top: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
-   }
-
-   .passed_badge {
+.avatar {
+   width: 50px;
+   height: 50px;
+   border-radius: 15px;
+   overflow: hidden;
+   position: relative;
+   border: 2px solid transparent;
+   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   background: rgba(0, 0, 0, 0.2);
+   
+   &::before {
+      content: '';
       position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 10;
+      inset: 0;
+      background: linear-gradient(45deg, 
+         rgba(255, 255, 255, 0.1),
+         rgba(255, 255, 255, 0.05)
+      );
+      z-index: 1;
    }
 
-   .progress {
-      z-index: 1;
+   &:hover {
+      transform: scale(1.05);
+      box-shadow: 
+         0 0 15px rgba(255, 255, 255, 0.2),
+         0 0 30px rgba(255, 255, 255, 0.1);
    }
 }
 
-@keyframes pulse-border {
-   0% {
-      border-color: #f44336;
-      box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+.image {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   transition: transform 0.3s ease;
+
+   &:hover {
+      transform: scale(1.1);
    }
-   70% {
-      border-color: #f44336;
-      box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+}
+
+.name {
+   font-size: 14px;
+   color: #ffffff;
+   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+   font-weight: 500;
+   transition: all 0.3s ease;
+   text-align: center;
+   max-width: 100px;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+
+   &:hover {
+      transform: scale(1.05);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
    }
-   100% {
-      border-color: #f44336;
-      box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+}
+
+.progress {
+   position: absolute;
+   inset: -3px;
+   border-radius: 17px;
+   border: 3px solid transparent;
+   transition: all 0.3s ease;
+}
+
+.passed_badge {
+   position: absolute;
+   bottom: -25px;
+   left: 50%;
+   transform: translateX(-50%);
+   background: rgba(0, 0, 0, 0.6);
+   color: white;
+   padding: 3px 10px;
+   border-radius: 12px;
+   font-size: 12px;
+   font-weight: 500;
+   white-space: nowrap;
+   backdrop-filter: blur(4px);
+   box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 0 8px rgba(0, 0, 0, 0.1);
+   z-index: 10;
+   
+   &::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 6px solid rgba(0, 0, 0, 0.6);
    }
 }

@@ -31,6 +31,10 @@
             transition: transform 0.2s ease-out !important;
          }
       }
+      
+      @media (max-width: 480px) {
+         animation: card-slide 0.2s ease-out;
+      }
    }
 }
 

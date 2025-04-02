@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import styles from "./avatar.module.scss";
 import { useGame } from "src/contexts/GameContext";
 import { useAudio } from "src/contexts/AudioContext";
@@ -16,6 +16,12 @@ interface AvatarProps {
 const Avatar = ({ src, name, playerId }: AvatarProps) => {
    const { state, passData } = useGame();
    const { play } = useAudio();
+   const [imageSrc, setImageSrc] = useState<string>(src);
+   
+   // Обновляем источник изображения при изменении props
+   useEffect(() => {
+      setImageSrc(src);
+   }, [src]);
    
    // Проигрываем звук только для "Беру" и "Пасс"
    useEffect(() => {
@@ -45,6 +51,12 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
       return "transparent"; // Прозрачный для неактивных игроков
    }, [state.defenderId, state.attackerId, playerId]);
 
+   // Обработчик ошибки загрузки изображения
+   const handleImageError = () => {
+      const seed = playerId || name || Math.random().toString(36).substring(2, 8);
+      setImageSrc(`https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`);
+   };
+
    // Тестовые значения для проверки таймера
    const TEST_MODE = false;
    const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
@@ -53,7 +65,14 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
    return (
       <div className={styles.avatar_container}>
          <div className={styles.avatar} style={{ 'borderColor': borderColor }}>
-            {src && <img src={src} className={styles.image} />}
+            {imageSrc && (
+               <img 
+                  src={imageSrc} 
+                  className={styles.image} 
+                  alt={name}
+                  onError={handleImageError}
+               />
+            )}
             {isActivePlayer && (TEST_MODE || (state.moveTime && state.movedAt)) && (
                <ProgressTimer 
                   moveTime={TEST_MODE ? testMoveTime : (state.moveTime ?? "00:00:30")} 

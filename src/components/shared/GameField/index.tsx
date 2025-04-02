@@ -7,6 +7,7 @@ import { IFoolPlayer } from "src/types";
 import { useUser } from "src/contexts/UserContext";
 import userImg from "src/assets/img/user.svg";
 import PassButton from "src/components/ui/PassButton";
+import TopPanel from "../TopPanel";
 
 const GameField = () => {
    const { state, personalState } = useGame();
@@ -14,16 +15,7 @@ const GameField = () => {
    
    return (
       <div className={styles.field}>
-         <div className={styles.players}>
-            {state.players.map((value: IFoolPlayer, index) => (
-               <Player 
-                  {...value} 
-                  key={index} 
-                  avatar={value.avatar ?? userImg}
-                  name={value.id === user.id ? "Вы" : value.name}
-               />
-            ))}
-         </div>
+         <TopPanel />
          <Table />
          <PlayerCards cards={personalState.cardsInHand} />
          <PassButton />
