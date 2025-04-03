@@ -237,7 +237,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
             transform: draggableData?.transform
                ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`
                : draggableData?.rotation !== undefined 
-                 ? `rotate(${draggableData.rotation}deg)` 
+                 ? `rotate(${draggableData.rotation}deg) ${draggableData.bottomOffset ? `translateY(${draggableData.bottomOffset}px)` : ''}` 
                  : undefined,
          }}
       >

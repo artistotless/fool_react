@@ -53,7 +53,8 @@ export interface IDraggableData {
    listeners: SyntheticListenerMap | undefined,
    attributes: DraggableAttributes,
    setNodeRef: (element: HTMLElement | null) => void,
-   rotation?: number
+   rotation?: number,
+   bottomOffset?: number
 }
 
 export interface IRank {

@@ -10,7 +10,7 @@ import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
 import { clearTableAnimated, Sounds } from "src/utils";
 
 const Test = () => {
-   const { clearTable, slots, addCardToSlot, pass } = useGame();
+   const { clearTable, slots, addCardToSlot, pass, addCardToHand } = useGame();
    // const animate = useAnimateElement();
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
@@ -32,7 +32,7 @@ const Test = () => {
             gap: "5px",
          }}
       >
-         {/* <button
+         <button
             onClick={() => {
                if (elementRef.current) {
                   elementRef.current.style.display = elementRef.current.style.display == 'none' ? 'flex' : 'none';
@@ -40,7 +40,7 @@ const Test = () => {
             }}
          >
             Спрятать
-         </button> */}
+         </button>
          <button
             onClick={() => {
                clearTableAnimated(tableCardsRef,
@@ -82,21 +82,19 @@ const Test = () => {
          >
             Анимация карты из колоды
          </button> */}
-         {/* <button
+         <button
             onClick={() => {
-
                let randomSuit = Math.floor(Math.random() * 4)
                let randomRank = Math.floor(Math.random() * 13)
 
                addCardToHand({
                   suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
                   rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
-                  id: Math.floor(Math.random() * 1000),
                });
             }}
          >
             Карта в руку
-         </button> */}
+         </button>
 
          <button
             onClick={() => {

@@ -11,6 +11,7 @@ interface CardProps extends ICard {
    elementId?: string;
    index: number;
    rotation?: number;
+   bottomOffset?: number;
 }
 
 const DraggableCard = forwardRef(
@@ -22,6 +23,7 @@ const DraggableCard = forwardRef(
          draggable = true,
          index,
          rotation,
+         bottomOffset = 0,
       }: CardProps,
       ref
    ) => {
@@ -41,9 +43,10 @@ const DraggableCard = forwardRef(
          setNodeRef,
          isDraggable: draggable,
          rotation,
+         bottomOffset,
       };
 
-      return createCardElement(rank, suit, ref,false, draggableData)
+      return createCardElement(rank, suit, ref, false, draggableData)
    }
 );
 
