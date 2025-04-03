@@ -84,13 +84,15 @@ const Test = () => {
          </button> */}
          <button
             onClick={() => {
-               let randomSuit = Math.floor(Math.random() * 4)
-               let randomRank = Math.floor(Math.random() * 13)
 
-               addCardToHand({
-                  suit: { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] },
-                  rank: { name: Object.values(Ranks)[randomRank], value: Object.values(RankValues)[randomRank] as number, shortName: Object.values(Ranks)[randomRank] },
-               });
+               let randomSuit = Math.floor(Math.random() * 4)
+               let randomRank = Math.floor(Math.random() * 9)
+
+               const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
+               const suit = { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] };
+               const rank = { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] };
+
+               addCardToHand({ suit, rank});
             }}
          >
             Карта в руку
