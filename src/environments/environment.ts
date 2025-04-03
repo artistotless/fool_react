@@ -47,12 +47,12 @@ export const testMode = (): {
 
     return {
         useTestCards: testModeEnabled,
-        testButtons:  testModeEnabled,
+        testButtons:  true,
         testCards: cards
     };
 }
 
-const testModeEnabled = true;
+const testModeEnabled = false;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

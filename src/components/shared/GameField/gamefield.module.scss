@@ -6,7 +6,8 @@
    justify-content: space-between;
    align-items: center;
    flex-direction: column;
-   background: #10412f;
+   // background: #10412f;
+   background: #102f41;
    box-shadow: inset 6px 12px 112px 6px rgba(0, 0, 0, 0.3);
    padding-top: 10px;
    padding-bottom: 10px;
@@ -78,7 +79,7 @@
       min-width: 0;
       flex: 0 0 auto;
       width: auto;
-      margin-right: 15px;
+      margin-right: 8px;
    }
    
    .center_section {
@@ -171,6 +172,7 @@
       }
       
       .trump_overlay {
+         --trump-suit-size: 14px;
          position: absolute;
          bottom: -5px;
          right: -5px;
@@ -201,6 +203,7 @@
          }
          
          @media (max-width: 480px) {
+            --trump-suit-size: 11px;
             width: 18px;
             height: 18px;
             bottom: -3px;
@@ -208,8 +211,12 @@
          }
          
          .trump_suit {
-            font-size: 18px;
+            font-size: var(--trump-suit-size);
             color: #ff3b30;
+            font-family: "Noto Sans SC", serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
          }
       }
       
@@ -420,10 +427,14 @@
    @media (max-width: 400px) {
       min-width: 60px;
       padding: 3px 6px;
-      
+
       .player_info {
          .name {
-            display: none;
+            max-width: 50px;
+            font-size: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
          }
          
          .cards_count {
@@ -466,7 +477,7 @@
    }
    
    &.active {
-      animation: subtle-pulse 2s infinite ease-in-out;
+      
    }
    
    .avatar_mini {
@@ -504,6 +515,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      max-width: 90px;
    }
    
    .cards_count {
@@ -530,17 +542,5 @@
    }
    100% {
       width: 0%;
-   }
-}
-
-@keyframes subtle-pulse {
-   0% {
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-   }
-   50% {
-      box-shadow: 0 3px 12px rgba(56, 189, 248, 0.3);
-   }
-   100% {
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
    }
 }

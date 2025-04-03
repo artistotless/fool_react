@@ -114,14 +114,14 @@ const TopPanel = () => {
                <div className={styles.deck_count}>{deckCount}</div>
             </div>
             
-            <div className={styles.action_buttons}>
-               {/* <button className={styles.action_button} onClick={pass}>
+            {/* <div className={styles.action_buttons}>
+               <button className={styles.action_button} onClick={pass}>
                   Пасс
-               </button> */}
-               {/* <button className={`${styles.action_button} ${styles.take}`}>
+               </button>
+               <button className={`${styles.action_button} ${styles.take}`}>
                   Взять
-               </button> */}
-            </div>
+               </button>
+            </div> */}
          </div>
          
          <div className={styles.center_section}>
