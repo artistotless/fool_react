@@ -52,11 +52,11 @@ export const testMode = (): {
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;
-export const gsEndpoint = null;
-export const cardServerUrl = '../src/assets';
-// export const gsEndpoint = 'http://85.173.114.118:52001';
-// export const cardServerUrl = 'http://85.173.114.118:5500/durak_cards';
+// export const gsEndpoint = null;
+// export const cardServerUrl = '../src/assets';
+export const gsEndpoint = 'http://85.173.114.118:52001';
+export const cardServerUrl = 'http://85.173.114.118:5500/durak_cards';

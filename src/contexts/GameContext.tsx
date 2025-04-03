@@ -154,27 +154,71 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (pendingActions.current.length > 0) {
          // Создаем новый массив для действий, которые не были подтверждены
          const unconfirmedActions: typeof pendingActions.current = [];
+         // Создаем массив для карт, которые нужно переместить в другой слот
+         const cardsToMove: {card: ICard, fromSlotId?: number, toSlotId: number}[] = [];
          
          pendingActions.current.forEach(action => {
             // Проверяем, есть ли карта в новом состоянии игры на столе
-            const isCardOnTable = newState.tableCards.some(tc => {
+            let isCardOnTable = false;
+            let correctSlotId: number | undefined = undefined;
+            
+            newState.tableCards.forEach(tc => {
                if (action.type === 'attack') {
                   // Проверяем, есть ли атакующая карта на столе
-                  return tc.card.rank.name === action.card.rank.name && 
-                         tc.card.suit.name === action.card.suit.name;
+                  if (tc.card.rank.name === action.card.rank.name && 
+                      tc.card.suit.name === action.card.suit.name) {
+                      isCardOnTable = true;
+                      correctSlotId = tc.slotIndex;
+                  }
                } else if (action.type === 'defend' && action.slotId !== undefined) {
                   // Проверяем, есть ли защищающая карта на столе
-                  return tc.slotIndex === action.slotId && 
-                         tc.defendingCard && 
-                         tc.defendingCard.rank.name === action.card.rank.name && 
-                         tc.defendingCard.suit.name === action.card.suit.name;
+                  if (tc.defendingCard && 
+                      tc.defendingCard.rank.name === action.card.rank.name && 
+                      tc.defendingCard.suit.name === action.card.suit.name) {
+                      isCardOnTable = true;
+                      correctSlotId = tc.slotIndex;
+                  }
                }
-               return false;
             });
             
             // Если карты нет на столе, добавляем в список для возврата в руку
             if (!isCardOnTable) {
                unconfirmedActions.push(action);
+            } 
+            // Если карта на столе, но в другом слоте, добавляем в список для перемещения
+            else if (action.type === 'attack' && correctSlotId !== undefined) {
+               // Находим текущий слот с картой
+               let currentSlotId: number | undefined = undefined;
+               
+               setSlots(prev => {
+                  const newSlots = [...prev];
+                  for (let i = 0; i < newSlots.length; i++) {
+                     const isCardInSlot = newSlots[i].cards.some(c => 
+                        c.rank.name === action.card.rank.name && 
+                        c.suit.name === action.card.suit.name
+                     );
+                     
+                     if (isCardInSlot) {
+                        currentSlotId = newSlots[i].id;
+                        break;
+                     }
+                  }
+                  return newSlots;
+               });
+               
+               if (currentSlotId !== correctSlotId) {
+                  cardsToMove.push({
+                     card: action.card,
+                     fromSlotId: currentSlotId,
+                     toSlotId: correctSlotId
+                  });
+               }
+            } else if (action.type === 'defend' && action.slotId !== undefined && correctSlotId !== undefined && action.slotId !== correctSlotId) {
+               cardsToMove.push({
+                  card: action.card,
+                  fromSlotId: action.slotId,
+                  toSlotId: correctSlotId
+               });
             }
          });
          
@@ -210,6 +254,42 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                      };
                   }));
                }
+            });
+         }
+         
+         // Перемещаем карты в правильные слоты
+         if (cardsToMove.length > 0) {
+            setSlots(prev => {
+               const newSlots = [...prev];
+               
+               cardsToMove.forEach(moveInfo => {
+                  // Удаляем карту из текущего слота
+                  if (moveInfo.fromSlotId !== undefined) {
+                     const fromSlot = newSlots.find(s => s.id === moveInfo.fromSlotId);
+                     if (fromSlot) {
+                        fromSlot.cards = fromSlot.cards.filter(c => 
+                           c.rank.name !== moveInfo.card.rank.name || 
+                           c.suit.name !== moveInfo.card.suit.name
+                        );
+                     }
+                  } else {
+                     // Если fromSlotId не указан, ищем карту во всех слотах
+                     for (let i = 0; i < newSlots.length; i++) {
+                        newSlots[i].cards = newSlots[i].cards.filter(c => 
+                           c.rank.name !== moveInfo.card.rank.name || 
+                           c.suit.name !== moveInfo.card.suit.name
+                        );
+                     }
+                  }
+                  
+                  // Добавляем карту в правильный слот
+                  const toSlot = newSlots.find(s => s.id === moveInfo.toSlotId);
+                  if (toSlot) {
+                     toSlot.cards.push(moveInfo.card);
+                  }
+               });
+               
+               return newSlots;
             });
          }
          
