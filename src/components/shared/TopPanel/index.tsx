@@ -115,9 +115,9 @@ const TopPanel = () => {
             </div>
             
             <div className={styles.action_buttons}>
-               <button className={styles.action_button} onClick={pass}>
+               {/* <button className={styles.action_button} onClick={pass}>
                   Пасс
-               </button>
+               </button> */}
                {/* <button className={`${styles.action_button} ${styles.take}`}>
                   Взять
                </button> */}

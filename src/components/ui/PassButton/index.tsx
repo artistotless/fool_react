@@ -10,21 +10,32 @@ const PassButton = () => {
    const defender = state.players.find(player => player.id == state.defenderId);
 
    let passBtnTitle = '';
+   let className = '';
 
    if (state.tableCards.length == 0)
       passBtnTitle = ''
-   else if (user.id == state.defenderId && !allBeaten)
+   else if (user.id == state.defenderId && !allBeaten){
       passBtnTitle = 'Беру'
-   else if (user.id != state.defenderId && allBeaten)
+      className = styles.take
+   }
+   else if (user.id != state.defenderId && allBeaten){
       passBtnTitle = 'Бито'
-   else if (user.id != state.defenderId && !allBeaten && defender?.passed)
+   }
+   else if (user.id != state.defenderId && !allBeaten && defender?.passed){
       passBtnTitle = 'Пасс'
+   }
 
    if (!passBtnTitle) return null;
 
    return (
       <div className={styles.pass_button}>
-         <button onClick={() => pass()}>{passBtnTitle}</button>
+         <button className={`${styles.action_button} ${className}`} onClick={() => pass()}>{passBtnTitle}</button>
+                        {/* <button className={styles.action_button} onClick={pass}>
+                  Пасс
+               </button> */}
+               {/* <button className={`${styles.action_button} ${styles.take}`}>
+                  Взять
+               </button> */}
       </div>
    );
 };

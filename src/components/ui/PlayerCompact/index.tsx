@@ -44,6 +44,7 @@ const PlayerCompact = ({
    return (
       <div 
          className={`${styles.player_compact} ${isCurrentUser ? styles.current : ''} ${isActive ? styles.active : ''}`}
+         id={`player-${id}`}
       >
          <div className={styles.avatar_mini}>
             <img src={avatarSrc} alt={name} onError={() => {

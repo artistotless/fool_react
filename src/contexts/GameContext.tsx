@@ -15,6 +15,7 @@ import {
    useCallback,
    useEffect,
    useMemo,
+   useRef,
 } from "react";
 import { testMode } from "src/environments/environment";
 import { useAudio } from "./AudioContext";
@@ -37,6 +38,9 @@ interface GameContext {
    clearTable: () => void;
    passData: { playerId: string, defenderId: string, allCardsBeaten: boolean } | null;
 }
+
+// Максимальное количество карт на столе (как на бэкенде)
+const MAX_TABLE_CARDS = 6;
 
 const getInitialValue = () => ({
    slots: Array(6)
@@ -104,18 +108,34 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const { user } = useUser();
    const animate = useAnimateElement();
    const [passData, setPassData] = useState<{ playerId: string, defenderId: string, allCardsBeaten: boolean } | null>(null);
+   // Используем ref для хранения очереди действий, ожидающих подтверждения
+   const pendingActions = useRef<{ type: 'attack' | 'defend', cardIndex: number, slotId?: number, card: ICard }[]>([]);
+   // Состояние для отслеживания игроков, которые пасовали
+   const [passedPlayers, setPassedPlayers] = useState<string[]>([]);
 
    useEffect(() => {
       if (data && isConnected) {
          if (data.updateType === GameUpdateTypes.GameState) {
             handleGameState(data.state);
-            setGameState(data.state)
+            setGameState(data.state);
+            
+            // Обновляем список пасовавших игроков
+            const passedPlayers = data.state.players
+               .filter((player: IFoolPlayer) => player.passed)
+               .map((player: IFoolPlayer) => player.id);
+            setPassedPlayers(passedPlayers);
+            
+            // Проверка подтверждений для действий
+            validatePendingActions(data.state);
          }
          else if (data.updateType === GameUpdateTypes.PersonalState) {
             setPersonalState(data.state)
          }
          else if (data.updateType === GameUpdateTypes.PassedState) {
-            handlePassed(data.state)
+            handlePassed(data.state);
+            
+            // Добавляем игрока в список пасовавших
+            setPassedPlayers(prev => [...prev, data.state.playerId]);
          }
          else if (data.winners) {
             handleWinners(data.winners)
@@ -127,6 +147,76 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (isConnected)
          sendData("GetUpdate");
    }, [isConnected]);
+   
+   // Функция для проверки подтверждения действий
+   const validatePendingActions = (newState: IGameState) => {
+      // Если есть ожидающие действия
+      if (pendingActions.current.length > 0) {
+         // Создаем новый массив для действий, которые не были подтверждены
+         const unconfirmedActions: typeof pendingActions.current = [];
+         
+         pendingActions.current.forEach(action => {
+            // Проверяем, есть ли карта в новом состоянии игры на столе
+            const isCardOnTable = newState.tableCards.some(tc => {
+               if (action.type === 'attack') {
+                  // Проверяем, есть ли атакующая карта на столе
+                  return tc.card.rank.name === action.card.rank.name && 
+                         tc.card.suit.name === action.card.suit.name;
+               } else if (action.type === 'defend' && action.slotId !== undefined) {
+                  // Проверяем, есть ли защищающая карта на столе
+                  return tc.slotIndex === action.slotId && 
+                         tc.defendingCard && 
+                         tc.defendingCard.rank.name === action.card.rank.name && 
+                         tc.defendingCard.suit.name === action.card.suit.name;
+               }
+               return false;
+            });
+            
+            // Если карты нет на столе, добавляем в список для возврата в руку
+            if (!isCardOnTable) {
+               unconfirmedActions.push(action);
+            }
+         });
+         
+         // Возвращаем неподтвержденные карты в руку
+         if (unconfirmedActions.length > 0) {
+            unconfirmedActions.forEach(action => {
+               // Добавляем карту обратно в руку
+               addCardToHand(action.card);
+               
+               // Удаляем карту из слота, если она была добавлена туда
+               if (action.type === 'defend' && action.slotId !== undefined) {
+                  setSlots(prev => prev.map(slot => {
+                     if (slot.id === action.slotId) {
+                        return { 
+                           ...slot, 
+                           cards: slot.cards.filter(c => 
+                              c.rank.name !== action.card.rank.name || 
+                              c.suit.name !== action.card.suit.name
+                           ) 
+                        };
+                     }
+                     return slot;
+                  }));
+               } else if (action.type === 'attack') {
+                  // Находим слот, в который была добавлена атакующая карта
+                  setSlots(prev => prev.map(slot => {
+                     return { 
+                        ...slot, 
+                        cards: slot.cards.filter(c => 
+                           c.rank.name !== action.card.rank.name || 
+                           c.suit.name !== action.card.suit.name
+                        ) 
+                     };
+                  }));
+               }
+            });
+         }
+         
+         // Очищаем очередь ожидающих действий
+         pendingActions.current = [];
+      }
+   };
 
    const handleGameState = (newState: IGameState): void => {
       const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
@@ -174,6 +264,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             tableCardsRef.current = {};
          });
       }
+
+      // Закомментировано, так как карты теперь добавляются оптимистично
+      /*
       // Player puts a card on the table
       else {
          newState.tableCards.forEach(tc => {
@@ -188,6 +281,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             }
          });
       }
+      */
 
       setLeftCardsCount(newLeftCardsCount);
    };
@@ -261,25 +355,194 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          await sendData("Pass");
    }, [isConnected]);  // Мемоизация с зависимостью от connection
 
+   // Получение всех рангов карт на столе
+   const getTableCardRanks = useCallback(() => {
+      const ranks = new Set<string>();
+      
+      slots.forEach(slot => {
+         slot.cards.forEach(card => {
+            ranks.add(card.rank.name);
+         });
+      });
+      
+      return Array.from(ranks);
+   }, [slots]);
+
+   // Проверка возможности атаки
+   const canAttack = useCallback((card: ICard) => {
+      // Если на столе максимальное количество карт
+      const tableCardCount = slots.reduce((count, slot) => count + (slot.cards.length > 0 ? 1 : 0), 0);
+      if (tableCardCount >= MAX_TABLE_CARDS) {
+         console.log("Стол полон, атака невозможна");
+         return false;
+      }
+      
+      // Если игрок защищающийся
+      if (state.defenderId === user.id) {
+         console.log("Вы не можете атаковать, так как защищаетесь");
+         return false;
+      }
+      
+      // Если игрок уже пасовал
+      if (passedPlayers.includes(user.id)) {
+         console.log("Вы уже пасовали, атака невозможна");
+         return false;
+      }
+      
+      // Если на столе есть карты
+      if (tableCardCount > 0) {
+         // Если игрок не атакующий и атакующий не пасовал
+         if (state.attackerId !== user.id && !passedPlayers.includes(state.attackerId!)) {
+            console.log("Вы не можете атаковать, атакующий игрок еще не пасовал");
+            return false;
+         }
+         
+         // Проверка ранга карты - должен соответствовать рангам карт на столе
+         const tableRanks = getTableCardRanks();
+         if (!tableRanks.includes(card.rank.name)) {
+            console.log("Карта должна иметь такой же ранг, как карты на столе");
+            return false;
+         }
+      } else {
+         // Если на столе нет карт, и игрок не является атакующим
+         if (state.attackerId !== user.id) {
+            console.log("Вы не можете атаковать первым, так как не являетесь атакующим");
+            return false;
+         }
+      }
+      
+      return true;
+   }, [state, slots, user.id, passedPlayers, getTableCardRanks]);
+
+   // Проверка возможности защиты
+   const canDefend = useCallback((defendingCard: ICard, slotId: number) => {
+      // Если игрок не является защищающимся
+      if (state.defenderId !== user.id) {
+         console.log("Вы не можете защищаться, так как не являетесь защищающимся");
+         return false;
+      }
+      
+      // Проверка слота
+      const slot = slots.find(s => s.id === slotId);
+      if (!slot) {
+         console.log("Неверный индекс слота");
+         return false;
+      }
+      
+      // Проверка, что в слоте есть атакующая карта и нет защищающей
+      if (slot.cards.length !== 1) {
+         console.log("В слоте должна быть только атакующая карта");
+         return false;
+      }
+      
+      const attackingCard = slot.cards[0];
+      
+      // Проверка валидности защиты (по правилам игры "Дурак")
+      // 1. Если карты одной масти, то защищающая должна быть старше
+      if (attackingCard.suit.name === defendingCard.suit.name) {
+         if (defendingCard.rank.value <= attackingCard.rank.value) {
+            console.log("Защищающая карта должна быть старше атакующей карты той же масти");
+            return false;
+         }
+      } 
+      // 2. Если масти разные, то защищающая карта должна быть козырем
+      else if (state.trumpCard && defendingCard.suit.name !== state.trumpCard.suit.name) {
+         console.log("Если масти разные, то защищающая карта должна быть козырем");
+         return false;
+      }
+      
+      return true;
+   }, [state, slots, user.id]);
+
    const onDroppedToDropZone = (card: ICard, cardIndex: number) => {
       if (state.defenderId === user.id)
          return;
-      attack(cardIndex)
+      
+      // Проверяем возможность атаки
+      if (!canAttack(card)) {
+         console.log("Атака невозможна по правилам игры");
+         return;
+      }
+         
+      // Оптимистично удаляем карту из руки
+      removeCardFromHand(cardIndex);
+      
+      // Оптимистично добавляем карту на стол
+      const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
+      if (availableSlot !== -1) {
+         addCardToSlot(card, availableSlot);
+         
+         // Добавляем действие в список ожидающих подтверждения
+         pendingActions.current.push({
+            type: 'attack',
+            cardIndex,
+            card,
+            slotId: availableSlot
+         });
+      }
+      
+      // Отправляем действие на сервер
+      attack(cardIndex);
+      
       console.log(
-         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута в зоне и попала на слот 0`
+         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута в зоне и попала на слот ${availableSlot}`
       );
    };
 
    const onDroppedToTableSlot = (card: ICard, cardIndex: number, slotId: number) => {
+      if (state.defenderId === user.id) {
+         // Если игрок защищается
+         // Проверяем возможность защиты данной картой
+         if (!canDefend(card, slotId)) {
+            console.log("Защита невозможна по правилам игры");
+            return;
+         }
+         
+         // Оптимистично удаляем карту из руки
+         removeCardFromHand(cardIndex);
+         
+         // Оптимистично добавляем карту в слот
+         addCardToSlot(card, slotId);
+         
+         // Добавляем действие в список ожидающих подтверждения
+         pendingActions.current.push({
+            type: 'defend',
+            cardIndex,
+            slotId,
+            card
+         });
+         
+         // Отправляем действие на сервер
+         defend(cardIndex, slotId);
+      } else {
+         // Если игрок атакует
+         // Проверяем возможность атаки
+         if (!canAttack(card)) {
+            console.log("Атака невозможна по правилам игры");
+            return;
+         }
+         
+         // Оптимистично удаляем карту из руки
+         removeCardFromHand(cardIndex);
+         
+         // Оптимистично добавляем карту в слот
+         addCardToSlot(card, slotId);
+         
+         // Добавляем действие в список ожидающих подтверждения
+         pendingActions.current.push({
+            type: 'attack',
+            cardIndex,
+            slotId,
+            card
+         });
+         
+         // Отправляем действие на сервер
+         attack(cardIndex);
+      }
+      
       console.log(
          `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута на слот ${slotId}`
       );
-
-      if (state.defenderId === user.id) {
-         defend(cardIndex, slotId);
-      } else {
-         attack(cardIndex);
-      }
    };
 
    const handleDragEnd = (event: DragEndEvent) => {

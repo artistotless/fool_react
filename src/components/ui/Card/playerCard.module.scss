@@ -84,7 +84,7 @@
 
   .suit_small {
     font-size: var(--suit-small-size);
-    margin-top: -9px;
+    margin-top: -6px;
   }
 
   // Bottom-right corner
@@ -113,12 +113,12 @@
     }
 
     .suit_regular_left_top {
-      top: -3px;
+      top: -6px;
       left: 2px;
     }
 
     .suit_regular_right_bottom {
-      bottom: -3px;
+      bottom: -6px;
       right: 2px;
     }
 
@@ -221,7 +221,7 @@
     
     .card_suits_container .card_suits .suit_regular {
       &:first-child {
-        margin-top: 8px;
+        margin-top: 10px;
       }
       
       &:last-child {
@@ -235,12 +235,12 @@
     
     .high_cards_container {
       .suit_regular_left_top {
-        top: -2px;
+        top: -4px;
         left: 1px;
       }
       
       .suit_regular_right_bottom {
-        bottom: -2px;
+        bottom: -4px;
         right: 1px;
       }
     }
