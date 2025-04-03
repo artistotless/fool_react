@@ -26,6 +26,11 @@
       animation: card-slide 0.3s ease-out;
       transform-origin: bottom center;
       transition: transform 0.2s;
+      
+      /* Базовый стиль для всех устройств - плавное возвращение карты */
+      &:not(:active) {
+         transition: transform 0.3s ease-out !important;
+      }
 
       @media (hover: hover) and (pointer: fine) {
          &:not(:active) {
@@ -33,20 +38,15 @@
          }
       }
       
+      /* Специфичные стили для тач-устройств */
+      @media (hover: none) and (pointer: coarse) {
+         &:not(:active) {
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+         }
+      }
+      
       @media (max-width: 480px) {
          animation: card-slide 0.2s ease-out;
       }
-   }
-}
-
-@keyframes card-slide {
-   0% {
-      transform: translateY(100px);
-      opacity: 0.2;
-   }
-
-   100% {
-      transform: translateY(0);
-      opacity: 1;
    }
 }
