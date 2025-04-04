@@ -1,5 +1,5 @@
 import { GameStatus, GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo, IFoolPlayer } from "src/types";
-import { clearTableAnimated, Sounds } from "src/utils";
+import { animateCardToSlot, clearTableAnimated, Sounds } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import useAnimateElement, {
@@ -150,6 +150,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
    // Функция для проверки подтверждения действий
    const validatePendingActions = (newState: IGameState) => {
+      const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
+      setIsReloaded(isReloadedPage);
+
       // Если есть ожидающие действия
       if (pendingActions.current.length > 0) {
          // Создаем новый массив для действий, которые не были подтверждены
@@ -297,19 +300,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          pendingActions.current = [];
       }
       else {
-         newState.tableCards.forEach(tc => {
-            const existingSlot = slots.find(s => s.id === tc.slotIndex);
 
-            if (existingSlot?.cards.length == 0) {
-               addCardToSlot(tc.card, tc.slotIndex);
-               if (tc.defendingCard)
+         if (isReloadedPage) {
+            let newSlots = slots.map(slot => {
+               const tableCard = newState.tableCards.find(tc => tc.slotIndex === slot.id);
+               return {
+                  ...slot,
+                  cards: tableCard ? [tableCard.card, ...(tableCard.defendingCard ? [tableCard.defendingCard] : [])] : slot.cards
+               }
+            });
+
+            setSlots(newSlots);
+         } else {
+            newState.tableCards.forEach(tc => {
+               const existingSlot = slots.find(s => s.id === tc.slotIndex);
+
+               if (existingSlot?.cards.length == 0) {
+                  addCardToSlot(tc.card, tc.slotIndex);
+                  if (tc.defendingCard)
+                     addCardToSlot(tc.defendingCard, tc.slotIndex);
+               }
+
+               else if (existingSlot?.cards.length == 1 && tc.defendingCard) {
                   addCardToSlot(tc.defendingCard, tc.slotIndex);
-            }
-
-            else if (existingSlot?.cards.length == 1 && tc.defendingCard) {
-               addCardToSlot(tc.defendingCard, tc.slotIndex);
-            }
-         });
+               }
+            });
+         }
       }
    };
 
@@ -318,22 +334,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
       const newLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
       const { tableCardsRef } = animationService;
-
-      const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
-      setIsReloaded(isReloadedPage);
-
-
-      // if (isReloadedPage) {
-      //    let newSlots = slots.map(slot => {
-      //       const tableCard = newState.tableCards.find(tc => tc.slotIndex === slot.id);
-      //       return {
-      //          ...slot,
-      //          cards: tableCard ? [tableCard.card, ...(tableCard.defendingCard ? [tableCard.defendingCard] : [])] : slot.cards
-      //       }
-      //    });
-
-      //    setSlots(newSlots);
-      // }
 
       // If the round ends with the defender beaten all cards
       if ((newLeftCardsCount > leftCardsCount)) {
@@ -531,40 +531,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return true;
    }, [state, slots, user.id]);
 
-   const onDroppedToDropZone = (card: ICard, cardIndex: number) => {
-      if (state.defenderId === user.id)
-         return;
 
-      // Проверяем возможность атаки
-      if (!canAttack(card)) {
-         console.log("Атака невозможна по правилам игры");
-         return;
-      }
-
-      // Оптимистично удаляем карту из руки
-      removeCardFromHand(cardIndex);
-
-      // Оптимистично добавляем карту на стол
-      const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
-      if (availableSlot !== -1) {
-         addCardToSlot(card, availableSlot);
-
-         // Добавляем действие в список ожидающих подтверждения
-         pendingActions.current.push({
-            type: 'attack',
-            cardIndex,
-            card,
-            slotId: availableSlot
-         });
-      }
-
-      // Отправляем действие на сервер
-      attack(cardIndex);
-
-      console.log(
-         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута в зоне и попала на слот ${availableSlot}`
-      );
-   };
 
    const onDroppedToTableSlot = (card: ICard, cardIndex: number, slotId: number) => {
       if (state.defenderId === user.id) {
@@ -575,50 +542,68 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             return;
          }
 
-         // Оптимистично удаляем карту из руки
+         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
+         addCardToSlot(card, slotId);
+         
+         // Удаляем карту из руки
          removeCardFromHand(cardIndex);
 
-         // Оптимистично добавляем карту в слот
-         addCardToSlot(card, slotId);
-
-         // Добавляем действие в список ожидающих подтверждения
-         pendingActions.current.push({
-            type: 'defend',
-            cardIndex,
-            slotId,
-            card
+         // Анимируем перемещение карты в слот
+         animateCardToSlot(`playercard-${cardIndex}`, `slot-${slotId}`, 300, () => {
+            // После завершения анимации удаляем оригинальную карту
+            const cardElement = document.getElementById(`playercard-${cardIndex}`);
+            if (cardElement) {
+               cardElement.remove();
+            }
+            
+            // Добавляем действие в список ожидающих подтверждения
+            pendingActions.current.push({
+               type: 'defend',
+               cardIndex,
+               slotId,
+               card
+            });
+            
+            // Отправляем действие на сервер
+            defend(cardIndex, slotId);
          });
-
-         // Отправляем действие на сервер
-         defend(cardIndex, slotId);
       } else {
          // Если игрок атакует
          // Проверяем возможность атаки
-         if (!canAttack(card)) {
+         if (!canAttack(card) && false) {
             console.log("Атака невозможна по правилам игры");
             return;
          }
-
-         // Оптимистично удаляем карту из руки
+         
+         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
+         addCardToSlot(card, slotId);
+         
+         // Удаляем карту из руки
          removeCardFromHand(cardIndex);
 
-         // Оптимистично добавляем карту в слот
-         addCardToSlot(card, slotId);
-
-         // Добавляем действие в список ожидающих подтверждения
-         pendingActions.current.push({
-            type: 'attack',
-            cardIndex,
-            slotId,
-            card
+         // Анимируем перемещение карты и затем удаляем её
+         animateCardToSlot(`playercard-${cardIndex}`, `slot-${slotId}`, 300, () => {
+            // После завершения анимации удаляем оригинальную карту
+            const cardElement = document.getElementById(`playercard-${cardIndex}`);
+            if (cardElement) {
+               cardElement.remove();
+            }
+            
+            // Добавляем действие в список ожидающих подтверждения
+            pendingActions.current.push({
+               type: 'attack',
+               cardIndex,
+               slotId,
+               card
+            });
+            
+            // Отправляем действие на сервер
+            attack(cardIndex);
          });
-
-         // Отправляем действие на сервер
-         attack(cardIndex);
       }
 
       console.log(
-         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута на слот ${slotId}`
+         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута в зоне и попала на слот ${slotId}`
       );
    };
 
@@ -626,7 +611,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const card = event.active.data.current?.card;
 
       if (String(event.over?.id).startsWith("slot")) {
-         const id = Number(String(event.over?.id).split("-")[1]);
+         const slotId = String(event.over?.id);
+         const id = Number(slotId.split("-")[1]);
+
          onDroppedToTableSlot(card as ICard, card?.index as number, id);
       }
       else if (card) {
@@ -639,9 +626,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
          // Проверяем, находится ли точка дропа выше середины зоны
          const isAfterMiddle = middleOfDropZone >= activeRect?.top;
-         if (isAfterMiddle) {
-            onDroppedToDropZone(card as ICard, card.index as number);
-         }
+         if (!isAfterMiddle)
+            return;
+
+         const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
+         if (availableSlot == -1)
+            return;
+
+         onDroppedToTableSlot(card as ICard, card.index as number, availableSlot);
       }
    };
 
@@ -667,7 +659,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    }), [slots, personalState, state, winnersIds, passData]);
 
    return (
-      <GameContext.Provider value={contextValue}      >
+      <GameContext.Provider value={contextValue}>
          <DndContext modifiers={[snapCenterToCursor]} onDragEnd={handleDragEnd}>{children}</DndContext>
       </GameContext.Provider>
    );

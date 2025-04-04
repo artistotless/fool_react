@@ -28,6 +28,7 @@ const Slot = ({ slot, playerId, defenderId, trumpCard }: SlotProps, key: number)
 
    return (
       <div
+         id={`slot-${slot.id}`}
          className={`${styles.slot} ${isDropping && isDefender && slot.cards.length < 2 && ((isSameSuit && isHigherRank) || isTrumpCard) ? styles.drop : ""}`}
          key={key}
          ref={setNodeRef}

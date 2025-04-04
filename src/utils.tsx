@@ -157,6 +157,62 @@ export const clearTableAnimated = (
    cardRefs.current = {};
 };
 
+/**
+ * animateCardToSlot function
+ * 
+ * Анимирует плавное перемещение карты в слот после её перетаскивания
+ * 
+ * @param {string} cardId - ID DOM элемента карты
+ * @param {string} slotId - ID DOM элемента слота
+ * @param {number} animationDuration - Длительность анимации в миллисекундах
+ * @param {Function} onComplete - Функция, вызываемая после завершения анимации
+ * 
+ * @returns {void}
+ */
+export const animateCardToSlot = (
+   cardId: string,
+   slotId: string,
+   animationDuration: number = 300,
+   onComplete?: () => void
+) => {
+   const cardElement = document.getElementById(cardId);
+   const slotElement = document.getElementById(slotId);
+   
+   if (!cardElement || !slotElement) {
+      console.error("Card or slot element not found");
+      onComplete && onComplete();
+      return;
+   }
+   
+   const getAbsolutePosition = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return {
+         x: rect.left + window.scrollX,
+         y: rect.top + window.scrollY,
+         width: rect.width,
+         height: rect.height,
+      };
+   };
+   
+   // Получаем координаты карты и слота
+   const cardRect = getAbsolutePosition(cardElement);
+   const slotRect = getAbsolutePosition(slotElement);
+   
+   // Вычисляем смещение для центра слота
+   const translateX = slotRect.x + slotRect.width / 2 - cardRect.x - cardRect.width / 2;
+   const translateY = slotRect.y + slotRect.height / 2 - cardRect.y - cardRect.height / 2;
+   
+   // Устанавливаем стили для анимации
+   cardElement.style.transition = `transform ${animationDuration}ms ease-out`;
+   cardElement.style.zIndex = "1000";
+   cardElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
+   
+   // По завершении анимации вызываем callback
+   setTimeout(() => {
+      onComplete && onComplete();
+   }, animationDuration);
+};
+
 export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
    try {
       // Получаем адрес сервера из localStorage
@@ -234,11 +290,12 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          }}
 
          style={{
-            transform: draggableData?.transform
+            transform: draggableData?.isDraggable ? (draggableData?.transform
                ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`
                : draggableData?.rotation !== undefined 
                  ? `rotate(${draggableData.rotation}deg) ${draggableData.bottomOffset ? `translateY(${draggableData.bottomOffset}px)` : ''}` 
-                 : undefined,
+                 : undefined)
+               : undefined,
          }}
       >
          {/* Верхний левый угол */}
