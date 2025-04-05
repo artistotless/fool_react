@@ -598,21 +598,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             return;
          }
       }
-
-      // Сначала скрываем оригинальную карту, чтобы она не появлялась в руке
-      const originalCard = document.getElementById(`playercard-${cardIndex}`);
-      if (originalCard) {
-         originalCard.style.opacity = '0';
-         originalCard.style.visibility = 'hidden';
-      }
-
+           
       // Создаем копию карты в той же позиции, где было отпущено перетаскивание
       const cardClone = createCardClone(cardIndex, dropPosition);
+
+      // Cкрываем оригинальную карту, чтобы она не появлялась в руке
+      const originalCard = document.getElementById(`playercard-${cardIndex}`);
+      if (originalCard) {
+         // originalCard.style.opacity = '0';
+         originalCard.style.visibility = 'hidden';
+         console.log('originalCard', 'hidden');
+      }
+ 
       // Добавляем клон в DOM
       document.body.appendChild(cardClone!);
+      // originalCard?.remove();
       // Удаляем карту из руки
-      removeCardFromHand(cardIndex);
-
+      
       // Анимируем перемещение карты и затем удаляем её
       animateCardToSlot(`playercard-clone-${cardIndex}`, `slot-${slotId}`, 300, () => {
          // После завершения анимации удаляем клонированную карту
@@ -620,7 +622,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          if (cardClone) {
             // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
             card.playPlaceAnim = false;
+            removeCardFromHand(cardIndex);
             addCardToSlot(card, slotId);
+
+            if (originalCard) {
+               originalCard.style.visibility = 'visible';
+            }
             cardClone.remove();
          }
 

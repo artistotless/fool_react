@@ -290,6 +290,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          }}
 
          style={{
+            visibility: 'visible',
             animation: tableCard ? (playPlaceAnim ? cardStyles.animation : 'none') : 'none',
             transform: draggableData?.isDraggable ? (draggableData?.transform
                ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`

@@ -1,16 +1,13 @@
 import styles from "./playercards.module.scss";
 import DraggableCard from "src/components/ui/Card/DraggableCard";
 import { CSSProperties, useEffect } from "react";
-import { ICard } from "src/types";
+import { useGame } from "src/contexts/GameContext";
+const PlayerCards = () => {
+   
+   const { personalState } = useGame();
+   const cards = personalState.cardsInHand;
 
-interface PlayerCardsProps {
-   isDraggingEnabled?: boolean;
-   cards: ICard[]
-}
-
-const PlayerCards = (props: PlayerCardsProps) => {
-   let gap = getAdaptiveGap(props.cards.length);
-   const cards = props.cards && props.cards.length ? props.cards : []
+   let gap = getAdaptiveGap(cards.length);
 
    // Функция для определения адаптивного gap на основе количества карт и размера экрана
    function getAdaptiveGap(length: number) {
@@ -150,7 +147,7 @@ const PlayerCards = (props: PlayerCardsProps) => {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
    }, [cards.length]);
-
+   console.log('playercards render');
    return (
       <div className={styles.cards_wrapper}>
          <div
@@ -166,7 +163,7 @@ const PlayerCards = (props: PlayerCardsProps) => {
                <DraggableCard
                   index={index}
                   elementId={`playercard-${index}`}
-                  draggable={props.isDraggingEnabled}
+                  draggable={true}
                   rotation={calculateRotation(index, cards.length)}
                   bottomOffset={calculateBottom(index, cards.length)}
                   {...card}
