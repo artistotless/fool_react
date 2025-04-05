@@ -177,13 +177,13 @@ export const animateCardToSlot = (
 ) => {
    const cardElement = document.getElementById(cardId);
    const slotElement = document.getElementById(slotId);
-   
+
    if (!cardElement || !slotElement) {
       console.error("Card or slot element not found");
       onComplete && onComplete();
       return;
    }
-   
+
    const getAbsolutePosition = (element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
       return {
@@ -193,20 +193,20 @@ export const animateCardToSlot = (
          height: rect.height,
       };
    };
-   
+
    // Получаем координаты карты и слота
    const cardRect = getAbsolutePosition(cardElement);
    const slotRect = getAbsolutePosition(slotElement);
-   
+
    // Вычисляем смещение для центра слота
    const translateX = slotRect.x + slotRect.width / 2 - cardRect.x - cardRect.width / 2;
    const translateY = slotRect.y + slotRect.height / 2 - cardRect.y - cardRect.height / 2;
-   
+
    // Устанавливаем стили для анимации
    cardElement.style.transition = `transform ${animationDuration}ms ease-out`;
    cardElement.style.zIndex = "1000";
    cardElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
-   
+
    // По завершении анимации вызываем callback
    setTimeout(() => {
       onComplete && onComplete();
@@ -236,7 +236,7 @@ export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
    }
 };
 
-export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, tableCard: boolean, draggableData?: IDraggableData | undefined) => {
+export const createCardElement = (rank: IRank, suit: ISuit, ref: React.ForwardedRef<unknown>, tableCard: boolean, draggableData?: IDraggableData | undefined, playPlaceAnim: boolean = true) => {
 
    const cardStyles = tableCard ? tableCardStyles : playerCardStyles;
 
@@ -290,11 +290,12 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          }}
 
          style={{
+            animation: tableCard ? (playPlaceAnim ? cardStyles.animation : 'none') : 'none',
             transform: draggableData?.isDraggable ? (draggableData?.transform
                ? `translate3d(${draggableData?.transform.x}px, ${draggableData?.transform.y}px, 0)`
-               : draggableData?.rotation !== undefined 
-                 ? `rotate(${draggableData.rotation}deg) ${draggableData.bottomOffset ? `translateY(${draggableData.bottomOffset}px)` : ''}` 
-                 : undefined)
+               : draggableData?.rotation !== undefined
+                  ? `rotate(${draggableData.rotation}deg) ${draggableData.bottomOffset ? `translateY(${draggableData.bottomOffset}px)` : ''}`
+                  : undefined)
                : undefined,
          }}
       >
@@ -330,7 +331,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
          </div>
       </div>
    );
-}     
+}
 
 export const Sounds = {
    CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },

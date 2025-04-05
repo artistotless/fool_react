@@ -7,8 +7,8 @@ interface CardProps extends ICard {
    className?: string;
 }
 
-const Card = forwardRef(({ suit, rank }: CardProps, ref) => {
-   return createCardElement(rank, suit, ref,true);
+const Card = forwardRef(({ suit, rank, playPlaceAnim = true }: CardProps, ref) => {
+   return createCardElement(rank, suit, ref, true, undefined, playPlaceAnim);
 }
 );
 

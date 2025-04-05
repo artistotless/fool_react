@@ -531,82 +531,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return true;
    }, [state, slots, user.id]);
 
-
-
-   const onDroppedToTableSlot = (card: ICard, cardIndex: number, slotId: number) => {
-      if (state.defenderId === user.id) {
-         // Если игрок защищается
-         // Проверяем возможность защиты данной картой
-         if (!canDefend(card, slotId)) {
-            console.log("Защита невозможна по правилам игры");
-            return;
-         }
-
-         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
-         addCardToSlot(card, slotId);
-         
-         // Удаляем карту из руки
-         removeCardFromHand(cardIndex);
-
-         // Анимируем перемещение карты в слот
-         animateCardToSlot(`playercard-${cardIndex}`, `slot-${slotId}`, 300, () => {
-            // После завершения анимации удаляем оригинальную карту
-            const cardElement = document.getElementById(`playercard-${cardIndex}`);
-            if (cardElement) {
-               cardElement.remove();
-            }
-            
-            // Добавляем действие в список ожидающих подтверждения
-            pendingActions.current.push({
-               type: 'defend',
-               cardIndex,
-               slotId,
-               card
-            });
-            
-            // Отправляем действие на сервер
-            defend(cardIndex, slotId);
-         });
-      } else {
-         // Если игрок атакует
-         // Проверяем возможность атаки
-         if (!canAttack(card) && false) {
-            console.log("Атака невозможна по правилам игры");
-            return;
-         }
-         
-         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
-         addCardToSlot(card, slotId);
-         
-         // Удаляем карту из руки
-         removeCardFromHand(cardIndex);
-
-         // Анимируем перемещение карты и затем удаляем её
-         animateCardToSlot(`playercard-${cardIndex}`, `slot-${slotId}`, 300, () => {
-            // После завершения анимации удаляем оригинальную карту
-            const cardElement = document.getElementById(`playercard-${cardIndex}`);
-            if (cardElement) {
-               cardElement.remove();
-            }
-            
-            // Добавляем действие в список ожидающих подтверждения
-            pendingActions.current.push({
-               type: 'attack',
-               cardIndex,
-               slotId,
-               card
-            });
-            
-            // Отправляем действие на сервер
-            attack(cardIndex);
-         });
-      }
-
-      console.log(
-         `Карта "${card.rank.name} ${card.suit.iconChar}" дропнута в зоне и попала на слот ${slotId}`
-      );
-   };
-
    const handleDragEnd = (event: DragEndEvent) => {
       const card = event.active.data.current?.card;
 
@@ -614,7 +538,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          const slotId = String(event.over?.id);
          const id = Number(slotId.split("-")[1]);
 
-         onDroppedToTableSlot(card as ICard, card?.index as number, id);
+         // Получаем координаты, где карта была отпущена
+         const dropPosition = event.active.rect.current.translated;
+
+         // Преобразуем ClientRect в нужный формат
+         const position = dropPosition ? {
+            top: dropPosition.top,
+            left: dropPosition.left,
+            width: dropPosition.width,
+            height: dropPosition.height
+         } : null;
+
+         onDroppedToTableSlot(card as ICard, card?.index as number, id, position);
       }
       else if (card) {
          const offset = 50;
@@ -633,8 +568,96 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          if (availableSlot == -1)
             return;
 
-         onDroppedToTableSlot(card as ICard, card.index as number, availableSlot);
+         // Преобразуем ClientRect в нужный формат
+         const position = {
+            top: activeRect.top,
+            left: activeRect.left,
+            width: activeRect.width,
+            height: activeRect.height
+         };
+
+         onDroppedToTableSlot(card as ICard, card.index as number, availableSlot, position);
       }
+   };
+
+   const onDroppedToTableSlot = (card: ICard, cardIndex: number, slotId: number, dropPosition?: { top: number, left: number, width?: number, height?: number } | null) => {
+      const type = state.defenderId === user.id ? 'defend' : 'attack';
+
+      if (type === 'defend') {
+         // Если игрок защищается
+         // Проверяем возможность защиты данной картой
+         if (!canDefend(card, slotId)) {
+            console.log("Защита невозможна по правилам игры");
+            return;
+         }
+      } else {
+         // Если игрок атакует
+         // Проверяем возможность атаки
+         if (!canAttack(card) && false) {
+            console.log("Атака невозможна по правилам игры");
+            return;
+         }
+      }
+
+      // Создаем копию карты в той же позиции, где было отпущено перетаскивание
+      const cardClone = createCardClone(cardIndex, dropPosition);
+      // Добавляем клон в DOM
+      document.body.appendChild(cardClone!);
+      // Удаляем карту из руки
+      removeCardFromHand(cardIndex);
+
+      // Анимируем перемещение карты и затем удаляем её
+      animateCardToSlot(`playercard-clone-${cardIndex}`, `slot-${slotId}`, 300, () => {
+         // После завершения анимации удаляем клонированную карту
+         const cardClone = document.getElementById(`playercard-clone-${cardIndex}`);
+         if (cardClone) {
+            // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
+            card.playPlaceAnim = false;
+            addCardToSlot(card, slotId);
+            cardClone.remove();
+         }
+
+         // Добавляем действие в список ожидающих подтверждения
+         pendingActions.current.push({
+            type: type,
+            cardIndex,
+            slotId,
+            card
+         });
+
+         if (type === 'defend')
+            defend(cardIndex, slotId);
+         else
+            attack(cardIndex);
+      });
+
+      console.log(
+         `Карта "${card.rank.name} ${card.suit.iconChar}" попала в слот ${slotId}`
+      );
+   }
+
+   const createCardClone = (cardIndex: number, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null => {
+      // Создаем копию карты в той же позиции, где было отпущено перетаскивание
+      const originalCardElement = document.getElementById(`playercard-${cardIndex}`);
+      if (originalCardElement && dropPosition) {
+         // Создаем клон карты
+         const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
+         cardClone.id = `playercard-clone-${cardIndex}`;
+         cardClone.style.position = 'absolute';
+
+         // Используем позицию, где было завершено перетаскивание
+         cardClone.style.left = `${dropPosition.left}px`;
+         cardClone.style.top = `${dropPosition.top}px`;
+         cardClone.style.width = `${originalCardElement.offsetWidth}px`;
+         cardClone.style.height = `${originalCardElement.offsetHeight}px`;
+         cardClone.style.transform = '';
+         cardClone.style.zIndex = '1999';
+         cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
+
+         return cardClone;
+      }
+
+      return null;
    };
 
    const handlePassed = (passedState: { playerId: string, defenderId: string, allCardsBeaten: boolean }): void => {

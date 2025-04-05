@@ -71,6 +71,7 @@ export interface ISuit {
 export interface ICard {
    suit: ISuit;
    rank: IRank;
+   playPlaceAnim: boolean;
 }
 
 export interface IFoolPlayer {
