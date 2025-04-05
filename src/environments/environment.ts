@@ -26,6 +26,8 @@ export const tokens = [
 export const testMode = (): {   
     testButtons: boolean;
     useTestCards: boolean
+    canAttack: boolean
+    canDefend: boolean
     testCards: ICard[]
 } => {
 
@@ -47,12 +49,14 @@ export const testMode = (): {
 
     return {
         useTestCards: testModeEnabled,
-        testButtons:  true,
+        canAttack: testModeEnabled,
+        testButtons:  testModeEnabled,
+        canDefend: testModeEnabled,
         testCards: cards
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

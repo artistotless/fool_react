@@ -586,17 +586,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (type === 'defend') {
          // Если игрок защищается
          // Проверяем возможность защиты данной картой
-         if (!canDefend(card, slotId)) {
+         if (!canDefend(card, slotId) && !testMode().canDefend) {
             console.log("Защита невозможна по правилам игры");
             return;
          }
       } else {
          // Если игрок атакует
          // Проверяем возможность атаки
-         if (!canAttack(card)) {
+         if (!canAttack(card) && !testMode().canAttack) {
             console.log("Атака невозможна по правилам игры");
             return;
          }
+      }
+
+      // Сначала скрываем оригинальную карту, чтобы она не появлялась в руке
+      const originalCard = document.getElementById(`playercard-${cardIndex}`);
+      if (originalCard) {
+         originalCard.style.opacity = '0';
+         originalCard.style.visibility = 'hidden';
       }
 
       // Создаем копию карты в той же позиции, где было отпущено перетаскивание
