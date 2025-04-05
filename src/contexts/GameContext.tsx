@@ -534,7 +534,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const handleDragEnd = (event: DragEndEvent) => {
       const card = event.active.data.current?.card;
 
-      if (String(event.over?.id).startsWith("slot")) {
+      if (String(event.over?.id).startsWith("slot") && state.defenderId === user.id) {
          const slotId = String(event.over?.id);
          const id = Number(slotId.split("-")[1]);
 
@@ -593,7 +593,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       } else {
          // Если игрок атакует
          // Проверяем возможность атаки
-         if (!canAttack(card) && false) {
+         if (!canAttack(card)) {
             console.log("Атака невозможна по правилам игры");
             return;
          }
