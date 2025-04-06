@@ -36,7 +36,7 @@ export const varibleGap = (
  * @returns {void}
  */
 export const moveElementTo = (
-   element: string | HTMLElement,
+   element: string | HTMLElement | HTMLElement[],
    destinationId: string,
    animationDuration: number = 300,
    targetSize?: { width: number, height: number },
@@ -44,17 +44,19 @@ export const moveElementTo = (
    onComplete?: () => void,
 ) => {
 
-   let elementElement: HTMLElement | null = null;
+   let elements: HTMLElement[] = [];
 
    if (typeof element === 'string') {
-      elementElement = document.getElementById(element);
+      elements[0] = document.getElementById(element) as HTMLElement;
+   } else if (Array.isArray(element)) {
+      elements = element;
    } else {
-      elementElement = element;
+      elements[0] = element;
    }
 
    const destination = document.getElementById(destinationId);
 
-   if (!elementElement || !destination) {
+   if (!elements || !destination) {
       console.error("Element or destination element not found");
       onComplete && onComplete();
       return;
@@ -70,24 +72,26 @@ export const moveElementTo = (
       };
    };
 
-   // Получаем координаты элемента и цели
-   const elementRect = getAbsolutePosition(elementElement);
-   const destinationRect = getAbsolutePosition(destination);
+   elements.forEach((element) => {
+      // Получаем координаты элемента и цели
+      const elementRect = getAbsolutePosition(element);
+      const destinationRect = getAbsolutePosition(destination);
 
-   // Вычисляем смещение для центра цели
-   const translateX = (destinationRect.x + destinationRect.width / 2 - elementRect.x - elementRect.width / 2) + (destinationOffset ? destinationOffset.x : 0);
-   const translateY = (destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2) + (destinationOffset ? destinationOffset.y : 0);
+      // Вычисляем смещение для центра цели
+      const translateX = (destinationRect.x + destinationRect.width / 2 - elementRect.x - elementRect.width / 2) + (destinationOffset ? destinationOffset.x : 0);
+      const translateY = (destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2) + (destinationOffset ? destinationOffset.y : 0);
 
-   // Устанавливаем стили для анимации
-   elementElement.style.willChange = `transform${targetSize ? ', width, height' : ''}`;
-   elementElement.style.transition = `transform ${animationDuration}ms ease-out${targetSize ? `, width ${animationDuration}ms ease-out, height ${animationDuration}ms ease-out` : ''}`;
-   elementElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
+      // Устанавливаем стили для анимации
+      element.style.willChange = `transform${targetSize ? ', width, height' : ''}`;
+      element.style.transition = `transform ${animationDuration}ms ease-out${targetSize ? `, width ${animationDuration}ms ease-out, height ${animationDuration}ms ease-out` : ''}`;
+      element.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
 
-   // Применяем изменение размеров, если указан targetSize
-   if (targetSize) {
-      elementElement.style.width = `${targetSize.width}px`;
-      elementElement.style.height = `${targetSize.height}px`;
-   }
+      // Применяем изменение размеров, если указан targetSize
+      if (targetSize) {
+         element.style.width = `${targetSize.width}px`;
+         element.style.height = `${targetSize.height}px`;
+      }
+   });
 
    // По завершении анимации вызываем callback
    setTimeout(() => {
@@ -501,7 +505,9 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
 export const Sounds = {
    CardSlideLeft: { id: 1, src: '../src/assets/sounds/card-slideaway.wav' },
    CardAddedToTable: { id: 2, src: '../src/assets/sounds/card-taking.wav' },
-   Toast: { id: 3, src: '../src/assets/sounds/toast_sound.mp3' }
+   Toast: { id: 3, src: '../src/assets/sounds/toast_sound.mp3' },
+   CardFromDeck: { id: 4, src: '../src/assets/sounds/card-deck-flick.mp3' },
+   CardsShuffle: { id: 5, src: '../src/assets/sounds/card_shuffle.mp3' },
 }
 
 // export const moveFromTable = (

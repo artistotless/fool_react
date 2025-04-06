@@ -1,21 +1,14 @@
-import { animate } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import animationService from "src/contexts/animationService";
 import { useAudio } from "src/contexts/AudioContext";
 import { useGame } from "src/contexts/GameContext";
 import { testMode } from "src/environments/environment";
-// import useAnimateElement, {
-//    animateElements,
-// } from "src/hooks/useAnimateElement";
-import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
 import { clearTableAnimated, moveElementTo, Sounds } from "src/utils";
 
 const Test = () => {
-   const { clearTable, slots, addCardToSlot, addCardToHand, removeFromSlot } = useGame();
-   // const animate = useAnimateElement();
+   const { clearTable, slots, addCardToHand } = useGame();
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
-   const [slot, setSlot] = useState(0);
    const elementRef = useRef<HTMLDivElement>(null);
 
    return (
@@ -49,11 +42,11 @@ const Test = () => {
                   const slotElement = document.getElementById(`slot-${slot.id}`);
                   if (!slotElement) return;
 
-                  Array.from(slotElement.children).forEach((card, index) => {
-                     moveElementTo(card as HTMLElement, "playercards", 200, undefined, { x: 0, y: 800 }, () => {
-                        addCardToHand(slot.cards[index]);
-                        removeFromSlot(slot.id, `${slot.cards[index].suit.name}-${slot.cards[index].rank.name}`);
-                        // card.remove();
+                  moveElementTo(Array.from(slotElement.children) as HTMLElement[], "playercards", 200, undefined, { x: 0, y: 800 }, () => {
+                     slot.cards.forEach((card, _) => {
+                        addCardToHand(card);
+                        clearTable();
+                        tableCardsRef.current = {};
                      });
                   });
                });

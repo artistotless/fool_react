@@ -1,5 +1,5 @@
 import { GameStatus, GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo, IFoolPlayer } from "src/types";
-import { animateCardToSlot, clearTableAnimated, Sounds } from "src/utils";
+import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import useAnimateElement, {
@@ -86,10 +86,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    const { isConnected, data, sendData } = useSignalR();
    const { play } = useAudio();
    const { user } = useUser();
-   const animate = useAnimateElement();
    const [passData, setPassData] = useState<{ playerId: string, defenderId: string, allCardsBeaten: boolean } | null>(null);
    // Используем ref для хранения очереди действий, ожидающих подтверждения
-   const pendingActions = useRef<{ type: 'attack' | 'defend', cardIndex: number, slotId?: number, card: ICard }[]>([]);
+   const pendingActions = useRef<{ type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[]>([]);
    // Состояние для отслеживания игроков, которые пасовали
    const [passedPlayers, setPassedPlayers] = useState<string[]>([]);
 
@@ -109,11 +108,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             validatePendingActions(data.state);
          }
          else if (data.updateType === GameUpdateTypes.PersonalState) {
-            setPersonalState(data.state)
+            const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
+            if ((isReloaded || isReloadedPage) && state.rounds != 0)
+               setPersonalState(data.state)
+            else
+               handlePersonalState(data.state)
          }
          else if (data.updateType === GameUpdateTypes.PassedState) {
             handlePassed(data.state);
-
             // Добавляем игрока в список пасовавших
             setPassedPlayers(prev => [...prev, data.state.playerId]);
          }
@@ -309,6 +311,35 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
    };
 
+   const handlePersonalState = (newState: IPersonalState): void => {
+      const newCardsInHand = newState.cardsInHand.filter(c => !personalState.cardsInHand.some(c2 => c2.rank.name === c.rank.name && c2.suit.name === c.suit.name));
+      const animationDuration = newCardsInHand.length > 3 ? 100 : 400;
+      const sound = newCardsInHand.length > 3 ? Sounds.CardsShuffle : Sounds.CardFromDeck;
+
+      // Функция для анимации одной карты с индексом
+      const animateCard = (index: number, playSound: boolean = true) => {
+         // Если достигли конца массива, завершаем
+         if (index >= newCardsInHand.length) return;
+
+         const card = newCardsInHand[index];
+
+         if (playSound)
+            play(sound);
+
+         moveCardFromDeck("playercards", "deck", animationDuration, () => {
+            addCardToHand(card);
+            animateCard(index + 1, playSound);
+         });
+      };
+
+      // Начинаем с первой карты, если они есть
+      if (newCardsInHand.length > 0) {
+         if (sound === Sounds.CardsShuffle)
+            play(sound);
+         animateCard(0, sound === Sounds.CardFromDeck);
+      }
+   };
+
    const handleGameState = (newState: IGameState): void => {
       const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
       const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
@@ -325,16 +356,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       else if ((newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
          const toElement = state.defenderId === user.id ? "playercards" : `player-${state.defenderId}`;
 
-         animateElements(
-            tableCardsRef.current,
-            {
-               toElement: toElement,
-               animationOptions: {
-                  animationDuration: 300,
-               },
-            },
-            animate
-         ).then(() => {
+         const offsetY = state.defenderId === user.id ? 800 : -400;
+
+         moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: offsetY }, () => {
             clearTable();
             tableCardsRef.current = {};
          });
@@ -405,15 +429,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    }, [setSlots]);
 
    // Функция для отправки атаки
-   const attack = useCallback(async (cardIndex: number) => {
+   const attack = useCallback(async (cardId: string) => {
       if (isConnected)
-         await sendData("Attack", cardIndex);
+         await sendData("Attack", cardId);
    }, [isConnected]);  // Мемоизация с зависимостью от connection
 
    // Функция для отправки защиты
-   const defend = useCallback(async (cardDefendingIndex: number, cardAttackingIndex: number) => {
+   const defend = useCallback(async (cardDefendingId: string, cardAttackingIndex: number) => {
       if (isConnected)
-         await sendData("Defend", cardDefendingIndex, cardAttackingIndex);
+         await sendData("Defend", cardDefendingId, cardAttackingIndex);
    }, [isConnected]);  // Мемоизация с зависимостью от connection
 
    // Функция для передачи хода 
@@ -625,15 +649,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          // Добавляем действие в список ожидающих подтверждения
          pendingActions.current.push({
             type: type,
-            cardIndex,
+            cardId,
             slotId,
             card
          });
 
          if (type === 'defend')
-            defend(cardIndex, slotId);
+            defend(cardId, slotId);
          else
-            attack(cardIndex);
+            attack(cardId);
       });
 
       console.log(
