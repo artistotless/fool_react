@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { IFoolPlayer } from 'src/types';
-import styles from 'src/components/shared/GameField/gamefield.module.scss';
+import styles from './playercompact.module.scss';
 
 interface PlayerCompactProps extends IFoolPlayer {
    isAttacking?: boolean;

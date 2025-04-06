@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styles from 'src/components/shared/GameField/gamefield.module.scss';
+import styles from './toppanel.module.scss';
 import { useGame } from 'src/contexts/GameContext';
 import { useUser } from 'src/contexts/UserContext';
 import PlayerCompact from 'src/components/ui/PlayerCompact';
