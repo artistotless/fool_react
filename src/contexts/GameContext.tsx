@@ -369,8 +369,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    };
 
    const addCardToSlot = useCallback(
-      (card: ICard, slotID: number) => {
-         play(Sounds.CardAddedToTable);
+      (card: ICard, slotID: number, playSound: boolean = true) => {
+         if (playSound)
+            play(Sounds.CardAddedToTable);
          setSlots((prev) => {
             return prev.map((slot) => {
                if (slot.id === slotID) {
@@ -598,7 +599,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             return;
          }
       }
-           
+
       // Создаем копию карты в той же позиции, где было отпущено перетаскивание
       const cardClone = createCardClone(cardIndex, dropPosition);
 
@@ -609,12 +610,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          originalCard.style.visibility = 'hidden';
          console.log('originalCard', 'hidden');
       }
- 
+
       // Добавляем клон в DOM
       document.body.appendChild(cardClone!);
       // originalCard?.remove();
       // Удаляем карту из руки
-      
+      play(Sounds.CardAddedToTable);
       // Анимируем перемещение карты и затем удаляем её
       animateCardToSlot(`playercard-clone-${cardIndex}`, `slot-${slotId}`, 300, () => {
          // После завершения анимации удаляем клонированную карту
@@ -623,7 +624,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
             card.playPlaceAnim = false;
             removeCardFromHand(cardIndex);
-            addCardToSlot(card, slotId);
+            addCardToSlot(card, slotId, false);
 
             if (originalCard) {
                originalCard.style.visibility = 'visible';
