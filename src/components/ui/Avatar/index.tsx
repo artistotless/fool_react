@@ -5,7 +5,6 @@ import { useAudio } from "src/contexts/AudioContext";
 import { Sounds } from "src/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import ProgressTimer from "../ProgressTimer";
-import { useUser } from "src/contexts/UserContext";
 
 interface AvatarProps {
    src: string;
@@ -54,7 +53,7 @@ const Avatar = ({ src, name, playerId }: AvatarProps) => {
    // Обработчик ошибки загрузки изображения
    const handleImageError = () => {
       const seed = playerId || name || Math.random().toString(36).substring(2, 8);
-      setImageSrc(`https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`);
+      setImageSrc(`https://api.dicebear.com/9.x/open-peeps/svg?seed=${seed}`);
    };
 
    // Тестовые значения для проверки таймера

@@ -5,11 +5,11 @@ import { useUser } from 'src/contexts/UserContext';
 import PlayerCompact from 'src/components/ui/PlayerCompact';
 import cardBack from 'src/assets/cards/backs/blue.png';
 import { SuitsSymbols } from 'src/types';
-import { moveCardFromDeck } from 'src/utils';
+import { createRandomCard, moveCardFromDeck } from 'src/utils';
 import { testMode } from 'src/environments/environment';
 
 const TopPanel = () => {
-   const { state } = useGame();
+   const { state, addCardToHand } = useGame();
    const { user } = useUser();
 
    // Количество карт в колоде
@@ -104,11 +104,19 @@ const TopPanel = () => {
       checkScrollability();
    }, [state.players.length]);
 
+   const testDeckMethod = () => {
+      if (testMode().enabled) {
+         moveCardFromDeck("playercards", "deck", 300, () => {
+            addCardToHand(createRandomCard());
+         });
+      }
+   }
+
    return (
       <div className={styles.top_panel}>
          <div className={styles.left_section}>
             <div className={styles.deck_info}>
-               <div onClick={() => { if (testMode().enabled) { moveCardFromDeck("playercards", "deck", 400); } }}
+               <div onClick={testDeckMethod}
                   className={styles.deck_container} id="deck">
                   <img src={cardBack} alt="Колода" className={styles.deck_image} />
                   {state.trumpCard && (

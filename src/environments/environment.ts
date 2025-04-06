@@ -23,13 +23,40 @@ export const tokens = [
     }
 ];
 
-export const testMode = (): {   
+const avaStyle = "open-peeps";
+
+const testPlayers = [
+    {
+        name: "Player 1",
+        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=1`,
+        id: "player1",
+        passed: false,
+        cardsCount: 6
+ },
+ {
+        name: "Player 2",
+        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=2`,
+        id: "player2",
+        passed: false,
+        cardsCount: 6
+ },
+ {
+        name: "Player 3",
+        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
+        id: "player3",
+        passed: false,
+        cardsCount: 6
+    }
+];
+
+export const testMode = (): {
     testButtons: boolean;
     useTestCards: boolean
     canAttack: boolean
     canDefend: boolean
     testCards: ICard[]
     enabled: boolean
+    testPlayers: { name: string, avatar: string, id: string, passed: boolean, cardsCount: number }[]
 } => {
 
     const cards = Array(6).fill(null).map((_, index) => {
@@ -51,14 +78,15 @@ export const testMode = (): {
     return {
         useTestCards: testModeEnabled,
         canAttack: testModeEnabled,
-        testButtons:  testModeEnabled,
+        testButtons: true || testModeEnabled,
         canDefend: testModeEnabled,
         testCards: cards,
-        enabled: testModeEnabled
+        enabled: testModeEnabled,
+        testPlayers: testPlayers
     };
 }
 
-const testModeEnabled = true;
+const testModeEnabled = false;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

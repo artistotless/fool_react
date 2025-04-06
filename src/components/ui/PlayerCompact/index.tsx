@@ -34,8 +34,8 @@ const PlayerCompact = ({
          // Используем id игрока как seed для получения одинаковой аватарки для одного и того же игрока
          const seed = id || name || Math.random().toString(36).substring(2, 8);
          // Можно выбрать другие стили: bottts, identicon, avataaars, human, big-smile, lorelei, pixel-art и т.д.
-         const style = 'fun-emoji';
-         setAvatarSrc(`https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`);
+         const style = 'open-peeps';
+         setAvatarSrc(`https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`);
       } else {
          setAvatarSrc(avatar);
       }

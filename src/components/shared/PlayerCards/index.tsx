@@ -160,8 +160,8 @@ const PlayerCards = () => {
          >
             {cards.map((card, index) => (
                <DraggableCard
-                  index={index}
-                  elementId={`playercard-${index}`}
+                  id={`${card.suit.name}-${card.rank.name}`}
+                  elementId={`playercard-${card.suit.name}-${card.rank.name}`}
                   draggable={true}
                   rotation={calculateRotation(index, cards.length)}
                   bottomOffset={calculateBottom(index, cards.length)}

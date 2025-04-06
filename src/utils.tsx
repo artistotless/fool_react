@@ -1,6 +1,6 @@
 import { CSSProperties, RefObject } from "react";
 import back_ic from "src/assets/cards/backs/red.png";
-import { IDraggableData, IRank, ISuit, RankValues, SuitsSymbols } from "./types";
+import { ICard, IDraggableData, IRank, ISuit, Ranks, RankValues, Suits, SuitsSymbols } from "./types";
 import * as env from "./environments/environment";
 import playerCardStyles from "../src/components/ui/Card/playerCard.module.scss";
 import tableCardStyles from "../src/components/ui/Card/tableCard.module.scss";
@@ -39,11 +39,13 @@ export const moveElementTo = (
    element: string | HTMLElement,
    destinationId: string,
    animationDuration: number = 300,
-   onComplete?: () => void
+   targetSize?: { width: number, height: number },
+   destinationOffset?: { x: number, y: number },
+   onComplete?: () => void,
 ) => {
 
    let elementElement: HTMLElement | null = null;
-   
+
    if (typeof element === 'string') {
       elementElement = document.getElementById(element);
    } else {
@@ -73,19 +75,36 @@ export const moveElementTo = (
    const destinationRect = getAbsolutePosition(destination);
 
    // Вычисляем смещение для центра цели
-   const translateX = destinationRect.x + destinationRect.width / 2 - elementRect.x - elementRect.width / 2;
-   const translateY = destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2;
+   const translateX = (destinationRect.x + destinationRect.width / 2 - elementRect.x - elementRect.width / 2) + (destinationOffset ? destinationOffset.x : 0);
+   const translateY = (destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2) + (destinationOffset ? destinationOffset.y : 0);
 
    // Устанавливаем стили для анимации
-   elementElement.style.willChange = `transform`;
-   elementElement.style.transition = `transform ${animationDuration}ms ease-out`;
+   elementElement.style.willChange = `transform${targetSize ? ', width, height' : ''}`;
+   elementElement.style.transition = `transform ${animationDuration}ms ease-out${targetSize ? `, width ${animationDuration}ms ease-out, height ${animationDuration}ms ease-out` : ''}`;
    elementElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
+
+   // Применяем изменение размеров, если указан targetSize
+   if (targetSize) {
+      elementElement.style.width = `${targetSize.width}px`;
+      elementElement.style.height = `${targetSize.height}px`;
+   }
 
    // По завершении анимации вызываем callback
    setTimeout(() => {
       onComplete && onComplete();
    }, animationDuration);
 };
+
+export const createRandomCard = (): ICard => {
+   let randomSuit = Math.floor(Math.random() * 4)
+   let randomRank = Math.floor(Math.random() * 9)
+
+   const numericRankValues = Object.values(RankValues).filter(value => typeof value === 'number') as number[];
+   const suit = { iconChar: Object.values(SuitsSymbols)[randomSuit], name: Object.values(Suits)[randomSuit] };
+   const rank = { name: Object.values(Ranks)[randomRank], value: numericRankValues[randomRank] as number, shortName: Object.values(Ranks)[randomRank] };
+
+   return { suit, rank };
+}
 
 /**
  * moveCardFromDeck function
@@ -101,7 +120,8 @@ export const moveElementTo = (
 export const moveCardFromDeck = (
    targetRef: RefObject<any> | string,
    deckRef: RefObject<any> | string,
-   animationDuration: number = 1000
+   animationDuration: number = 300,
+   onComplete?: () => void
 ) => {
    const getDOMElement = (ref: RefObject<any> | string) => {
       return typeof ref === "string"
@@ -160,8 +180,9 @@ export const moveCardFromDeck = (
    cardElement.style.height = `${height}px`;
    document.body.appendChild(cardElement);
 
-   moveElementTo(cardElement, targetElement.id, animationDuration, ()=>{
+   moveElementTo(cardElement, targetElement.id, animationDuration, { width: targetWidth, height: targetHeight }, { x: 0, y: 0 }, () => {
       cardElement.remove();
+      onComplete && onComplete();
    });
 };
 
@@ -413,7 +434,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
    }
 
    let isRed = suit.iconChar == SuitsSymbols.Diamond || suit.iconChar == SuitsSymbols.Heart;
-   
+
    let highRankImg =
       rank.value == RankValues.Queen ? queenImg :
          rank.value == RankValues.King ? kingImg :
@@ -533,3 +554,4 @@ export const element = (
 
    return element;
 };
+

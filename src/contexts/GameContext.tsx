@@ -34,8 +34,9 @@ interface GameContext {
    pass: () => void,
    addCardToHand: (card: ICard | ICard[]) => void;
    addCardToSlot: (card: ICard, slotID: number) => void;
-   removeCardFromHand: (card_id: number) => void;
+   removeCardFromHand: (cardId: string) => void;
    clearTable: () => void;
+   removeFromSlot: (slotId: number, cardId: string) => void;
    passData: { playerId: string, defenderId: string, allCardsBeaten: boolean } | null;
 }
 
@@ -56,28 +57,7 @@ const getInitialValue = () => ({
       trumpCard: null,
       deckCardsCount: 0,
       status: 'ReadyToBegin' as GameStatus,
-      players: [
-         {
-            name: "Player 1",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
-            id: "player1",
-            passed: false,
-            cardsCount: 6
-         },
-         {
-            name: "Player 2",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
-            id: "player2",
-            passed: false,
-            cardsCount: 6
-         },
-         {
-            name: "Player 3",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3",
-            id: "player3",
-            passed: false,
-            cardsCount: 6
-         }
+      players: testMode().testPlayers ? testMode().testPlayers : [
       ],
    },
    personalState: {
@@ -402,10 +382,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    );
 
    const removeCardFromHand = useCallback(
-      (idx: number) => {
+      (cardId: string) => {
          setPersonalState((prevPersonalState) => ({
             ...prevPersonalState,
-            cardsInHand: prevPersonalState.cardsInHand.filter((_, index) => index !== idx)
+            cardsInHand: prevPersonalState.cardsInHand.filter((card, _) => `${card.suit.name}-${card.rank.name}` !== cardId)
          }));
       },
       [setPersonalState]
@@ -413,6 +393,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
    const clearTable = useCallback(() => {
       setSlots((prev) => prev.map((slot) => ({ ...slot, cards: [] })));
+   }, [setSlots]);
+
+   const removeFromSlot = useCallback((slotId: number, cardId: string) => {
+      setSlots((prev) => prev.map((slot) => {
+         if (slot.id === slotId) {
+            return { ...slot, cards: slot.cards.filter((card) => `${card.suit.name}-${card.rank.name}` !== cardId) };
+         }
+         return slot;
+      }));
    }, [setSlots]);
 
    // Функция для отправки атаки
@@ -600,11 +589,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          }
       }
 
+      const cardId = `${card.suit.name}-${card.rank.name}`;
       // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-      const cardClone = createCardClone(cardIndex, dropPosition);
+      const cardClone = createCardClone(cardId, dropPosition);
 
       // Cкрываем оригинальную карту, чтобы она не появлялась в руке
-      const originalCard = document.getElementById(`playercard-${cardIndex}`);
+      const originalCard = document.getElementById(`playercard-${cardId}`);
       if (originalCard) {
          // originalCard.style.opacity = '0';
          originalCard.style.visibility = 'hidden';
@@ -617,13 +607,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Удаляем карту из руки
       play(Sounds.CardAddedToTable);
       // Анимируем перемещение карты и затем удаляем её
-      animateCardToSlot(`playercard-clone-${cardIndex}`, `slot-${slotId}`, 300, () => {
+      animateCardToSlot(`playercard-clone-${cardId}`, `slot-${slotId}`, 300, () => {
          // После завершения анимации удаляем клонированную карту
-         const cardClone = document.getElementById(`playercard-clone-${cardIndex}`);
+         const cardClone = document.getElementById(`playercard-clone-${cardId}`);
          if (cardClone) {
             // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
             card.playPlaceAnim = false;
-            removeCardFromHand(cardIndex);
+            removeCardFromHand(cardId);
             addCardToSlot(card, slotId, false);
 
             if (originalCard) {
@@ -651,13 +641,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       );
    }
 
-   const createCardClone = (cardIndex: number, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null => {
+   const createCardClone = (cardId: string, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null => {
       // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-      const originalCardElement = document.getElementById(`playercard-${cardIndex}`);
+      const originalCardElement = document.getElementById(`playercard-${cardId}`);
       if (originalCardElement && dropPosition) {
          // Создаем клон карты
          const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
-         cardClone.id = `playercard-clone-${cardIndex}`;
+         cardClone.id = `playercard-clone-${cardId}`;
          cardClone.style.position = 'absolute';
 
          // Используем позицию, где было завершено перетаскивание
@@ -693,6 +683,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       addCardToSlot,
       removeCardFromHand,
       clearTable,
+      removeFromSlot,
       passData
    }), [slots, personalState, state, winnersIds, passData]);
 
