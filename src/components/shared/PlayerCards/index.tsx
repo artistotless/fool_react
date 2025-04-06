@@ -147,7 +147,6 @@ const PlayerCards = () => {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
    }, [cards.length]);
-   console.log('playercards render');
    return (
       <div className={styles.cards_wrapper}>
          <div

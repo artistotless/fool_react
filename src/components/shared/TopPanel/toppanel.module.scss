@@ -158,10 +158,10 @@
       position: absolute;
       bottom: -5px;
       right: -5px;
-      background: linear-gradient(135deg, rgba(30, 42, 56, 0.9), rgba(10, 15, 20, 0.9));
+      background: #ffffff;
       border-radius: 50%;
-      width: 26px;
-      height: 26px;
+      width: 20px;
+      height: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -172,14 +172,16 @@
       transform: rotate(-10deg);
       transition: all 0.3s ease;
       z-index: 5;
-      
+   
+      &.dark {
+         background: linear-gradient(135deg, rgba(30, 42, 56, 0.9), rgba(10, 15, 20, 0.9));
+      }
+   
       &:hover {
          transform: rotate(0) scale(1.1);
       }
       
       @media (max-width: 768px) {
-         width: 22px;
-         height: 22px;
          bottom: -4px;
          right: -4px;
       }
@@ -193,12 +195,16 @@
       }
       
       .trump_suit {
+         color: #000000;
          font-size: var(--trump-suit-size);
-         color: #ff3b30;
          font-family: "Noto Sans SC", serif;
          font-optical-sizing: auto;
          font-weight: 400;
          font-style: normal;
+
+         &.red {
+            color: #ff3b30;
+         }
       }
    }
    

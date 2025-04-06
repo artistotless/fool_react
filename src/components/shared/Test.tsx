@@ -7,7 +7,7 @@ import { testMode } from "src/environments/environment";
 //    animateElements,
 // } from "src/hooks/useAnimateElement";
 import { Ranks, RankValues, Suits, SuitsSymbols } from "src/types";
-import { clearTableAnimated, Sounds } from "src/utils";
+import { clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "src/utils";
 
 const Test = () => {
    const { clearTable, slots, addCardToSlot, pass, addCardToHand } = useGame();
@@ -75,7 +75,7 @@ const Test = () => {
             onClick={() => {
                moveCardFromDeck(
                   "playercards",
-                  animationService.deckRef,
+                  "deck",
                   400
                );
             }}

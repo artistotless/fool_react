@@ -7,7 +7,6 @@ import tableCardStyles from "../src/components/ui/Card/tableCard.module.scss";
 import queenImg from '../src/assets/cards/queen.png';
 import kingImg from '../src/assets/cards/king.png';
 import jackImg from '../src/assets/cards/jack.png';
-// import { col } from "framer-motion/client";
 
 export const varibleGap = (
    gapSizes: number[],
@@ -23,6 +22,69 @@ export const varibleGap = (
    }
 
    return gap;
+};
+
+/**
+ * moveElementTo function
+ *
+ * Проигрывает анимацию перемещения элемента к указанной цели
+ *
+ * @param {string} element - ID DOM элемента
+ * @param {string} destinationId - ID DOM элемента цели
+ * @param {number} animationDuration - (опционально) Длительность анимации (мс)
+ * @param {Function} onComplete - Функция, вызываемая после завершения анимации
+ * @returns {void}
+ */
+export const moveElementTo = (
+   element: string | HTMLElement,
+   destinationId: string,
+   animationDuration: number = 300,
+   onComplete?: () => void
+) => {
+
+   let elementElement: HTMLElement | null = null;
+   
+   if (typeof element === 'string') {
+      elementElement = document.getElementById(element);
+   } else {
+      elementElement = element;
+   }
+
+   const destination = document.getElementById(destinationId);
+
+   if (!elementElement || !destination) {
+      console.error("Element or destination element not found");
+      onComplete && onComplete();
+      return;
+   }
+
+   const getAbsolutePosition = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return {
+         x: rect.left + window.scrollX,
+         y: rect.top + window.scrollY,
+         width: rect.width,
+         height: rect.height,
+      };
+   };
+
+   // Получаем координаты элемента и цели
+   const elementRect = getAbsolutePosition(elementElement);
+   const destinationRect = getAbsolutePosition(destination);
+
+   // Вычисляем смещение для центра цели
+   const translateX = destinationRect.x + destinationRect.width / 2 - elementRect.x - elementRect.width / 2;
+   const translateY = destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2;
+
+   // Устанавливаем стили для анимации
+   elementElement.style.willChange = `transform`;
+   elementElement.style.transition = `transform ${animationDuration}ms ease-out`;
+   elementElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
+
+   // По завершении анимации вызываем callback
+   setTimeout(() => {
+      onComplete && onComplete();
+   }, animationDuration);
 };
 
 /**
@@ -68,7 +130,7 @@ export const moveCardFromDeck = (
    const cardWidth = deckElement.offsetWidth;
    const cardHeight = deckElement.offsetHeight;
 
-   const targetWidth = targetElement.offsetWidth;
+   const targetWidth = 122;
    const targetHeight = targetElement.offsetHeight;
 
    const startX = deckRect.x + deckRect.width / 2 - cardWidth / 2;
@@ -82,7 +144,87 @@ export const moveCardFromDeck = (
          width: `${cardWidth}px`,
          height: `${cardHeight}px`,
          transition: `opacity .3s ease-out`,
-         zIndex: "1000",
+         zIndex: "10",
+      },
+      src: back_ic,
+   });
+
+   const x = startX + (endX - startX) * 0;
+   const y = startY + (endY - startY) * 0;
+   const width = cardWidth + (targetWidth - cardWidth) * 0;
+   const height = cardHeight + (targetHeight - cardHeight) * 0;
+
+   cardElement.style.left = `${x}px`;
+   cardElement.style.top = `${y}px`;
+   cardElement.style.width = `${width}px`;
+   cardElement.style.height = `${height}px`;
+   document.body.appendChild(cardElement);
+
+   moveElementTo(cardElement, targetElement.id, animationDuration, ()=>{
+      cardElement.remove();
+   });
+};
+
+/**
+ * moveCardFromDeck function
+ *
+ * Проигрывает анимацию перелета карты из колоды к указанной цели `targetRef`
+ *
+ * @param {RefObject<any> | string} targetRef - Ссылка на DOM элемент цели (или его `id`)
+ * @param {RefObject<any> | string} deckRef - Ссылка на DOM элемент колоды (или его `id`)
+ * @param {number} animationDuration - (опционально) Длительность анимации (мс)
+ *
+ * @returns {void}
+ */
+export const moveCardFromDeckOld = (
+   targetRef: RefObject<any> | string,
+   deckRef: RefObject<any> | string,
+   animationDuration: number = 1000
+) => {
+   const getDOMElement = (ref: RefObject<any> | string) => {
+      return typeof ref === "string"
+         ? document.getElementById(ref)
+         : ref.current;
+   };
+
+   const getAbsolutePosition = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return {
+         x: rect.left + window.scrollX,
+         y: rect.top + window.scrollY,
+         width: rect.width,
+         height: rect.height,
+      };
+   };
+
+   const deckElement = getDOMElement(deckRef);
+   if (!deckElement) throw new Error("Deck element not found");
+   const deckRect = getAbsolutePosition(deckElement);
+
+   const targetElement = getDOMElement(targetRef);
+   if (!targetElement) throw new Error("Target element not found");
+   const targetRect = getAbsolutePosition(targetElement);
+
+   const cardWidth = deckElement.offsetWidth;
+   const cardHeight = deckElement.offsetHeight;
+
+   const targetWidth = 122;
+   const targetHeight = targetElement.offsetHeight;
+
+   console.log(cardWidth, cardHeight, targetWidth, targetHeight);
+
+   const startX = deckRect.x + deckRect.width / 2 - cardWidth / 2;
+   const startY = deckRect.y + deckRect.height / 2 - cardHeight / 2;
+   const endX = targetRect.x + targetRect.width / 2 - targetWidth / 2;
+   const endY = targetRect.y + targetRect.height / 2 - targetHeight / 2;
+
+   const cardElement = element("img", {
+      style: {
+         position: "absolute",
+         width: `${cardWidth}px`,
+         height: `${cardHeight}px`,
+         transition: `opacity .3s ease-out`,
+         zIndex: "1",
       },
       src: back_ic,
    });
@@ -103,12 +245,12 @@ export const moveCardFromDeck = (
 
       const x = startX + (endX - startX) * progress;
       const y = startY + (endY - startY) * progress;
-      // const width = cardWidth + (targetWidth - cardWidth) * progress;
+      const width = cardWidth + (targetWidth - cardWidth) * progress;
       const height = cardHeight + (targetHeight - cardHeight) * progress;
 
       cardElement.style.left = `${x}px`;
       cardElement.style.top = `${y}px`;
-      // cardElement.style.width = `${width}px`;
+      cardElement.style.width = `${width}px`;
       cardElement.style.height = `${height}px`;
 
       if (progress > 0.8) {
@@ -271,6 +413,7 @@ export const createCardElement = (rank: IRank, suit: ISuit, ref: React.Forwarded
    }
 
    let isRed = suit.iconChar == SuitsSymbols.Diamond || suit.iconChar == SuitsSymbols.Heart;
+   
    let highRankImg =
       rank.value == RankValues.Queen ? queenImg :
          rank.value == RankValues.King ? kingImg :

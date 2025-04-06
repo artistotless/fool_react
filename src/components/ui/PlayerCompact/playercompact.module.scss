@@ -14,64 +14,21 @@
    backdrop-filter: blur(6px);
    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
    overflow: hidden;
-   
-   &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background-color: transparent;
-      z-index: 2;
-      transition: all 0.3s ease;
-   }
-   
-   &.attacking::before {
-      background: linear-gradient(to right, #38bdf8, #0ea5e9);
-      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
-   }
-   
-   &.defending::before {
-      background: linear-gradient(to right, #a78bfa, #8b5cf6);
-      box-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
-   }
-   
-   &.passed {
-      &::after {
-         content: '✓';
-         position: absolute;
-         top: -6px;
-         right: -6px;
-         width: 18px;
-         height: 18px;
-         background: linear-gradient(135deg, #94a3b8, #64748b);
-         color: white;
-         font-size: 10px;
-         font-weight: bold;
-         border-radius: 50%;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-         z-index: 5;
-         border: 1px solid rgba(255, 255, 255, 0.3);
-      }
-   }
-   
+
    &.waiting {
       .timer_bar {
-         height: 2px;
          position: absolute;
          bottom: 0;
          left: 0;
-         background: linear-gradient(to right, #f59e0b, #d97706);
-         animation: timerProgress 15s linear forwards;
-         z-index: 2;
-         box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+         height: 3px;
+         background: linear-gradient(to right, #fb923c, #f97316, #ea580c);
+         z-index: 3;
+         box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+         transition: width 1s linear;
+         border-radius: 0 4px 4px 0;
       }
    }
-   
+
    @media (max-width: 400px) {
       min-width: 60px;
       padding: 3px 6px;
@@ -84,50 +41,51 @@
             text-overflow: ellipsis;
             white-space: nowrap;
          }
-         
+
          .cards_count {
             margin-left: -2px;
          }
       }
-      
-      &.attacking::before, 
+
+      &.attacking::before,
       &.defending::before {
          height: 3px;
       }
+
+      &.waiting .timer_bar {
+         height: 2px;
+      }
    }
-   
+
    &:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
       border-color: rgba(100, 160, 255, 0.4);
-      
+
       .avatar_mini {
          transform: scale(1.05);
       }
    }
-   
+
    &.current {
       background: linear-gradient(145deg, rgba(35, 50, 90, 0.8), rgba(25, 40, 75, 0.8));
       border: 1px solid rgba(100, 200, 255, 0.4);
-      box-shadow: 
+      box-shadow:
          0 0 15px rgba(100, 200, 255, 0.25),
          0 4px 10px rgba(0, 0, 0, 0.3);
-      
+
       .name {
          color: #78DCFF;
          font-weight: 600;
       }
-      
+
       .avatar_mini {
          border-color: rgba(120, 220, 255, 0.5);
          box-shadow: 0 0 8px rgba(120, 220, 255, 0.3);
       }
    }
-   
-   &.active {
-      
-   }
-   
+
+
    .avatar_mini {
       width: 28px;
       height: 28px;
@@ -139,14 +97,14 @@
       background: linear-gradient(145deg, #2E5CB8, #1A3A70);
       position: relative;
       transition: all 0.3s ease;
-      
+
       img {
          width: 100%;
          height: 100%;
          object-fit: cover;
       }
    }
-   
+
    .player_info {
       flex: 1;
       min-width: 0;
@@ -154,7 +112,7 @@
       flex-direction: column;
       gap: 1px;
    }
-   
+
    .name {
       font-size: 12px;
       font-weight: 500;
@@ -165,20 +123,20 @@
       white-space: nowrap;
       max-width: 90px;
    }
-   
+
    .cards_count {
       font-size: 10px;
       color: rgba(200, 220, 255, 0.9);
       display: flex;
       align-items: center;
-      
+
       &::before {
          content: "🃏";
          font-size: 9px;
          margin-right: 3px;
       }
    }
-   
+
    .status_indicator {
       display: none;
    }
@@ -188,7 +146,8 @@
    0% {
       width: 100%;
    }
+
    100% {
       width: 0%;
    }
-} 
+}

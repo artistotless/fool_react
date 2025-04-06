@@ -30,12 +30,6 @@ const PassButton = () => {
    return (
       <div className={styles.pass_button}>
          <button className={`${styles.action_button} ${className}`} onClick={() => pass()}>{passBtnTitle}</button>
-                        {/* <button className={styles.action_button} onClick={pass}>
-                  Пасс
-               </button> */}
-               {/* <button className={`${styles.action_button} ${styles.take}`}>
-                  Взять
-               </button> */}
       </div>
    );
 };

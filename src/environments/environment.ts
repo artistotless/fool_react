@@ -29,6 +29,7 @@ export const testMode = (): {
     canAttack: boolean
     canDefend: boolean
     testCards: ICard[]
+    enabled: boolean
 } => {
 
     const cards = Array(6).fill(null).map((_, index) => {
@@ -52,7 +53,8 @@ export const testMode = (): {
         canAttack: testModeEnabled,
         testButtons:  testModeEnabled,
         canDefend: testModeEnabled,
-        testCards: cards
+        testCards: cards,
+        enabled: testModeEnabled
     };
 }
 
