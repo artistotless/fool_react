@@ -1,10 +1,6 @@
 import { GameStatus, GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo, IFoolPlayer } from "src/types";
 import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "src/utils";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { snapCenterToCursor } from "@dnd-kit/modifiers";
-import useAnimateElement, {
-   animateElements,
-} from "src/hooks/useAnimateElement";
 import animationService from "./animationService";
 import { useSignalR } from "./SignalRContext";
 import {
@@ -20,6 +16,7 @@ import {
 import { testMode } from "src/environments/environment";
 import { useAudio } from "./AudioContext";
 import { useUser } from "./UserContext";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 
 export interface ISlot {
    id: number;
@@ -54,14 +51,13 @@ const getInitialValue = () => ({
       defenderId: null,
       tableCards: [],
       rounds: 0,
-      trumpCard: null,
+      trumpCard: testMode().enabled ? testMode().testTrumpCard : null,
       deckCardsCount: 0,
       status: 'ReadyToBegin' as GameStatus,
-      players: testMode().testPlayers ? testMode().testPlayers : [
-      ],
+      players: testMode().enabled ? testMode().testPlayers : [],
    },
    personalState: {
-      cardsInHand: testMode().useTestCards ? testMode().testCards : [],
+      cardsInHand: testMode().enabled ? testMode().testCards : [],
    },
    players: Array(3)
       .fill(null)

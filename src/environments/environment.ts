@@ -25,6 +25,18 @@ export const tokens = [
 
 const avaStyle = "open-peeps";
 
+const testTrumpCard = {
+    rank: {
+        name: '7',
+        value: 7,
+        suit: 'hearts'
+    },
+    suit: {
+        name: 'hearts',
+        iconChar: '♥'
+    }
+}
+
 const testPlayers = [
     {
         name: "Player 1",
@@ -51,10 +63,10 @@ const testPlayers = [
 
 export const testMode = (): {
     testButtons: boolean;
-    useTestCards: boolean
     canAttack: boolean
     canDefend: boolean
     testCards: ICard[]
+    testTrumpCard: ICard
     enabled: boolean
     testPlayers: { name: string, avatar: string, id: string, passed: boolean, cardsCount: number }[]
 } => {
@@ -76,17 +88,17 @@ export const testMode = (): {
     })
 
     return {
-        useTestCards: testModeEnabled,
         canAttack: testModeEnabled,
-        testButtons: true || testModeEnabled,
+        testButtons: false || testModeEnabled,
         canDefend: testModeEnabled,
         testCards: cards,
         enabled: testModeEnabled,
+        testTrumpCard: testTrumpCard as ICard,
         testPlayers: testPlayers
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

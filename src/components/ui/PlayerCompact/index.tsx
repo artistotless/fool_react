@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { IFoolPlayer } from 'src/types';
 import styles from './playercompact.module.scss';
+import { testMode } from 'src/environments/environment';
+import ProgressTimer from '../ProgressTimer';
+import { useGame } from 'src/contexts/GameContext';
 
 interface PlayerCompactProps extends IFoolPlayer {
    isAttacking?: boolean;
@@ -74,6 +77,13 @@ const PlayerCompact = ({
       isWaiting && styles.waiting
    ].filter(Boolean).join(' ');
 
+   const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
+   const testMovedAt = new Date().toISOString();
+
+   const {state} = useGame();
+
+   console.log('playerCompact rendered');
+
    return (
       <div className={playerClass} id={`player-${id}`}>
          <div className={styles.avatar_mini}>
@@ -87,6 +97,13 @@ const PlayerCompact = ({
             <div className={styles.name}>{name}</div>
             <div className={styles.cards_count}>{cardsCount}</div>
          </div>
+         {/* {(testMode().enabled || (state.moveTime && state.movedAt)) && (
+               <ProgressTimer 
+                  moveTime={testMode().enabled ? testMoveTime : (state.moveTime ?? "00:00:30")} 
+                  movedAt={testMode().enabled ? testMovedAt : (state.movedAt ?? new Date().toISOString())}
+                  className={styles.progress}
+               />
+            )} */}
          {isWaiting && <div className={styles.timer_bar} style={{ width: `${(timer / timeLeft) * 100}%` }} />}
       </div>
    );
