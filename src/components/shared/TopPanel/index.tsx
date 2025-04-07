@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './toppanel.module.scss';
-import { useGame } from 'src/contexts/GameContext';
 import { useUser } from 'src/contexts/UserContext';
 import PlayerCompact from 'src/components/ui/PlayerCompact';
 import cardBack from 'src/assets/cards/backs/blue.png';
 import { SuitsSymbols } from 'src/types';
 import { createRandomCard, moveCardFromDeck } from 'src/utils';
 import { testMode } from 'src/environments/environment';
+import useGameStore from 'src/store/gameStore';
 
 const TopPanel = () => {
-   const { state, addCardToHand } = useGame();
+   const { state, addCardToHand } = useGameStore();
    const { user } = useUser();
 
    // Количество карт в колоде

@@ -1,10 +1,10 @@
 import styles from "./playercards.module.scss";
 import DraggableCard from "src/components/ui/Card/DraggableCard";
 import { CSSProperties, useEffect } from "react";
-import { useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
 const PlayerCards = () => {
    
-   const { personalState } = useGame();
+   const { personalState } = useGameStore();
    const cards = personalState.cardsInHand;
 
    let gap = getAdaptiveGap(cards.length);

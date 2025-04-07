@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import styles from "./avatar.module.scss";
-import { useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
 import { useAudio } from "src/contexts/AudioContext";
 import { Sounds } from "src/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -13,7 +13,7 @@ interface AvatarProps {
 }
 
 const Avatar = ({ src, name, playerId }: AvatarProps) => {
-   const { state, passData } = useGame();
+   const { state, passData } = useGameStore();
    const { play } = useAudio();
    const [imageSrc, setImageSrc] = useState<string>(src);
    

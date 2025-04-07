@@ -1,6 +1,7 @@
 import Card from "src/components/ui/Card";
 import styles from "./table.module.scss";
-import { ISlot as ISlot, useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
+import { ISlot } from "src/store/gameStore";
 import { useDroppable } from "@dnd-kit/core";
 import animationService from "src/contexts/animationService";
 import { useUser } from "src/contexts/UserContext";
@@ -50,7 +51,7 @@ const Slot = ({ slot, playerId, defenderId, trumpCard }: SlotProps, key: number)
 };
 
 const Table = () => {
-   const { slots, state } = useGame();
+   const { slots, state } = useGameStore();
    const { user } = useUser();
 
    return (

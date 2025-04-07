@@ -1,10 +1,10 @@
-import { useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
 import { useSignalR } from "src/contexts/SignalRContext";
 import styles from "./gameOver.module.scss";
 import { useEffect, useState } from "react";
 
 const GameOverPanel = () => {
-   const { state, winnersIds } = useGame();
+   const { state, winnersIds } = useGameStore();
    const { stopConnection } = useSignalR();
    const [isActive, setIsActive] = useState<boolean>(false);
 

@@ -98,7 +98,7 @@ export const testMode = (): {
     };
 }
 
-const testModeEnabled = true;
+const testModeEnabled = false;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { IFoolPlayer } from 'src/types';
 import styles from './playercompact.module.scss';
-import { testMode } from 'src/environments/environment';
-import ProgressTimer from '../ProgressTimer';
-import { useGame } from 'src/contexts/GameContext';
+// import { testMode } from 'src/environments/environment';
+// import ProgressTimer from '../ProgressTimer';
+// import useGameStore from 'src/store/gameStore';
 
 interface PlayerCompactProps extends IFoolPlayer {
    isAttacking?: boolean;
@@ -62,10 +62,10 @@ const PlayerCompact = ({
       setTimer(timeLeft);
    }, [timeLeft, isWaiting]);
 
-   let statusClass = '';
-   if (isAttacking) statusClass = styles.attacking;
-   if (isDefending) statusClass = styles.defending;
-   if (isPassed) statusClass = styles.passed;
+   // let statusClass = '';
+   // if (isAttacking) statusClass = styles.attacking;
+   // if (isDefending) statusClass = styles.defending;
+   // if (isPassed) statusClass = styles.passed;
 
    const playerClass = [
       styles.player_compact,
@@ -77,12 +77,10 @@ const PlayerCompact = ({
       isWaiting && styles.waiting
    ].filter(Boolean).join(' ');
 
-   const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
-   const testMovedAt = new Date().toISOString();
+   // const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
+   // const testMovedAt = new Date().toISOString();
 
-   const {state} = useGame();
-
-   console.log('playerCompact rendered');
+   // const {state} = useGameStore();
 
    return (
       <div className={playerClass} id={`player-${id}`}>

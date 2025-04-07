@@ -1,10 +1,13 @@
 import { useUser } from "src/contexts/UserContext";
-import { useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
+import { useGameService } from "src/services/gameService";
 import styles from "./passButton.module.scss";
+import { memo } from "react";
 
 const PassButton = () => {
    const { user } = useUser();
-   const { pass, state } = useGame();
+   const { state } = useGameStore();
+   const { pass } = useGameService();
 
    const allBeaten = state.tableCards.every(slot => slot.defendingCard);
    const defender = state.players.find(player => player.id == state.defenderId);
@@ -34,4 +37,4 @@ const PassButton = () => {
    );
 };
 
-export default PassButton; 
+export default memo(PassButton); 

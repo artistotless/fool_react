@@ -1,12 +1,12 @@
 import { useRef } from "react";
 import animationService from "src/contexts/animationService";
 import { useAudio } from "src/contexts/AudioContext";
-import { useGame } from "src/contexts/GameContext";
+import useGameStore from "src/store/gameStore";
 import { testMode } from "src/environments/environment";
 import { clearTableAnimated, moveElementTo, Sounds } from "src/utils";
 
 const Test = () => {
-   const { clearTable, slots, addCardToHand } = useGame();
+   const { clearTable, slots, addCardToHand } = useGameStore();
    const { play } = useAudio();
    const { tableCardsRef } = animationService;
    const elementRef = useRef<HTMLDivElement>(null);
