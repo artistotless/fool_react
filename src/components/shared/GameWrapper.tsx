@@ -1,7 +1,7 @@
 import { DndContext } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
-import { memo, ReactNode, useMemo } from "react";
-import { useGameService } from "../../services/gameService";
+import { ReactNode, } from "react";
+import { useGameService } from "../../contexts/GameServiceContext";
 
 interface GameWrapperProps {
   children: ReactNode;

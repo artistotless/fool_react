@@ -1,6 +1,6 @@
 import { useUser } from "src/contexts/UserContext";
 import useGameStore from "src/store/gameStore";
-import { useGameService } from "src/services/gameService";
+import { useGameService } from "src/contexts/GameServiceContext";
 import styles from "./passButton.module.scss";
 import { memo } from "react";
 

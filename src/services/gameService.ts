@@ -1,102 +1,121 @@
 import { DragEndEvent } from "@dnd-kit/core";
-import { useRef, useEffect, useCallback } from "react";
 import animationService from "../contexts/animationService";
-import { useAudio } from "../contexts/AudioContext";
-import { useSignalR } from "../contexts/SignalRContext";
-import { useUser } from "../contexts/UserContext";
-import useGameStore from "../store/gameStore";
-import { GameUpdateTypes, ICard, IGameState, IPersonalState, IWinnersInfo } from "../types";
+import { ICard, IGameState, IPersonalState, IWinnersInfo } from "../types";
 import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 import { testMode } from "../environments/environment";
 
 // Максимальное количество карт на столе (как на бэкенде)
 const MAX_TABLE_CARDS = 6;
 
-export const useGameService = () => {
-  const { isConnected, data, sendData } = useSignalR();
-  const { play } = useAudio();
-  const { user } = useUser();
+class GameService {
+  private static instance: GameService;
+  private pendingActions: { type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[] = [];
+  isReloaded: boolean | null = null;
+  leftCardsCount: number = 0;
 
-  // Методы и состояние из gameStore
-  const {
-    state,
-    personalState,
-    slots,
-    passedPlayers,
-    setGameState,
-    setPersonalState,
-    setSlots,
-    addCardToHand,
-    removeCardFromHand,
-    clearTable,
-    addCardToSlot,
-    setWinnersIds,
-    setPassData,
-    setPassedPlayers,
-    addPassedPlayer
-  } = useGameStore();
+  // Приватный конструктор для предотвращения создания экземпляров извне
+  private constructor() { }
 
-  // Используем ref для хранения очереди действий, ожидающих подтверждения
-  const pendingActions = useRef<{ type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[]>([]);
-  // Для отслеживания состояния перезагрузки страницы
-  const [isReloaded, setIsReloaded] = useState<boolean | null>(null);
-  // Для отслеживания количества карт вне рук игроков и стола
-  const [leftCardsCount, setLeftCardsCount] = useState<number>(0);
-
-  // Обработка событий от SignalR
-  useEffect(() => {
-    if (data && isConnected) {
-      if (data.updateType === GameUpdateTypes.GameState) {
-        handleGameState(data.state);
-        setGameState(data.state);
-
-        // Обновляем список пасовавших игроков
-        const passedPlayers = data.state.players
-          .filter((player: any) => player.passed)
-          .map((player: any) => player.id);
-        setPassedPlayers(passedPlayers);
-
-        // Проверка подтверждений для действий
-        validatePendingActions(data.state);
-      }
-      else if (data.updateType === GameUpdateTypes.PersonalState) {
-        const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
-        if ((isReloaded || isReloadedPage) && state.rounds != 0)
-          setPersonalState(data.state);
-        else
-          handlePersonalState(data.state);
-      }
-      else if (data.updateType === GameUpdateTypes.PassedState) {
-        handlePassed(data.state);
-        // Добавляем игрока в список пасовавших
-        addPassedPlayer(data.state.playerId);
-      }
-      else if (data.winners) {
-        handleWinners(data.winners);
-      }
+  // Статический метод для получения единственного экземпляра
+  public static getInstance(): GameService {
+    if (!GameService.instance) {
+      GameService.instance = new GameService();
     }
-  }, [data, isConnected]);
+    return GameService.instance;
+  }
 
-  // Запрос обновления данных при подключении
-  useEffect(() => {
-    if (!isConnected) return;
-    sendData("GetUpdate");
-    console.log('GetUpdate');
-  }, [isConnected]);
+  // Обработка обновления состояния игры
+  handleGameState(
+    newState: IGameState, 
+    state: IGameState, 
+    user: any, 
+    clearTable: () => void, 
+    play: Function
+  ): void {
+    const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
+    const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
+    const newLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
+    const { tableCardsRef } = animationService;
 
-  // Функция для проверки подтверждения действий
-  const validatePendingActions = (newState: IGameState) => {
-    const isReloadedPage = isReloaded === null && state.tableCards.length === 0;
-    setIsReloaded(isReloadedPage);
+    // If the round ends with the defender beaten all cards
+    if ((newLeftCardsCount > this.leftCardsCount)) {
+      clearTableAnimated(tableCardsRef,
+        () => play(Sounds.CardSlideLeft), clearTable as () => void);
+    }
+
+    // If the round ends with the defender taking cards from the table
+    else if ((newState.rounds > state.rounds) && (newLeftCardsCount === this.leftCardsCount)) {
+      const toElement = state.defenderId === user.id ? "playercards" : `player-${state.defenderId}`;
+      const offsetY = state.defenderId === user.id ? 800 : -400;
+
+      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: offsetY }, () => {
+        clearTable();
+        tableCardsRef.current = {};
+      });
+    }
+
+    this.leftCardsCount = newLeftCardsCount;
+  }
+
+  // Обработка обновления персонального состояния
+  handlePersonalState(
+    newState: IPersonalState, 
+    personalState: IPersonalState, 
+    addCardToHand: Function, 
+    play: Function
+  ): void {
+    const newCardsInHand = newState.cardsInHand.filter(c =>
+      !personalState.cardsInHand.some(c2 =>
+        c2.rank.name === c.rank.name && c2.suit.name === c.suit.name
+      )
+    );
+    const animationDuration = newCardsInHand.length > 3 ? 100 : 400;
+    const sound = newCardsInHand.length > 3 ? Sounds.CardsShuffle : Sounds.CardFromDeck;
+
+    // Функция для анимации одной карты с индексом
+    const animateCard = (index: number, playSound: boolean = true) => {
+      // Если достигли конца массива, завершаем
+      if (index >= newCardsInHand.length) return;
+
+      const card = newCardsInHand[index];
+
+      if (playSound)
+        play(sound);
+
+      moveCardFromDeck("playercards", "deck", animationDuration, () => {
+        addCardToHand(card);
+        animateCard(index + 1, playSound);
+      });
+    };
+
+    // Начинаем с первой карты, если они есть
+    if (newCardsInHand.length > 0) {
+      if (sound === Sounds.CardsShuffle)
+        play(sound);
+      animateCard(0, sound === Sounds.CardFromDeck);
+    }
+  }
+
+  // Валидация ожидающих действий
+  validatePendingActions(
+    newState: IGameState, 
+    state: IGameState, 
+    slots: any[], 
+    setSlots: Function, 
+    addCardToHand: Function, 
+    addCardToSlot: Function
+  ) {
+    const isReloadedPage = this.isReloaded === null && state.tableCards.length === 0;
+    this.isReloaded = isReloadedPage;
 
     // Если есть ожидающие действия
-    if (pendingActions.current.length > 0) {
+    if (this.pendingActions.length > 0) {
       // Создаем новый массив для действий, которые не были подтверждены
-      const unconfirmedActions: typeof pendingActions.current = [];
+      const unconfirmedActions: typeof this.pendingActions = [];
       // Создаем массив для карт, которые нужно переместить в другой слот
       const cardsToMove: { card: ICard, fromSlotId?: number, toSlotId: number }[] = [];
 
-      pendingActions.current.forEach(action => {
+      this.pendingActions.forEach(action => {
         // Проверяем, есть ли карта в новом состоянии игры на столе
         let isCardOnTable = false;
         let correctSlotId: number | undefined = undefined;
@@ -130,7 +149,7 @@ export const useGameService = () => {
           let currentSlotId: number | undefined = undefined;
 
           for (let i = 0; i < slots.length; i++) {
-            const isCardInSlot = slots[i].cards.some(c =>
+            const isCardInSlot = slots[i].cards.some((c: ICard) =>
               c.rank.name === action.card.rank.name &&
               c.suit.name === action.card.suit.name
             );
@@ -169,7 +188,7 @@ export const useGameService = () => {
               if (slot.id === action.slotId) {
                 return {
                   ...slot,
-                  cards: slot.cards.filter(c =>
+                  cards: slot.cards.filter((c: ICard) =>
                     c.rank.name !== action.card.rank.name ||
                     c.suit.name !== action.card.suit.name
                   )
@@ -183,7 +202,7 @@ export const useGameService = () => {
             const newSlots = slots.map(slot => {
               return {
                 ...slot,
-                cards: slot.cards.filter(c =>
+                cards: slot.cards.filter((c: ICard) =>
                   c.rank.name !== action.card.rank.name ||
                   c.suit.name !== action.card.suit.name
                 )
@@ -203,7 +222,7 @@ export const useGameService = () => {
           if (moveInfo.fromSlotId !== undefined) {
             const fromSlot = newSlots.find(s => s.id === moveInfo.fromSlotId);
             if (fromSlot) {
-              fromSlot.cards = fromSlot.cards.filter(c =>
+              fromSlot.cards = fromSlot.cards.filter((c: ICard) =>
                 c.rank.name !== moveInfo.card.rank.name ||
                 c.suit.name !== moveInfo.card.suit.name
               );
@@ -211,7 +230,7 @@ export const useGameService = () => {
           } else {
             // Если fromSlotId не указан, ищем карту во всех слотах
             for (let i = 0; i < newSlots.length; i++) {
-              newSlots[i].cards = newSlots[i].cards.filter(c =>
+              newSlots[i].cards = newSlots[i].cards.filter((c: ICard) =>
                 c.rank.name !== moveInfo.card.rank.name ||
                 c.suit.name !== moveInfo.card.suit.name
               );
@@ -229,7 +248,7 @@ export const useGameService = () => {
       }
 
       // Очищаем очередь ожидающих действий
-      pendingActions.current = [];
+      this.pendingActions = [];
     }
     else {
       if (isReloadedPage) {
@@ -261,106 +280,41 @@ export const useGameService = () => {
         });
       }
     }
-  };
+  }
 
-  const handlePersonalState = (newState: IPersonalState): void => {
-    const newCardsInHand = newState.cardsInHand.filter(c =>
-      !personalState.cardsInHand.some(c2 =>
-        c2.rank.name === c.rank.name && c2.suit.name === c.suit.name
-      )
-    );
-    const animationDuration = newCardsInHand.length > 3 ? 100 : 400;
-    const sound = newCardsInHand.length > 3 ? Sounds.CardsShuffle : Sounds.CardFromDeck;
-
-    // Функция для анимации одной карты с индексом
-    const animateCard = (index: number, playSound: boolean = true) => {
-      // Если достигли конца массива, завершаем
-      if (index >= newCardsInHand.length) return;
-
-      const card = newCardsInHand[index];
-
-      if (playSound)
-        play(sound);
-
-      moveCardFromDeck("playercards", "deck", animationDuration, () => {
-        addCardToHand(card);
-        animateCard(index + 1, playSound);
-      });
-    };
-
-    // Начинаем с первой карты, если они есть
-    if (newCardsInHand.length > 0) {
-      if (sound === Sounds.CardsShuffle)
-        play(sound);
-      animateCard(0, sound === Sounds.CardFromDeck);
-    }
-  };
-
-  const handleGameState = (newState: IGameState): void => {
-    const playersCardsCount = newState.players.reduce((total, player) => total + player.cardsCount, 0);
-    const tableCardsCount = newState.tableCards.reduce((total, slot) => !slot.defendingCard ? total + 1 : total + 2, 0);
-    const newLeftCardsCount = 36 - newState.deckCardsCount - playersCardsCount - tableCardsCount;
-    const { tableCardsRef } = animationService;
-
-    // If the round ends with the defender beaten all cards
-    if ((newLeftCardsCount > leftCardsCount)) {
-      clearTableAnimated(tableCardsRef,
-        () => play(Sounds.CardSlideLeft), clearTable);
-    }
-
-    // If the round ends with the defender taking cards from the table
-    else if ((newState.rounds > state.rounds) && (newLeftCardsCount === leftCardsCount)) {
-      const toElement = state.defenderId === user.id ? "playercards" : `player-${state.defenderId}`;
-
-      const offsetY = state.defenderId === user.id ? 800 : -400;
-
-      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: offsetY }, () => {
-        clearTable();
-        tableCardsRef.current = {};
-      });
-    }
-
-    setLeftCardsCount(newLeftCardsCount);
-  };
-
-  const handleWinners = (info: IWinnersInfo): void => {
+  // Обработка победителей
+  handleWinners(info: IWinnersInfo, setWinnersIds: Function): void {
     setWinnersIds(info.winners);
     console.log('winnersInfo', info);
-  };
+  }
 
-  // Функция для отправки атаки
-  const attack = useCallback(async (cardId: string) => {
-    if (isConnected)
-      await sendData("Attack", cardId);
-  }, [isConnected, sendData]);
-
-  // Функция для отправки защиты
-  const defend = useCallback(async (cardDefendingId: string, cardAttackingIndex: number) => {
-    if (isConnected)
-      await sendData("Defend", cardDefendingId, cardAttackingIndex);
-  }, [isConnected, sendData]);
-
-  // Функция для передачи хода
-  const pass = useCallback(async () => {
-    if (isConnected)
-      await sendData("Pass");
-  }, [isConnected, sendData]);
+  // Обработка событий паса
+  handlePassed(
+    passedState: { playerId: string, defenderId: string, allCardsBeaten: boolean },
+    setPassData: Function
+  ): void {
+    setPassData(passedState);
+    // Очищаем состояние через 2 секунды
+    setTimeout(() => {
+      setPassData(null);
+    }, 2000);
+  }
 
   // Получение всех рангов карт на столе
-  const getTableCardRanks = useCallback(() => {
+  getTableCardRanks(slots: any[]): string[] {
     const ranks = new Set<string>();
 
     slots.forEach(slot => {
-      slot.cards.forEach(card => {
+      slot.cards.forEach((card: ICard) => {
         ranks.add(card.rank.name);
       });
     });
 
     return Array.from(ranks);
-  }, [slots]);
+  }
 
   // Проверка возможности атаки
-  const canAttack = useCallback((card: ICard) => {
+  canAttack(card: ICard, state: IGameState, slots: any[], userId: string, passedPlayers: string[]): boolean {
     // Если на столе максимальное количество карт
     const tableCardCount = slots.reduce((count, slot) => count + (slot.cards.length > 0 ? 1 : 0), 0);
     if (tableCardCount >= MAX_TABLE_CARDS) {
@@ -369,13 +323,13 @@ export const useGameService = () => {
     }
 
     // Если игрок защищающийся
-    if (state.defenderId === user.id) {
+    if (state.defenderId === userId) {
       console.log("Вы не можете атаковать, так как защищаетесь");
       return false;
     }
 
     // Если игрок уже пасовал
-    if (passedPlayers.includes(user.id)) {
+    if (passedPlayers.includes(userId)) {
       console.log("Вы уже пасовали, атака невозможна");
       return false;
     }
@@ -383,32 +337,32 @@ export const useGameService = () => {
     // Если на столе есть карты
     if (tableCardCount > 0) {
       // Если игрок не атакующий и атакующий не пасовал
-      if (state.attackerId !== user.id && !passedPlayers.includes(state.attackerId!)) {
+      if (state.attackerId !== userId && !passedPlayers.includes(state.attackerId!)) {
         console.log("Вы не можете атаковать, атакующий игрок еще не пасовал");
         return false;
       }
 
       // Проверка ранга карты - должен соответствовать рангам карт на столе
-      const tableRanks = getTableCardRanks();
+      const tableRanks = this.getTableCardRanks(slots);
       if (!tableRanks.includes(card.rank.name)) {
         console.log("Карта должна иметь такой же ранг, как карты на столе");
         return false;
       }
     } else {
       // Если на столе нет карт, и игрок не является атакующим
-      if (state.attackerId !== user.id) {
+      if (state.attackerId !== userId) {
         console.log("Вы не можете атаковать первым, так как не являетесь атакующим");
         return false;
       }
     }
 
     return true;
-  }, [state, slots, user.id, passedPlayers, getTableCardRanks]);
+  }
 
   // Проверка возможности защиты
-  const canDefend = useCallback((defendingCard: ICard, slotId: number) => {
+  canDefend(defendingCard: ICard, slotId: number, state: IGameState, slots: any[], userId: string): boolean {
     // Если игрок не является защищающимся
-    if (state.defenderId !== user.id) {
+    if (state.defenderId !== userId) {
       console.log("Вы не можете защищаться, так как не являетесь защищающимся");
       return false;
     }
@@ -443,71 +397,61 @@ export const useGameService = () => {
     }
 
     return true;
-  }, [state, slots, user.id]);
+  }
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const card = event.active.data.current?.card;
+  // Создание клона карты
+  createCardClone(cardId: string, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null {
+    // Создаем копию карты в той же позиции, где было отпущено перетаскивание
+    const originalCardElement = document.getElementById(`playercard-${cardId}`);
+    if (originalCardElement && dropPosition) {
+      // Создаем клон карты
+      const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
+      cardClone.id = `playercard-clone-${cardId}`;
+      cardClone.style.position = 'absolute';
 
-    if (String(event.over?.id).startsWith("slot") && state.defenderId === user.id) {
-      const slotId = String(event.over?.id);
-      const id = Number(slotId.split("-")[1]);
+      // Используем позицию, где было завершено перетаскивание
+      cardClone.style.left = `${dropPosition.left}px`;
+      cardClone.style.top = `${dropPosition.top}px`;
+      cardClone.style.width = `${originalCardElement.offsetWidth}px`;
+      cardClone.style.height = `${originalCardElement.offsetHeight}px`;
+      cardClone.style.transform = '';
+      cardClone.style.zIndex = '1999';
+      cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
 
-      // Получаем координаты, где карта была отпущена
-      const dropPosition = event.active.rect.current.translated;
-
-      // Преобразуем ClientRect в нужный формат
-      const position = dropPosition ? {
-        top: dropPosition.top,
-        left: dropPosition.left,
-        width: dropPosition.width,
-        height: dropPosition.height
-      } : null;
-
-      onDroppedToTableSlot(card as ICard, id, position);
+      return cardClone;
     }
-    else if (card) {
-      const offset = 50;
-      const middleOfDropZone = (window.innerHeight / 2) + offset;
-      const activeRect = event.active.rect.current.translated;
 
-      if (!activeRect?.top)
-        return;
+    return null;
+  }
 
-      // Проверяем, находится ли точка дропа выше середины зоны
-      const isAfterMiddle = middleOfDropZone >= activeRect?.top;
-      if (!isAfterMiddle)
-        return;
-
-      const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
-      if (availableSlot == -1)
-        return;
-
-      // Преобразуем ClientRect в нужный формат
-      const position = {
-        top: activeRect.top,
-        left: activeRect.left,
-        width: activeRect.width,
-        height: activeRect.height
-      };
-
-      onDroppedToTableSlot(card as ICard, availableSlot, position);
-    }
-  }, []);
-
-  const onDroppedToTableSlot = (card: ICard, slotId: number, dropPosition?: { top: number, left: number, width?: number, height?: number } | null) => {
-    const type = state.defenderId === user.id ? 'defend' : 'attack';
+  // Обработка перетаскивания карты на слот
+  onDroppedToTableSlot(
+    card: ICard,
+    slotId: number,
+    state: IGameState,
+    slots: any[],
+    userId: string,
+    passedPlayers: string[],
+    removeCardFromHand: Function,
+    addCardToSlot: Function,
+    defend: Function,
+    attack: Function,
+    play: Function,
+    dropPosition?: { top: number, left: number, width?: number, height?: number } | null
+  ) {
+    const type = state.defenderId === userId ? 'defend' : 'attack';
 
     if (type === 'defend') {
       // Если игрок защищается
       // Проверяем возможность защиты данной картой
-      if (!canDefend(card, slotId) && !testMode().canDefend) {
+      if (!this.canDefend(card, slotId, state, slots, userId) && !testMode().canDefend) {
         console.log("Защита невозможна по правилам игры");
         return;
       }
     } else {
       // Если игрок атакует
       // Проверяем возможность атаки
-      if (!canAttack(card) && !testMode().canAttack) {
+      if (!this.canAttack(card, state, slots, userId, passedPlayers) && !testMode().canAttack) {
         console.log("Атака невозможна по правилам игры");
         return;
       }
@@ -515,7 +459,7 @@ export const useGameService = () => {
 
     const cardId = `${card.suit.name}-${card.rank.name}`;
     // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-    const cardClone = createCardClone(cardId, dropPosition);
+    const cardClone = this.createCardClone(cardId, dropPosition);
 
     // Скрываем оригинальную карту, чтобы она не появлялась в руке
     const originalCard = document.getElementById(`playercard-${cardId}`);
@@ -546,7 +490,7 @@ export const useGameService = () => {
       }
 
       // Добавляем действие в список ожидающих подтверждения
-      pendingActions.current.push({
+      this.pendingActions.push({
         type,
         cardId,
         slotId,
@@ -560,43 +504,93 @@ export const useGameService = () => {
     });
   }
 
-  const createCardClone = (cardId: string, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null => {
-    // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-    const originalCardElement = document.getElementById(`playercard-${cardId}`);
-    if (originalCardElement && dropPosition) {
-      // Создаем клон карты
-      const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
-      cardClone.id = `playercard-clone-${cardId}`;
-      cardClone.style.position = 'absolute';
+  // Обработка завершения перетаскивания
+  handleDragEnd(
+    event: DragEndEvent,
+    state: IGameState,
+    slots: any[],
+    userId: string,
+    passedPlayers: string[],
+    removeCardFromHand: Function,
+    addCardToSlot: Function,
+    defend: Function,
+    attack: Function,
+    play: Function
+  ) {
+    const card = event.active.data.current?.card;
 
-      // Используем позицию, где было завершено перетаскивание
-      cardClone.style.left = `${dropPosition.left}px`;
-      cardClone.style.top = `${dropPosition.top}px`;
-      cardClone.style.width = `${originalCardElement.offsetWidth}px`;
-      cardClone.style.height = `${originalCardElement.offsetHeight}px`;
-      cardClone.style.transform = '';
-      cardClone.style.zIndex = '1999';
-      cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
+    if (String(event.over?.id).startsWith("slot") && state.defenderId === userId) {
+      const slotId = String(event.over?.id);
+      const id = Number(slotId.split("-")[1]);
 
-      return cardClone;
+      // Получаем координаты, где карта была отпущена
+      const dropPosition = event.active.rect.current.translated;
+
+      // Преобразуем ClientRect в нужный формат
+      const position = dropPosition ? {
+        top: dropPosition.top,
+        left: dropPosition.left,
+        width: dropPosition.width,
+        height: dropPosition.height
+      } : null;
+
+      this.onDroppedToTableSlot(
+        card as ICard,
+        id,
+        state,
+        slots,
+        userId,
+        passedPlayers,
+        removeCardFromHand,
+        addCardToSlot,
+        defend,
+        attack,
+        play,
+        position
+      );
     }
+    else if (card) {
+      const offset = 50;
+      const middleOfDropZone = (window.innerHeight / 2) + offset;
+      const activeRect = event.active.rect.current.translated;
 
-    return null;
-  };
+      if (!activeRect?.top)
+        return;
 
-  const handlePassed = (passedState: { playerId: string, defenderId: string, allCardsBeaten: boolean }): void => {
-    setPassData(passedState);
-    // Очищаем состояние через 2 секунды
-    setTimeout(() => {
-      setPassData(null);
-    }, 2000);
-  };
+      // Проверяем, находится ли точка дропа выше середины зоны
+      const isAfterMiddle = middleOfDropZone >= activeRect?.top;
+      if (!isAfterMiddle)
+        return;
 
-  return {
-    handleDragEnd,
-    pass
-  };
-};
+      const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
+      if (availableSlot == -1)
+        return;
 
-// Импорт useState, который был пропущен
-import { useState } from "react"; 
+      // Преобразуем ClientRect в нужный формат
+      const position = {
+        top: activeRect.top,
+        left: activeRect.left,
+        width: activeRect.width,
+        height: activeRect.height
+      };
+
+      this.onDroppedToTableSlot(
+        card as ICard,
+        availableSlot,
+        state,
+        slots,
+        userId,
+        passedPlayers,
+        removeCardFromHand,
+        addCardToSlot,
+        defend,
+        attack,
+        play,
+        position
+      );
+    }
+  }
+}
+
+// Экспортируем синглтон
+export const gameService = GameService.getInstance();
