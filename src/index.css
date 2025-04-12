@@ -55,3 +55,19 @@ body {
    max-height: 100%;
    overflow: hidden;
 }
+
+/* Стили для временных элементов карт и "привидений" */
+.card-ghost {
+   pointer-events: none !important;
+   z-index: 1 !important;
+   border-radius: 10px;
+   opacity: 0;
+   transition: opacity 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out;
+}
+
+.temp-card {
+   visibility: hidden !important;
+   position: relative !important;
+   pointer-events: none !important;
+   opacity: 0 !important;
+}
