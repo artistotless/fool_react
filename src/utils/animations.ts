@@ -224,9 +224,6 @@ export const animateCardToSlot = (
    // Если слот пустой, сначала изменяем его размер до размера карты,
    // но делаем невидимым и только потом запускаем анимацию
    if (isEmptySlot) {
-      // Добавляем класс has_cards для инициирования плавного изменения размера
-      slotElement.classList.add('has_cards');
-      
       // Создаём временную карту, которая займёт место в слоте для правильной анимации
       const tempCard = document.createElement('div');
       tempCard.className = 'card temp-card';
@@ -237,7 +234,6 @@ export const animateCardToSlot = (
       
       // Добавляем временную карту в слот перед началом анимации
       slotElement.appendChild(tempCard);
-      slotElement.setAttribute('data-has-cards', 'true'); // устанавливаем data-атрибут
       
       // Функция для удаления временной карты после завершения анимации
       const cleanupTempCard = () => {
@@ -246,7 +242,7 @@ export const animateCardToSlot = (
          }
       };
       
-      // Задержка перед получением новых координат, чтобы DOM успел обновиться с новыми размерами
+      // Задержка перед получением новых координат, чтобы DOM успел обновиться
       setTimeout(() => {
          // Теперь слот имеет размер карты, получаем его актуальные координаты
          const slotRect = getAbsolutePosition(slotElement);
@@ -294,8 +290,7 @@ export const animateCardToSlot = (
             }
          }, animationDuration - 150);
          
-         // Вызываем функцию завершения анимации с небольшой задержкой,
-         // чтобы дать время соседним слотам плавно переместиться
+         // Вызываем функцию завершения анимации
          setTimeout(() => {
             cleanupTempCard();
             onComplete && onComplete();
