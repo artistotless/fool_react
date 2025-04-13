@@ -44,29 +44,29 @@ const testPlayers = [
         id: "player1",
         passed: false,
         cardsCount: 6
- },
- {
-        name: "Player 2",
-        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=2`,
-        id: "player2",
-        passed: false,
-        cardsCount: 6
- },
- {
-        name: "Player 3",
-        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
-        id: "player3",
-        passed: false,
-        cardsCount: 6
     }
+    //, {
+    //     name: "Player 2",
+    //     avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=2`,
+    //     id: "player2",
+    //     passed: false,
+    //     cardsCount: 6
+    // },
+    // {
+    //     name: "Player 3",
+    //     avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
+    //     id: "player3",
+    //     passed: false,
+    //     cardsCount: 6
+    // }
 ];
 
 export const testMode = (): {
     testButtons: boolean;
-    canAttack: boolean
-    canDefend: boolean
     testCards: ICard[]
     testTrumpCard: ICard
+    testMoveTime: string
+    testMovedAt: string
     enabled: boolean
     testPlayers: { name: string, avatar: string, id: string, passed: boolean, cardsCount: number }[]
 } => {
@@ -88,17 +88,17 @@ export const testMode = (): {
     })
 
     return {
-        canAttack: testModeEnabled,
         testButtons: false || testModeEnabled,
-        canDefend: testModeEnabled,
         testCards: cards,
         enabled: testModeEnabled,
         testTrumpCard: testTrumpCard as ICard,
-        testPlayers: testPlayers
+        testPlayers: testPlayers,
+        testMoveTime: "00:00:10",
+        testMovedAt: new Date().toISOString()
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

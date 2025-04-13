@@ -323,7 +323,7 @@ class GameService {
     }
 
     // Если игрок защищающийся
-    if (state.defenderId === userId) {
+    if (state.defenderId === userId ) {
       console.log("Вы не можете атаковать, так как защищаетесь");
       return false;
     }
@@ -362,7 +362,7 @@ class GameService {
   // Проверка возможности защиты
   canDefend(defendingCard: ICard, slotId: number, state: IGameState, slots: any[], userId: string): boolean {
     // Если игрок не является защищающимся
-    if (state.defenderId !== userId) {
+    if (state.defenderId !== userId && !testMode().enabled) {
       console.log("Вы не можете защищаться, так как не являетесь защищающимся");
       return false;
     }
@@ -437,21 +437,21 @@ class GameService {
     defend: Function,
     attack: Function,
     play: Function,
+    type: string,
     dropPosition?: { top: number, left: number, width?: number, height?: number } | null
   ) {
-    const type = state.defenderId === userId ? 'defend' : 'attack';
 
     if (type === 'defend') {
       // Если игрок защищается
       // Проверяем возможность защиты данной картой
-      if (!this.canDefend(card, slotId, state, slots, userId) && !testMode().canDefend) {
+      if (!this.canDefend(card, slotId, state, slots, userId)) {
         console.log("Защита невозможна по правилам игры");
         return;
       }
     } else {
       // Если игрок атакует
       // Проверяем возможность атаки
-      if (!this.canAttack(card, state, slots, userId, passedPlayers) && !testMode().canAttack) {
+      if (!this.canAttack(card, state, slots, userId, passedPlayers) && !testMode().enabled) {
         console.log("Атака невозможна по правилам игры");
         return;
       }
@@ -491,7 +491,7 @@ class GameService {
 
       // Добавляем действие в список ожидающих подтверждения
       this.pendingActions.push({
-        type,
+        type: type as 'attack' | 'defend',
         cardId,
         slotId,
         card
@@ -518,11 +518,12 @@ class GameService {
     play: Function
   ) {
     const card = event.active.data.current?.card;
+    let type = 'attack';
 
-    if (String(event.over?.id).startsWith("slot") && state.defenderId === userId) {
+    if (String(event.over?.id).startsWith("slot") && (state.defenderId === userId || testMode().enabled)) {
       const slotId = String(event.over?.id);
       const id = Number(slotId.split("-")[1]);
-
+      type = 'defend';
       // Получаем координаты, где карта была отпущена
       const dropPosition = event.active.rect.current.translated;
 
@@ -546,25 +547,50 @@ class GameService {
         defend,
         attack,
         play,
+        type,
         position
       );
     }
     else if (card) {
-      const offset = 50;
+      const offset = 130;
       const middleOfDropZone = (window.innerHeight / 2) + offset;
       const activeRect = event.active.rect.current.translated;
 
       if (!activeRect?.top)
         return;
 
+      console.log('activeRect', activeRect?.top);
       // Проверяем, находится ли точка дропа выше середины зоны
       const isAfterMiddle = middleOfDropZone >= activeRect?.top;
       if (!isAfterMiddle)
         return;
 
-      const availableSlot = slots.findIndex(slot => slot.cards.length === 0);
-      if (availableSlot == -1)
-        return;
+      let targetSlotId = -1;
+      
+      // Если игрок защищается и на столе есть карта, которую можно побить
+      if (state.defenderId === userId || testMode().enabled) {
+        // Ищем слот с картой, которую можно побить
+        for (let i = 0; i < slots.length; i++) {
+          const slot = slots[i];
+          // Проверяем, что в слоте есть атакующая карта и нет защищающей
+          if (slot.cards.length === 1) {
+            // Проверяем, можно ли эту карту побить
+            if (this.canDefend(card, slot.id, state, slots, userId)) {
+              targetSlotId = slot.id;
+              type = 'defend';
+              break;
+            }
+          }
+        }
+      }
+      
+      // Если не нашли карту для защиты или игрок атакует, ищем пустой слот
+      if (targetSlotId === -1) {
+        targetSlotId = slots.findIndex(slot => slot.cards.length === 0);
+        type = 'attack';
+        if (targetSlotId === -1)
+          return;
+      }
 
       // Преобразуем ClientRect в нужный формат
       const position = {
@@ -576,7 +602,7 @@ class GameService {
 
       this.onDroppedToTableSlot(
         card as ICard,
-        availableSlot,
+        targetSlotId,
         state,
         slots,
         userId,
@@ -586,6 +612,7 @@ class GameService {
         defend,
         attack,
         play,
+        type,
         position
       );
     }

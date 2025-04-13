@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { IFoolPlayer } from 'src/types';
 import styles from './playercompact.module.scss';
+import ProgressTimer from '../ProgressTimer';
+import { testMode } from 'src/environments/environment';
+import useGameStore from 'src/store/gameStore';
 // import { testMode } from 'src/environments/environment';
 // import ProgressTimer from '../ProgressTimer';
 // import useGameStore from 'src/store/gameStore';
@@ -13,6 +16,8 @@ interface PlayerCompactProps extends IFoolPlayer {
    isActive?: boolean;
    isWaiting?: boolean;
    timeLeft?: number;
+   passedPlayers?: string[]; // Массив ID игроков, которые "пасанули"
+   unbeatenCardsCount?: number; // Количество непобитых карт на столе
 }
 
 const PlayerCompact = ({
@@ -25,11 +30,15 @@ const PlayerCompact = ({
    isCurrentUser,
    isActive,
    isWaiting,
-   timeLeft = 40,
-   id
+   id,
+   passedPlayers = [],
+   unbeatenCardsCount = 0
 }: PlayerCompactProps) => {
    const [avatarSrc, setAvatarSrc] = useState<string>(avatar);
-   const [timer, setTimer] = useState<number>(timeLeft);
+   const [shouldShowTimer, setShouldShowTimer] = useState<boolean>(false);
+   const { state } = useGameStore();
+
+   console.log('playerCompact rendered');
 
    useEffect(() => {
       // Если аватарка отсутствует, загружаем случайную с DiceBear API
@@ -44,23 +53,32 @@ const PlayerCompact = ({
       }
    }, [avatar, id, name]);
 
+   // Определяем, должен ли отображаться таймер по новым правилам
    useEffect(() => {
-      let intervalId: NodeJS.Timeout | null = null;
-      
-      if (isWaiting && timer > 0) {
-         intervalId = setInterval(() => {
-            setTimer(prev => Math.max(0, prev - 1));
-         }, 1000);
-      }
-      
-      return () => {
-         if (intervalId) clearInterval(intervalId);
-      };
-   }, [isWaiting, timer]);
+      const isPlayerPassed = id ? passedPlayers.includes(id) : false;
+      let showTimer = false;
 
-   useEffect(() => {
-      setTimer(timeLeft);
-   }, [timeLeft, isWaiting]);
+      if(testMode().enabled) {
+         showTimer = true;
+      } else if (isAttacking && !isPlayerPassed && unbeatenCardsCount === 0) {
+         // Таймер для атакующего, если он не в списке пасанувших
+         showTimer = true;
+      } else if (isDefending && !isPlayerPassed && unbeatenCardsCount > 0) {
+         // Таймер для защищающегося, если он не в списке пасанувших И есть непобитые карты
+         showTimer = true;
+      } else if (!isAttacking && !isDefending && 
+                 passedPlayers.some(pId => document.getElementById(`player-${pId}`)?.classList.contains(styles.attacking)) &&
+                 !isPlayerPassed) {
+         // Таймер для других игроков, если атакующий пасанул и этот игрок не пасанул
+         showTimer = true;
+      }
+      else if (!isDefending && passedPlayers.length > 0 && passedPlayers.length === (document.querySelectorAll('[id^="player-"]').length - 1) && !isPlayerPassed) {
+         showTimer = true;
+      }
+
+      setShouldShowTimer(showTimer);
+   }, [id, isAttacking, isDefending, passedPlayers, unbeatenCardsCount]);
+
 
    // let statusClass = '';
    // if (isAttacking) statusClass = styles.attacking;
@@ -77,10 +95,6 @@ const PlayerCompact = ({
       isWaiting && styles.waiting
    ].filter(Boolean).join(' ');
 
-   // const testMoveTime = "00:00:30"; // Изменено с числа на строку в формате HH:mm:ss
-   // const testMovedAt = new Date().toISOString();
-
-   // const {state} = useGameStore();
 
    return (
       <div className={playerClass} id={`player-${id}`}>
@@ -95,14 +109,13 @@ const PlayerCompact = ({
             <div className={styles.name}>{name}</div>
             <div className={styles.cards_count}>{cardsCount}</div>
          </div>
-         {/* {(testMode().enabled || (state.moveTime && state.movedAt)) && (
+         {shouldShowTimer && (testMode().enabled || (state.moveTime && state.movedAt)) && (
                <ProgressTimer 
-                  moveTime={testMode().enabled ? testMoveTime : (state.moveTime ?? "00:00:30")} 
-                  movedAt={testMode().enabled ? testMovedAt : (state.movedAt ?? new Date().toISOString())}
+                  moveTime={testMode().enabled ? testMode().testMoveTime : (state.moveTime ?? "00:00:30")} 
+                  movedAt={testMode().enabled ? testMode().testMovedAt : (state.movedAt ?? new Date().toISOString())}
                   className={styles.progress}
                />
-            )} */}
-         {isWaiting && <div className={styles.timer_bar} style={{ width: `${(timer / timeLeft) * 100}%` }} />}
+            )}
       </div>
    );
 };

@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useMemo, useRef } from 'react';
 
 interface AudioContext {
-  play: ({ id, src }: { id: number, src: string }) => void;
+  play: ({ id, src }: { id: number, src: string }, loop: boolean) => void;
   pause: (id: number) => void;
   stop: (id: number) => void;
 }
@@ -14,7 +14,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({}); // Храним ссылки на аудиоэлементы
 
   // Функция для воспроизведения звука
-  const play = ({ id, src }: { id: number, src: string }) => {
+  const play = ({ id, src }: { id: number, src: string }, loop: boolean = false) => {
     if (!audioRefs.current[id]) {
       // Создаем новый аудиоэлемент, если его нет
       audioRefs.current[id] = new Audio(src);
@@ -22,6 +22,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const audio = audioRefs.current[id];
+    audio.loop = loop;
 
     if (audio.paused) {
       audio.play();

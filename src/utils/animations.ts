@@ -219,7 +219,7 @@ export const animateCardToSlot = (
    const cardRect = getAbsolutePosition(cardElement);
    
    // Проверяем, есть ли у слота дочерние элементы (карты)
-   const isEmptySlot = slotElement.querySelector('.card') === null;
+   const isEmptySlot = slotElement.children.length === 0;
    
    // Если слот пустой, сначала изменяем его размер до размера карты,
    // но делаем невидимым и только потом запускаем анимацию
@@ -268,11 +268,22 @@ export const animateCardToSlot = (
          cardGhost.style.border = '1px dashed rgba(42, 171, 238, 0.5)';
          cardGhost.style.left = '50%';
          cardGhost.style.top = '50%';
-         cardGhost.style.transform = 'translate(-50%, -50%)';
+         cardGhost.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+         cardGhost.style.transformStyle = 'flat';
          cardGhost.style.zIndex = '1';
          cardGhost.style.opacity = '0';
          
-         slotElement.appendChild(cardGhost);
+         // Важно: устанавливаем CSS-правила, которые переопределят любые наследуемые эффекты вращения
+         cardGhost.style.rotate = '0deg';
+         cardGhost.style.setProperty('rotate', '0deg', 'important');
+         cardGhost.style.setProperty('transform', 'translate(-50%, -50%) rotate(0deg)', 'important');
+         
+         // Вставляем призрака КАК ПЕРВЫЙ ЭЛЕМЕНТ, чтобы избежать автоматического применения rotate: 5deg
+         if (slotElement.firstChild) {
+            slotElement.insertBefore(cardGhost, slotElement.firstChild);
+         } else {
+            slotElement.appendChild(cardGhost);
+         }
          
          setTimeout(() => {
             cardGhost.style.opacity = '1';

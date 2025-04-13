@@ -9,7 +9,7 @@ import { testMode } from 'src/environments/environment';
 import useGameStore from 'src/store/gameStore';
 
 const TopPanel = () => {
-   const { state, addCardToHand } = useGameStore();
+   const { state, passedPlayers, addCardToHand } = useGameStore();
    const { user } = useUser();
 
    // Количество карт в колоде
@@ -161,6 +161,8 @@ const TopPanel = () => {
                      isAttacking={player.id === state.attackerId}
                      isDefending={player.id === state.defenderId}
                      isPassed={player.passed}
+                     passedPlayers={passedPlayers}
+                     unbeatenCardsCount={state.tableCards.filter(x => !x.defendingCard).length}
                      isWaiting={true}
                   />
                ))}

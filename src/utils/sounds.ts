@@ -4,4 +4,5 @@ export const Sounds = {
    Toast: { id: 3, src: '../src/assets/sounds/toast_sound.mp3' },
    CardFromDeck: { id: 4, src: '../src/assets/sounds/card-deck-flick.mp3' },
    CardsShuffle: { id: 5, src: '../src/assets/sounds/card_shuffle.mp3' },
+   Timer: { id: 6, src: '../src/assets/sounds/timer.wav' }
 }
