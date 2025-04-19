@@ -38,7 +38,6 @@ const ProgressTimer = ({
         
         // Управление звуком тикания часов
         if (remainingPercent <= 60 && !soundPlayedRef.current) {
-          console.log(remainingPercent);
           play(Sounds.Timer, true);
           soundPlayedRef.current = true;
         }
@@ -54,8 +53,6 @@ const ProgressTimer = ({
           intervalRef.current = null;
           stop(Sounds.Timer.id);
         }
-
-        console.log(remainingPercent);
       };
 
       updateProgress();

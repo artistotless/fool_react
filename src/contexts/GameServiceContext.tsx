@@ -149,7 +149,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     if (!isConnected) return false;
     try {
       const result = await sendData("ValidateAttack", cardId);
-      return !!result?.isValid;
+      return result && typeof result === 'object' && 'isValid' in result ? !!result.isValid : false;
     } catch (error) {
       console.error("Ошибка при валидации атаки:", error);
       return false;
@@ -161,7 +161,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     if (!isConnected) return false;
     try {
       const result = await sendData("ValidateDefend", cardId, slotId);
-      return !!result?.isValid;
+      return result && typeof result === 'object' && 'isValid' in result ? !!result.isValid : false;
     } catch (error) {
       console.error("Ошибка при валидации защиты:", error);
       return false;

@@ -1,10 +1,10 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import animationService from "../contexts/animationService";
-import { 
-  ICard, 
-  IGameState, 
-  IPersonalState, 
-  IWinnersInfo, 
+import {
+  ICard,
+  IGameState,
+  IPersonalState,
+  IWinnersInfo,
   ICardActionResult,
   ICardsMoveEvent,
   IRoundEndedEvent,
@@ -79,13 +79,13 @@ class GameService {
   // Метод для обработки отклоненного действия с картой
   handleCardActionRejected(action: ICardActionResult, addCardToHand: Function) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
-    
+
     // Находим оригинальную карту
     const originalCard = document.getElementById(`playercard-${action.cardId}`);
     if (originalCard) {
       originalCard.style.visibility = 'visible';
     }
-    
+
     // Возвращаем карту в руку игрока
     // Для этого нам нужно получить данные карты
     // В реальном приложении эти данные должны приходить от сервера
@@ -95,7 +95,7 @@ class GameService {
       suit: { name: suitName, iconChar: '' },
       rank: { name: rankName, value: 0 }
     };
-    
+
     addCardToHand(cardData);
   }
 
@@ -113,18 +113,18 @@ class GameService {
         suit: { name: suitName, iconChar: '' },
         rank: { name: rankName, value: 0 }
       };
-      
+
       // Обрабатываем различные типы перемещений
       if (move.fromLocation.type === 'hand' && move.toLocation.type === 'table') {
         // Карта из руки на стол
         if (move.fromLocation.playerId === 'currentPlayer') {
           removeCardFromHand(move.cardId);
-          
+
           // Анимируем перемещение карты в слот
           if (move.toLocation.slotId !== undefined) {
             // Здесь должна быть анимация
             play(Sounds.CardAddedToTable);
-            
+
             // Добавляем карту в слот
             addCardToSlot(cardData, move.toLocation.slotId);
           }
@@ -146,7 +146,7 @@ class GameService {
   // Метод для обработки окончания раунда
   handleRoundEnded(event: IRoundEndedEvent, userId: string, clearTable: Function, play: Function) {
     const { tableCardsRef } = animationService;
-    
+
     if (event.reason === 'allCardsBeaten') {
       // Все карты отбиты
       clearTableAnimated(tableCardsRef,
@@ -180,7 +180,7 @@ class GameService {
   // Метод для обработки раздачи карт
   handleCardsDealt(event: ICardsDealtEvent, play: Function) {
     const isCurrentPlayer = event.playerId === 'currentPlayer';
-    
+
     // Проигрываем звук раздачи карт
     if (event.isInitialDeal) {
       if (event.count > 3) {
@@ -191,7 +191,7 @@ class GameService {
     } else {
       play(Sounds.CardFromDeck);
     }
-    
+
     // Анимируем раздачу карт
     if (isCurrentPlayer) {
       for (let i = 0; i < event.count; i++) {
