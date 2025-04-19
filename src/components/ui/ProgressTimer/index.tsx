@@ -43,12 +43,19 @@ const ProgressTimer = ({
           soundPlayedRef.current = true;
         }
         
+        if(remainingPercent > 60 && soundPlayedRef.current) {
+          stop(Sounds.Timer.id);
+          soundPlayedRef.current = false;
+        }
+        
         // Остановка таймера при достижении 0
         if (remainingPercent === 0 && intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
           stop(Sounds.Timer.id);
         }
+
+        console.log(remainingPercent);
       };
 
       updateProgress();

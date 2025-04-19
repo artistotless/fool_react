@@ -5,11 +5,22 @@ import { useSignalR } from './SignalRContext';
 import { useUser } from './UserContext';
 import useGameStore from '../store/gameStore';
 import { DragEndEvent } from '@dnd-kit/core';
-import { GameUpdateTypes } from '../types';
+import { 
+  GameUpdateTypes, 
+  ICardActionResult, 
+  ICardsMoveEvent, 
+  IGameFinishedEvent,
+  IRoundEndedEvent,
+  IPlayerCardAction,
+  ICardsDealtEvent,
+  IStatePatchEvent
+} from '../types';
 
 interface GameServiceContextType {
   handleDragEnd: (event: DragEndEvent) => void;
   pass: () => Promise<void>;
+  validateAttack: (cardId: string) => Promise<boolean>;
+  validateDefend: (cardId: string, slotId: number) => Promise<boolean>;
 }
 
 // Создаем контекст
@@ -37,40 +48,92 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     setWinnersIds,
     setPassData,
     setPassedPlayers,
-    addPassedPlayer
+    addPassedPlayer,
+    applyStatePatch
   } = useGameStore();
 
   // Обработка событий от SignalR
   useEffect(() => {
-    if (data && isConnected) {
-      if (data.updateType === GameUpdateTypes.GameState) {
-        gameService.handleGameState(data.state, state, user, clearTable, play);
-        setGameState(data.state);
+    if (!data || !isConnected) return;
 
+    switch(data.updateType) {
+      case GameUpdateTypes.GameState:
+        setGameState(data.state);
+        
         // Обновляем список пасовавших игроков
         const passedPlayers = data.state.players
           .filter((player: any) => player.passed)
           .map((player: any) => player.id);
         setPassedPlayers(passedPlayers);
-
-        // Проверка подтверждений для действий
-        gameService.validatePendingActions(data.state, state, slots, setSlots, addCardToHand, addCardToSlot);
-      }
-      else if (data.updateType === GameUpdateTypes.PersonalState) {
-        const isReloadedPage = gameService.isReloaded === null && state.tableCards.length === 0;
-        if ((gameService.isReloaded || isReloadedPage) && state.rounds != 0)
-          setPersonalState(data.state);
-        else
-          gameService.handlePersonalState(data.state, personalState, addCardToHand, play);
-      }
-      else if (data.updateType === GameUpdateTypes.PassedState) {
-        gameService.handlePassed(data.state, setPassData);
+        break;
+        
+      case GameUpdateTypes.PersonalState:
+        setPersonalState(data.state);
+        break;
+        
+      case GameUpdateTypes.PassedState:
+        setPassData(data.state);
+        
         // Добавляем игрока в список пасовавших
         addPassedPlayer(data.state.playerId);
-      }
-      else if (data.winners) {
-        gameService.handleWinners(data.winners, setWinnersIds);
-      }
+        
+        // Очищаем состояние через 2 секунды
+        setTimeout(() => {
+          setPassData(null);
+        }, 2000);
+        break;
+        
+      case GameUpdateTypes.CardActionAccepted:
+        // Обработка успешного действия с картой
+        gameService.handleCardActionAccepted(data.action as ICardActionResult);
+        break;
+        
+      case GameUpdateTypes.CardActionRejected:
+        // Обработка отклоненного действия с картой
+        gameService.handleCardActionRejected(data.action as ICardActionResult, addCardToHand);
+        break;
+        
+      case GameUpdateTypes.CardsMoved:
+        // Обработка перемещения карт
+        gameService.handleCardsMoved(data.moves as ICardsMoveEvent, play, removeCardFromHand, addCardToHand, addCardToSlot);
+        break;
+        
+      case GameUpdateTypes.RoundEnded:
+        // Обработка окончания раунда
+        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, clearTable, play);
+        break;
+        
+      case GameUpdateTypes.TableSlotsUpdated:
+        // Прямое обновление слотов стола
+        setSlots(data.slots);
+        break;
+        
+      case GameUpdateTypes.PlayerDrewCards:
+      case GameUpdateTypes.PlayerPlayedCard:
+        // Анимации для действий других игроков
+        gameService.handlePlayerAction(data.event as IPlayerCardAction, play);
+        break;
+        
+      case GameUpdateTypes.CardsDealt:
+        // Анимация раздачи карт
+        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play);
+        break;
+        
+      case GameUpdateTypes.GameFinished:
+        // Обработка окончания игры
+        gameService.handleGameFinished(data.event as IGameFinishedEvent, setWinnersIds);
+        break;
+        
+      case GameUpdateTypes.StatePatched:
+        // Инкрементное обновление состояния
+        applyStatePatch(data.event as IStatePatchEvent);
+        break;
+        
+      default:
+        if (data.winners) {
+          setWinnersIds(data.winners);
+        }
+        break;
     }
   }, [data, isConnected]);
 
@@ -80,6 +143,30 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     sendData("GetUpdate");
     console.log('GetUpdate');
   }, [isConnected, sendData]);
+
+  // Функция для проверки возможности атаки
+  const validateAttack = useCallback(async (cardId: string) => {
+    if (!isConnected) return false;
+    try {
+      const result = await sendData("ValidateAttack", cardId);
+      return !!result?.isValid;
+    } catch (error) {
+      console.error("Ошибка при валидации атаки:", error);
+      return false;
+    }
+  }, [sendData, isConnected]);
+
+  // Функция для проверки возможности защиты
+  const validateDefend = useCallback(async (cardId: string, slotId: number) => {
+    if (!isConnected) return false;
+    try {
+      const result = await sendData("ValidateDefend", cardId, slotId);
+      return !!result?.isValid;
+    } catch (error) {
+      console.error("Ошибка при валидации защиты:", error);
+      return false;
+    }
+  }, [sendData, isConnected]);
 
   // Функция для отправки атаки
   const attack = useCallback(async (cardId: string) => {
@@ -100,26 +187,63 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   }, [sendData, isConnected]);
 
   // Обработчик завершения перетаскивания
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    gameService.handleDragEnd(
-      event,
-      state,
-      slots,
-      user.id,
-      passedPlayers,
-      removeCardFromHand,
-      addCardToSlot,
-      defend,
-      attack,
-      play
-    );
-  }, [state, slots, user.id, passedPlayers, removeCardFromHand, addCardToSlot, defend, attack, play]);
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const card = event.active.data.current?.card;
+    if (!card) return;
+    
+    // Проверяем, куда перетащили карту
+    if (String(event.over?.id).startsWith("slot")) {
+      const slotId = Number(String(event.over?.id).split("-")[1]);
+      
+      // Защита
+      if (state.defenderId === user.id) {
+        // Проверяем возможность защиты у сервера
+        const isValid = await validateDefend(
+          `${card.suit.name}-${card.rank.name}`, 
+          slotId
+        );
+        
+        if (isValid) {
+          removeCardFromHand(`${card.suit.name}-${card.rank.name}`);
+          // Анимируем перемещение карты
+          gameService.animateCardToSlot(
+            card, 
+            slotId, 
+            event.active.rect.current.translated, 
+            play
+          );
+          // Отправляем команду серверу
+          defend(`${card.suit.name}-${card.rank.name}`, slotId);
+        }
+      } 
+      // Атака
+      else {
+        // Проверяем возможность атаки у сервера
+        const isValid = await validateAttack(`${card.suit.name}-${card.rank.name}`);
+        
+        if (isValid) {
+          removeCardFromHand(`${card.suit.name}-${card.rank.name}`);
+          // Анимируем перемещение карты
+          gameService.animateCardToSlot(
+            card, 
+            slotId, 
+            event.active.rect.current.translated, 
+            play
+          );
+          // Отправляем команду серверу
+          attack(`${card.suit.name}-${card.rank.name}`);
+        }
+      }
+    }
+  }, [state, user.id, validateDefend, validateAttack, removeCardFromHand, defend, attack, play]);
 
   // Мемоизация контекстного значения
   const contextValue = useMemo(() => ({
     handleDragEnd,
-    pass
-  }), [handleDragEnd, pass]);
+    pass,
+    validateAttack,
+    validateDefend
+  }), [handleDragEnd, pass, validateAttack, validateDefend]);
 
   return (
     <GameServiceContext.Provider value={contextValue}>

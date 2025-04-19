@@ -4,7 +4,19 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 export enum GameUpdateTypes {
    GameState = "GameStateDto",
    PersonalState = "PlayerHandStateDto",
-   PassedState = "PlayerPassNotificationDto"
+   PassedState = "PlayerPassNotificationDto",
+   CardActionAccepted = "CardActionAcceptedDto",
+   CardActionRejected = "CardActionRejectedDto",
+   CardMoved = "CardMovedDto",
+   RoundEnded = "RoundEndedDto",
+   TableSlotsUpdated = "TableSlotsUpdatedDto",
+   PlayerDrewCards = "PlayerDrewCardsDto",
+   PlayerPlayedCard = "PlayerPlayedCardDto",
+   CardsDealt = "CardsDealtDto",
+   GameFinished = "GameFinishedDto",
+   ActionError = "ActionErrorDto",
+   CardsMoved = "CardsMovedDto",
+   StatePatched = "StatePatchedDto"
 }
 
 export enum Suits {
@@ -162,4 +174,68 @@ export interface IPersonalState {
 
 export interface IWinnersInfo {
    winners: string[];
+}
+
+export interface ICardActionResult {
+   cardId: string;
+   success: boolean;
+   actionType: 'attack' | 'defend';
+   slotId?: number;
+   errorMessage?: string;
+}
+
+export interface ICardMovedEvent {
+   cardId: string;
+   source: 'hand' | 'table' | 'deck';
+   destination: 'hand' | 'table' | 'discard';
+   playerId: string;
+}
+
+export interface IRoundEndedEvent {
+   reason: 'allCardsBeaten' | 'defenderTookCards';
+   defenderId: string;
+}
+
+export interface IPlayerCardAction {
+   playerId: string;
+   cardInfo: {
+      isHidden: boolean;
+      card?: ICard;
+   };
+}
+
+export interface ICardsDealtEvent {
+   playerId: string;
+   count: number;
+   isInitialDeal: boolean;
+}
+
+export interface IGameFinishedEvent {
+   winners: string[];
+   statistics: {
+      playerId: string;
+      cardsPlayed: number;
+      roundsWon: number;
+   }[];
+}
+
+export interface IActionErrorEvent {
+   actionType: 'attack' | 'defend' | 'pass';
+   errorCode: string;
+   errorMessage: string;
+   originalRequest: any;
+}
+
+export interface ICardsMoveEvent {
+   cards: {
+      cardId: string;
+      fromLocation: { type: 'hand' | 'table' | 'deck'; playerId?: string; slotId?: number };
+      toLocation: { type: 'hand' | 'table' | 'discard'; playerId?: string; slotId?: number };
+   }[];
+}
+
+export interface IStatePatchEvent {
+   path: string;
+   value: any;
+   operation: 'set' | 'remove' | 'add';
 }
