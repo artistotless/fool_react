@@ -2,21 +2,19 @@ import { DraggableAttributes } from "@dnd-kit/core";
 import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export enum GameUpdateTypes {
+   // Базовые события состояния игры
    GameState = "GameStateDto",
    PersonalState = "PlayerHandStateDto",
    PassedState = "PlayerPassNotificationDto",
-   CardActionAccepted = "CardActionAcceptedDto",
-   CardActionRejected = "CardActionRejectedDto",
-   CardMoved = "CardMovedDto",
-   RoundEnded = "RoundEndedDto",
-   TableSlotsUpdated = "TableSlotsUpdatedDto",
-   PlayerDrewCards = "PlayerDrewCardsDto",
-   PlayerPlayedCard = "PlayerPlayedCardDto",
-   CardsDealt = "CardsDealtDto",
-   GameFinished = "GameFinishedDto",
-   ActionError = "ActionErrorDto",
-   CardsMoved = "CardsMovedDto",
-   StatePatched = "StatePatchedDto"
+   
+   // Оптимизированный набор событий
+   CardsMoved = "CardsMovedDto", // Для всех перемещений карт (объединяет CardMoved и CardsMoved)
+   CardsDealt = "CardsDealtDto", // Получение карт игроком (объединяет PlayerDrewCards и CardsDealt)
+   PlayerAction = "PlayerActionDto", // Действия других игроков (заменяет PlayerPlayedCard)
+   ActionResult = "ActionResultDto", // Результат действия текущего игрока (объединяет CardActionAccepted, CardActionRejected, ActionError)
+   RoundEnded = "RoundEndedDto", // Информация о завершении раунда
+   GameStateSync = "GameStateSyncDto", // Полная синхронизация состояния (заменяет TableSlotsUpdated и StatePatched)
+   GameFinished = "GameFinishedDto" // Завершение игры и статистика
 }
 
 export enum Suits {
@@ -238,4 +236,115 @@ export interface IStatePatchEvent {
    path: string;
    value: any;
    operation: 'set' | 'remove' | 'add';
+}
+
+// Оптимизированные интерфейсы событий
+
+/**
+ * Действия с картами, которые возможны в игре
+ */
+export type CardActionType = 'attack' | 'defend' | 'pass';
+
+/**
+ * Типы локаций, где могут находиться карты
+ */
+export type CardLocationType = 'hand' | 'table' | 'deck' | 'discard';
+
+/**
+ * Локация карты
+ */
+export interface CardLocation {
+   type: CardLocationType;
+   playerId?: string;
+   slotId?: number;
+}
+
+/**
+ * Событие перемещения карт
+ */
+export interface ICardsMovedEvent {
+   cards: {
+      cardId: string;
+      fromLocation: CardLocation;
+      toLocation: CardLocation;
+      isRevealed: boolean; // Показывать ли карту при перемещении
+   }[];
+}
+
+/**
+ * Событие раздачи карт
+ */
+export interface ICardsDealtEvent {
+   playerId: string;
+   count: number;
+   isInitialDeal: boolean;
+   cardsInfo?: {
+      isHidden: boolean;
+      cards?: ICard[];
+   };
+}
+
+/**
+ * Действие другого игрока
+ */
+export interface IPlayerActionEvent {
+   playerId: string;
+   actionType: CardActionType;
+   targetSlotId?: number;
+   cardInfo?: {
+      isHidden: boolean;
+      card?: ICard;
+   };
+}
+
+/**
+ * Результат действия текущего игрока
+ */
+export interface IActionResultEvent {
+   success: boolean;
+   actionType: CardActionType;
+   cardId?: string;
+   slotId?: number;
+   errorCode?: string;
+   errorMessage?: string;
+}
+
+/**
+ * Событие окончания раунда
+ */
+export interface IRoundEndedEvent {
+   reason: 'allCardsBeaten' | 'defenderTookCards';
+   defenderId: string;
+   attackerId: string;
+   nextAttackerId: string;
+}
+
+/**
+ * Событие синхронизации состояния игры
+ */
+export interface IGameStateSyncEvent {
+   // Полное состояние слотов
+   slots?: {
+      id: number;
+      cards: ICard[];
+   }[];
+   
+   // Обновление конкретного поля состояния
+   patch?: {
+      path: string;
+      value: any;
+      operation: 'set' | 'remove' | 'add';
+   };
+}
+
+/**
+ * Событие окончания игры
+ */
+export interface IGameFinishedEvent {
+   winners: string[];
+   statistics: {
+      playerId: string;
+      cardsPlayed: number;
+      roundsWon: number;
+   }[];
 }

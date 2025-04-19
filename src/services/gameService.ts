@@ -8,9 +8,11 @@ import {
   ICardActionResult,
   ICardsMoveEvent,
   IRoundEndedEvent,
-  IPlayerCardAction,
+  IPlayerActionEvent,
   ICardsDealtEvent,
-  IGameFinishedEvent
+  IGameFinishedEvent,
+  ICardsMovedEvent,
+  IActionResultEvent
 } from "../types";
 import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 import { testMode } from "../environments/environment";
@@ -71,60 +73,62 @@ class GameService {
   }
 
   // Метод для обработки успешного действия с картой
-  handleCardActionAccepted(action: ICardActionResult) {
+  handleSuccessfulCardAction(action: IActionResultEvent) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} успешно принято`);
     // Здесь может быть код для обновления UI или воспроизведения звука
   }
 
   // Метод для обработки отклоненного действия с картой
-  handleCardActionRejected(action: ICardActionResult, addCardToHand: Function) {
+  handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
-
+    
     // Находим оригинальную карту
-    const originalCard = document.getElementById(`playercard-${action.cardId}`);
-    if (originalCard) {
-      originalCard.style.visibility = 'visible';
+    if (action.cardId) {
+      const originalCard = document.getElementById(`playercard-${action.cardId}`);
+      if (originalCard) {
+        originalCard.style.visibility = 'visible';
+      }
+      
+      // Возвращаем карту в руку игрока
+      // Для этого нам нужно получить данные карты
+      // В реальном приложении эти данные должны приходить от сервера
+      const [suitName, rankName] = action.cardId.split('-');
+      // Заглушка, в реальном приложении данные должны приходить от сервера
+      const cardData = {
+        suit: { name: suitName, iconChar: '' },
+        rank: { name: rankName, value: 0 }
+      };
+      
+      addCardToHand(cardData);
     }
-
-    // Возвращаем карту в руку игрока
-    // Для этого нам нужно получить данные карты
-    // В реальном приложении эти данные должны приходить от сервера
-    const [suitName, rankName] = action.cardId.split('-');
-    // Заглушка, в реальном приложении данные должны приходить от сервера
-    const cardData = {
-      suit: { name: suitName, iconChar: '' },
-      rank: { name: rankName, value: 0 }
-    };
-
-    addCardToHand(cardData);
   }
 
   // Метод для обработки перемещения карт
   handleCardsMoved(
-    moves: ICardsMoveEvent,
+    moveEvent: ICardsMovedEvent,
     play: Function,
     removeCardFromHand: Function,
-    addCardToHand: Function,
+    addCardToHand: Function, 
     addCardToSlot: Function
   ) {
-    moves.cards.forEach(move => {
+    moveEvent.cards.forEach(move => {
       const [suitName, rankName] = move.cardId.split('-');
       const cardData = {
         suit: { name: suitName, iconChar: '' },
         rank: { name: rankName, value: 0 }
       };
-
+      
       // Обрабатываем различные типы перемещений
       if (move.fromLocation.type === 'hand' && move.toLocation.type === 'table') {
         // Карта из руки на стол
         if (move.fromLocation.playerId === 'currentPlayer') {
           removeCardFromHand(move.cardId);
-
+          
           // Анимируем перемещение карты в слот
           if (move.toLocation.slotId !== undefined) {
             // Здесь должна быть анимация
             play(Sounds.CardAddedToTable);
-
+            
             // Добавляем карту в слот
             addCardToSlot(cardData, move.toLocation.slotId);
           }
@@ -139,14 +143,14 @@ class GameService {
         // Карта из слота в сброс
         // Здесь должна быть анимация отбоя карты
         play(Sounds.CardSlideLeft);
+          }
+        });
       }
-    });
-  }
 
   // Метод для обработки окончания раунда
   handleRoundEnded(event: IRoundEndedEvent, userId: string, clearTable: Function, play: Function) {
     const { tableCardsRef } = animationService;
-
+    
     if (event.reason === 'allCardsBeaten') {
       // Все карты отбиты
       clearTableAnimated(tableCardsRef,
@@ -164,23 +168,35 @@ class GameService {
   }
 
   // Метод для обработки действий других игроков
-  handlePlayerAction(event: IPlayerCardAction, play: Function) {
+  handlePlayerAction(event: IPlayerActionEvent, play: Function) {
+    // Если карта не указана (например, игрок пасовал)
+    if (!event.cardInfo) {
+      console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType} без карты`);
+      return;
+    }
+    
     // Анимируем действия других игроков
     if (event.cardInfo.isHidden) {
       // Другой игрок взял карту из колоды
       play(Sounds.CardFromDeck);
       moveCardFromDeck(`player-${event.playerId}`, "deck", 400);
-    } else {
+      } else {
       // Другой игрок сыграл карту
       play(Sounds.CardAddedToTable);
-      // Здесь можно добавить анимацию
+      
+      // Если у нас есть информация о карте и о целевом слоте,
+      // мы можем анимировать перемещение карты на стол
+      if (event.cardInfo.card && event.targetSlotId !== undefined) {
+        // Анимация перемещения карты от игрока на стол в конкретный слот
+        // Здесь могла бы быть более сложная анимация
+      }
     }
   }
 
   // Метод для обработки раздачи карт
-  handleCardsDealt(event: ICardsDealtEvent, play: Function) {
+  handleCardsDealt(event: ICardsDealtEvent, play: Function, addCardToHand: Function) {
     const isCurrentPlayer = event.playerId === 'currentPlayer';
-
+    
     // Проигрываем звук раздачи карт
     if (event.isInitialDeal) {
       if (event.count > 3) {
@@ -191,18 +207,25 @@ class GameService {
     } else {
       play(Sounds.CardFromDeck);
     }
-
-    // Анимируем раздачу карт
-    if (isCurrentPlayer) {
+    
+    // Если это текущий игрок и есть информация о картах, добавляем карты в руку
+    if (isCurrentPlayer && event.cardsInfo && event.cardsInfo.cards) {
+      // Добавляем карты в руку игрока
+      event.cardsInfo.cards.forEach((card, index) => {
+        setTimeout(() => {
+          moveCardFromDeck("playercards", "deck", 400, () => {
+            addCardToHand(card);
+          });
+        }, index * 200);
+      });
+    }
+    // Если это другой игрок или карты скрыты, просто анимируем
+    else {
+      // Анимируем раздачу карт
       for (let i = 0; i < event.count; i++) {
         setTimeout(() => {
-          moveCardFromDeck("playercards", "deck", 400);
-        }, i * 200);
-      }
-    } else {
-      for (let i = 0; i < event.count; i++) {
-        setTimeout(() => {
-          moveCardFromDeck(`player-${event.playerId}`, "deck", 400);
+          const target = isCurrentPlayer ? "playercards" : `player-${event.playerId}`;
+          moveCardFromDeck(target, "deck", 400);
         }, i * 200);
       }
     }

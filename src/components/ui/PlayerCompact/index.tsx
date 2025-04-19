@@ -109,7 +109,7 @@ const PlayerCompact = ({
             <div className={styles.name}>{name}</div>
             <div className={styles.cards_count}>{cardsCount}</div>
          </div>
-         {shouldShowTimer && (testMode().enabled || (state.moveTime && state.movedAt)) && (
+         {false && shouldShowTimer && (testMode().enabled || (state.moveTime && state.movedAt)) && (
                <ProgressTimer 
                   moveTime={testMode().enabled ? testMode().testMoveTime : (state.moveTime ?? "00:00:30")} 
                   movedAt={testMode().enabled ? testMode().testMovedAt : (state.movedAt ?? new Date().toISOString())}
