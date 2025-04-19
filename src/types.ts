@@ -4,16 +4,12 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 export enum GameUpdateTypes {
    // Базовые события состояния игры
    GameState = "GameStateDto",
-   PersonalState = "PlayerHandStateDto",
-   PassedState = "PlayerPassNotificationDto",
-   
    // Оптимизированный набор событий
    CardsMoved = "CardsMovedDto", // Для всех перемещений карт (объединяет CardMoved и CardsMoved)
-   CardsDealt = "CardsDealtDto", // Получение карт игроком (объединяет PlayerDrewCards и CardsDealt)
+   CardsDealt = "CardsDealtDto", // Получение карт игроком (объединяет PlayerDrewCards and CardsDealt)
    PlayerAction = "PlayerActionDto", // Действия других игроков (заменяет PlayerPlayedCard)
    ActionResult = "ActionResultDto", // Результат действия текущего игрока (объединяет CardActionAccepted, CardActionRejected, ActionError)
    RoundEnded = "RoundEndedDto", // Информация о завершении раунда
-   GameStateSync = "GameStateSyncDto", // Полная синхронизация состояния (заменяет TableSlotsUpdated и StatePatched)
    GameFinished = "GameFinishedDto" // Завершение игры и статистика
 }
 
@@ -170,76 +166,6 @@ export interface IPersonalState {
    cardsInHand: ICard[];
 }
 
-export interface IWinnersInfo {
-   winners: string[];
-}
-
-export interface ICardActionResult {
-   cardId: string;
-   success: boolean;
-   actionType: 'attack' | 'defend';
-   slotId?: number;
-   errorMessage?: string;
-}
-
-export interface ICardMovedEvent {
-   cardId: string;
-   source: 'hand' | 'table' | 'deck';
-   destination: 'hand' | 'table' | 'discard';
-   playerId: string;
-}
-
-export interface IRoundEndedEvent {
-   reason: 'allCardsBeaten' | 'defenderTookCards';
-   defenderId: string;
-}
-
-export interface IPlayerCardAction {
-   playerId: string;
-   cardInfo: {
-      isHidden: boolean;
-      card?: ICard;
-   };
-}
-
-export interface ICardsDealtEvent {
-   playerId: string;
-   count: number;
-   isInitialDeal: boolean;
-}
-
-export interface IGameFinishedEvent {
-   winners: string[];
-   statistics: {
-      playerId: string;
-      cardsPlayed: number;
-      roundsWon: number;
-   }[];
-}
-
-export interface IActionErrorEvent {
-   actionType: 'attack' | 'defend' | 'pass';
-   errorCode: string;
-   errorMessage: string;
-   originalRequest: any;
-}
-
-export interface ICardsMoveEvent {
-   cards: {
-      cardId: string;
-      fromLocation: { type: 'hand' | 'table' | 'deck'; playerId?: string; slotId?: number };
-      toLocation: { type: 'hand' | 'table' | 'discard'; playerId?: string; slotId?: number };
-   }[];
-}
-
-export interface IStatePatchEvent {
-   path: string;
-   value: any;
-   operation: 'set' | 'remove' | 'add';
-}
-
-// Оптимизированные интерфейсы событий
-
 /**
  * Действия с картами, которые возможны в игре
  */
@@ -317,24 +243,6 @@ export interface IRoundEndedEvent {
    defenderId: string;
    attackerId: string;
    nextAttackerId: string;
-}
-
-/**
- * Событие синхронизации состояния игры
- */
-export interface IGameStateSyncEvent {
-   // Полное состояние слотов
-   slots?: {
-      id: number;
-      cards: ICard[];
-   }[];
-   
-   // Обновление конкретного поля состояния
-   patch?: {
-      path: string;
-      value: any;
-      operation: 'set' | 'remove' | 'add';
-   };
 }
 
 /**

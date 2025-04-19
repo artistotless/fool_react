@@ -85,7 +85,10 @@ export const moveCardFromDeck = (
    targetRef: RefObject<any> | string,
    deckRef: RefObject<any> | string,
    animationDuration: number = 300,
-   onComplete?: () => void
+   onComplete?: () => void,
+   offsets: { x: number, y: number } = { x: 0, y: -100 },
+   startSize?: { width: number, height: number },
+   endSize?: { width: number, height: number },
 ) => {
    const getDOMElement = (ref: RefObject<any> | string) => {
       return typeof ref === "string"
@@ -111,11 +114,11 @@ export const moveCardFromDeck = (
    if (!targetElement) throw new Error("Target element not found");
    const targetRect = getAbsolutePosition(targetElement);
 
-   const cardWidth = deckElement.offsetWidth;
-   const cardHeight = deckElement.offsetHeight;
+   const cardWidth = startSize ? startSize.width : deckElement.offsetWidth;
+   const cardHeight = startSize ? startSize.height : deckElement.offsetHeight;
 
-   const targetWidth = 122;
-   const targetHeight = targetElement.offsetHeight;
+   const targetWidth = endSize ? endSize.width : 122;
+   const targetHeight = endSize ? endSize.height : 168;
 
    const startX = deckRect.x + deckRect.width / 2 - cardWidth / 2;
    const startY = deckRect.y + deckRect.height / 2 - cardHeight / 2;
@@ -128,7 +131,7 @@ export const moveCardFromDeck = (
          width: `${cardWidth}px`,
          height: `${cardHeight}px`,
          transition: `opacity .3s ease-out`,
-         zIndex: "10",
+         zIndex: "60",
       },
       src: back_ic,
    });
@@ -144,7 +147,7 @@ export const moveCardFromDeck = (
    cardElement.style.height = `${height}px`;
    document.body.appendChild(cardElement);
 
-   moveElementTo(cardElement, targetElement.id, animationDuration, { width: targetWidth, height: targetHeight }, { x: 0, y: -100 }, () => {
+   moveElementTo(cardElement, targetElement.id, animationDuration, { width: targetWidth, height: targetHeight }, offsets, () => {
       cardElement.remove();
       onComplete && onComplete();
    });

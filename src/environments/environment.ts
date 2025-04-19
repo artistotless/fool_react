@@ -41,24 +41,24 @@ const testPlayers = [
     {
         name: "Player 1",
         avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=1`,
-        id: "player1",
+        id: "3bff8e42-2da8-4aa3-a966-6132ab6f7e90",
         passed: false,
         cardsCount: 6
     }
-    //, {
-    //     name: "Player 2",
-    //     avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=2`,
-    //     id: "player2",
-    //     passed: false,
-    //     cardsCount: 6
-    // },
-    // {
-    //     name: "Player 3",
-    //     avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
-    //     id: "player3",
-    //     passed: false,
-    //     cardsCount: 6
-    // }
+    , {
+        name: "Player 2",
+        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=2`,
+        id: "f02d247e-5662-4b36-b1ec-ca61c518c973",
+        passed: false,
+        cardsCount: 6
+    },
+    {
+        name: "Player 3",
+        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
+        id: "player3",
+        passed: false,
+        cardsCount: 6
+    }
 ];
 
 export const testMode = (): {
@@ -71,7 +71,7 @@ export const testMode = (): {
     testPlayers: { name: string, avatar: string, id: string, passed: boolean, cardsCount: number }[]
 } => {
 
-    const cards = Array(6).fill(null).map((_, index) => {
+    const cards = Array(5).fill(null).map((_,index) => {
 
         let randomSuit = Math.floor(Math.random() * 4)
         let randomRank = Math.floor(Math.random() * 9)
@@ -86,6 +86,12 @@ export const testMode = (): {
             rank
         };
     })
+
+    cards.push({
+        id: 6,
+        suit: { iconChar: SuitsSymbols.Heart, name: Suits.Heart },
+        rank: { name: Ranks.Ace, value: 14, shortName: Ranks.Ace }
+    });
 
     return {
         testButtons: false || testModeEnabled,

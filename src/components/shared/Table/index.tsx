@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, memo } from "react";
+import { useRef, useEffect, memo } from "react";
 import Card from "src/components/ui/Card";
 import styles from "./table.module.scss";
 import useGameStore from "src/store/gameStore";

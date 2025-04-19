@@ -18,6 +18,19 @@ import animationService from "../contexts/animationService";
 import { useAudio } from "../contexts/AudioContext";
 import useGameStore from "../store/gameStore";
 import { clearTableAnimated, moveElementTo, Sounds } from "../utils";
+import { testMode } from 'src/environments/environment';
+
+// Дополним enum GameUpdateTypes, так как его не хватает в файле types.ts
+enum ExtendedGameUpdateTypes {
+  GameState = "GameStateDto",
+  GameStateSync = "GameStateSyncDto",
+  CardsMoved = "CardsMovedDto",
+  CardsDealt = "CardsDealtDto",
+  PlayerAction = "PlayerActionDto",
+  ActionResult = "ActionResultDto",
+  RoundEnded = "RoundEndedDto",
+  GameFinished = "GameFinishedDto"
+}
 
 // Стили для компонента
 const styles = {
@@ -77,7 +90,7 @@ const TestEventSimulator: React.FC = () => {
   const { user } = useUser();
   const { simulateReceiveEvent } = useSignalR();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<string>(GameUpdateTypes.ActionResult);
+  const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameState);
   
   // Получаем необходимые функции и ссылки для кнопок из Test.tsx
   const { clearTable, slots, addCardToHand } = useGameStore();
@@ -104,7 +117,7 @@ const TestEventSimulator: React.FC = () => {
   
   // Генераторы различных событий
   const generateActionResult = () => {
-    simulateEvent(GameUpdateTypes.ActionResult, {
+    simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
       result: {
         success: true,
         actionType: 'attack',
@@ -114,7 +127,7 @@ const TestEventSimulator: React.FC = () => {
   };
   
   const generateActionResultError = () => {
-    simulateEvent(GameUpdateTypes.ActionResult, {
+    simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
       result: {
         success: false,
         actionType: 'attack',
@@ -126,10 +139,10 @@ const TestEventSimulator: React.FC = () => {
   };
   
   const generateCardsMoved = () => {
-    const fromLocation: CardLocation = { type: 'hand', playerId: user.id };
+    const fromLocation: CardLocation = { type: 'hand', playerId: testMode().testPlayers[1].id };
     const toLocation: CardLocation = { type: 'table', slotId: 0 };
     
-    simulateEvent(GameUpdateTypes.CardsMoved, {
+    simulateEvent(ExtendedGameUpdateTypes.CardsMoved, {
       moves: {
         cards: [
           {
@@ -144,83 +157,60 @@ const TestEventSimulator: React.FC = () => {
   };
   
   const generateRoundEnded = () => {
-    simulateEvent(GameUpdateTypes.RoundEnded, {
+    simulateEvent(ExtendedGameUpdateTypes.RoundEnded, {
       event: {
         reason: 'allCardsBeaten',
-        defenderId: user.id,
-        attackerId: 'player-2',
-        nextAttackerId: user.id
+        defenderId: testMode().testPlayers[1].id,
+        attackerId: testMode().testPlayers[0].id,
+        nextAttackerId: testMode().testPlayers[1].id
       } as IRoundEndedEvent
     });
   };
   
-  const generateGameStateSync = () => {
-    simulateEvent(GameUpdateTypes.GameStateSync, {
-      event: {
-        slots: Array(6).fill(null).map((_, index) => ({
-          id: index,
-          cards: index === 0 ? [testCard] : []
-        }))
-      } as IGameStateSyncEvent
-    });
-  };
-  
-  const generateStatePatch = () => {
-    simulateEvent(GameUpdateTypes.GameStateSync, {
-      event: {
-        patch: {
-          path: 'state.deckCardsCount',
-          value: 10,
-          operation: 'set'
-        }
-      } as IGameStateSyncEvent
-    });
-  };
-  
   const generatePlayerAction = () => {
-    simulateEvent(GameUpdateTypes.PlayerAction, {
+    simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
-        playerId: 'bot-1',
+        playerId: testMode().testPlayers[1].id,
         actionType: 'attack',
         targetSlotId: 0,
         cardInfo: {
           isHidden: false,
-          card: testCard
+          card: testMode().testCards[0]
         }
       } as IPlayerActionEvent
     });
   };
   
   const generatePlayerPass = () => {
-    simulateEvent(GameUpdateTypes.PlayerAction, {
+    simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
-        playerId: 'bot-1',
+        playerId:  testMode().testPlayers[1].id,
         actionType: 'pass'
       } as IPlayerActionEvent
     });
   };
   
   const generateCardsDealt = () => {
-    simulateEvent(GameUpdateTypes.CardsDealt, {
+    simulateEvent(ExtendedGameUpdateTypes.CardsDealt, {
       event: {
-        playerId: 'currentPlayer',
+        playerId:  testMode().testPlayers[2].id,
         count: 3,
-        isInitialDeal: true,
+        isInitialDeal: false,
         cardsInfo: {
           isHidden: false,
-          cards: [testCard]
+          cards: testMode().testCards.slice(0, 3)
         }
       } as ICardsDealtEvent
     });
   };
   
   const generateGameFinished = () => {
-    simulateEvent(GameUpdateTypes.GameFinished, {
+    simulateEvent(ExtendedGameUpdateTypes.GameFinished, {
       event: {
-        winners: [user.id],
+        winners: [ testMode().testPlayers[0].id],
         statistics: [
           {
-            playerId: user.id,
+            playerId:  testMode().testPlayers[0].id,
             cardsPlayed: 12,
             roundsWon: 3
           }
@@ -229,18 +219,40 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
+  const generateGameState = () => {
+    simulateEvent(ExtendedGameUpdateTypes.GameState, {
+      state: {
+        attackerId: testMode().testPlayers[0].id,
+        defenderId: testMode().testPlayers[1].id,
+        tableCards: [],
+        trumpCard: {
+          suit: { name: Suits.Spade, iconChar: '♠' },
+          rank: { name: Ranks.Ten, value: 10 }
+        },
+        personalState: {
+          cardsInHand: testMode().testCards
+        },
+        deckCardsCount: 24,
+        rounds: 1,
+        status: 'InProgress',
+        players: testMode().testPlayers,
+        movedAt: testMode().testMovedAt,
+        moveTime: testMode().testMoveTime
+      }
+    });
+  };
+
   // Карта событий и их обработчиков
   const eventHandlers: Record<string, () => void> = {
-    [GameUpdateTypes.ActionResult + '_success']: generateActionResult,
-    [GameUpdateTypes.ActionResult + '_error']: generateActionResultError,
-    [GameUpdateTypes.CardsMoved]: generateCardsMoved,
-    [GameUpdateTypes.RoundEnded]: generateRoundEnded,
-    [GameUpdateTypes.GameStateSync + '_slots']: generateGameStateSync,
-    [GameUpdateTypes.GameStateSync + '_patch']: generateStatePatch,
-    [GameUpdateTypes.PlayerAction + '_play']: generatePlayerAction,
-    [GameUpdateTypes.PlayerAction + '_pass']: generatePlayerPass,
-    [GameUpdateTypes.CardsDealt]: generateCardsDealt,
-    [GameUpdateTypes.GameFinished]: generateGameFinished
+    [ExtendedGameUpdateTypes.GameState]: generateGameState,
+    [ExtendedGameUpdateTypes.ActionResult + '_success']: generateActionResult,
+    [ExtendedGameUpdateTypes.ActionResult + '_error']: generateActionResultError,
+    [ExtendedGameUpdateTypes.CardsMoved]: generateCardsMoved,
+    [ExtendedGameUpdateTypes.RoundEnded]: generateRoundEnded,
+    [ExtendedGameUpdateTypes.PlayerAction + '_play']: generatePlayerAction,
+    [ExtendedGameUpdateTypes.PlayerAction + '_pass']: generatePlayerPass,
+    [ExtendedGameUpdateTypes.CardsDealt]: generateCardsDealt,
+    [ExtendedGameUpdateTypes.GameFinished]: generateGameFinished,
   };
 
   // Функция для обработки выбранного события
@@ -257,7 +269,7 @@ const TestEventSimulator: React.FC = () => {
   const handleClear = () => {
     clearTableAnimated(
       tableCardsRef,
-      () => play(Sounds.CardSlideLeft),
+      () => play(Sounds.CardSlideLeft,false),
       () => clearTable()
     );
   };
@@ -289,26 +301,33 @@ const TestEventSimulator: React.FC = () => {
     );
   }
 
-  // Получаем красивые имена событий для отображения
+  // Функция для отображения названия события
   const getDisplayName = (eventKey: string): string => {
-    // Если это базовый тип с суффиксом
+    // Если ключ содержит суффикс (напр. ActionResult_success)
     if (eventKey.includes('_')) {
       const [baseType, suffix] = eventKey.split('_');
-      const baseName = Object.entries(GameUpdateTypes).find(([_, value]) => value === baseType)?.[0] || baseType;
+      const baseName = Object.entries(ExtendedGameUpdateTypes).find(([_, value]) => value === baseType)?.[0] || baseType;
       
       switch (suffix) {
-        case 'success': return `${baseName} (успех)`;
-        case 'error': return `${baseName} (ошибка)`;
-        case 'slots': return `${baseName} (обновление слотов)`;
-        case 'patch': return `${baseName} (патч состояния)`;
-        case 'play': return `${baseName} (сыграть карту)`;
-        case 'pass': return `${baseName} (пас)`;
-        default: return `${baseName} (${suffix})`;
+        case 'success':
+          return `${baseName} (успех)`;
+        case 'error':
+          return `${baseName} (ошибка)`;
+        case 'slots':
+          return `${baseName} (слоты)`;
+        case 'patch':
+          return `${baseName} (патч)`;
+        case 'play':
+          return `${baseName} (карта)`;
+        case 'pass':
+          return `${baseName} (пас)`;
+        default:
+          return `${baseName} (${suffix})`;
       }
     }
     
     // Иначе просто ищем имя в перечислении
-    return Object.entries(GameUpdateTypes).find(([_, value]) => value === eventKey)?.[0] || eventKey;
+    return Object.entries(ExtendedGameUpdateTypes).find(([_, value]) => value === eventKey)?.[0] || eventKey;
   };
 
   return (

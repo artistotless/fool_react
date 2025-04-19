@@ -13,16 +13,14 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
-  IGameStateSyncEvent,
-  CardActionType
 } from '../types';
 import { testMode } from 'src/environments/environment';
 
 interface GameServiceContextType {
   handleDragEnd: (event: DragEndEvent) => void;
   pass: () => Promise<void>;
-  validateAttack: (cardId: string) => Promise<boolean>;
-  validateDefend: (cardId: string, slotId: number) => Promise<boolean>;
+  validateAttack: (cardId: string) => boolean;
+  validateDefend: (cardId: string, slotId: number) => boolean;
 }
 
 // Создаем контекст
@@ -42,48 +40,30 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     passedPlayers,
     setGameState,
     setPersonalState,
-    setSlots,
     addCardToHand,
     removeCardFromHand,
     clearTable,
     addCardToSlot,
     setWinnersIds,
-    setPassData,
     setPassedPlayers,
-    addPassedPlayer,
-    applyStatePatch
   } = useGameStore();
 
   // Обработка событий от SignalR
   useEffect(() => {
-    if (!data || !isConnected) return;
+    if (!data || !isConnected && !testMode().enabled) return;
+
+    console.log(data);
 
     switch (data.updateType) {
       // Базовые события
       case GameUpdateTypes.GameState:
         setGameState(data.state);
-
+        setPersonalState(data.state.personalState);
         // Обновляем список пасовавших игроков
         const passedPlayers = data.state.players
           .filter((player: any) => player.passed)
           .map((player: any) => player.id);
         setPassedPlayers(passedPlayers);
-        break;
-
-      case GameUpdateTypes.PersonalState:
-        setPersonalState(data.state);
-        break;
-
-      case GameUpdateTypes.PassedState:
-        setPassData(data.state);
-
-        // Добавляем игрока в список пасовавших
-        addPassedPlayer(data.state.playerId);
-
-        // Очищаем состояние через 2 секунды
-        setTimeout(() => {
-          setPassData(null);
-        }, 2000);
         break;
 
       // Оптимизированные события
@@ -122,21 +102,6 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, clearTable, play);
         break;
 
-      case GameUpdateTypes.GameStateSync:
-        // Обработка синхронизации состояния
-        const syncEvent = data.event as IGameStateSyncEvent;
-
-        // Если пришли обновленные слоты
-        if (syncEvent.slots) {
-          setSlots(syncEvent.slots);
-        }
-
-        // Если пришел патч для конкретного поля
-        if (syncEvent.patch) {
-          applyStatePatch(syncEvent.patch);
-        }
-        break;
-
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
         gameService.handlePlayerAction(data.event as IPlayerActionEvent, play);
@@ -144,6 +109,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
       case GameUpdateTypes.CardsDealt:
         // Обработка раздачи карт
+        data.event.playerId = user.id === data.event.playerId ? "currentPlayer" : data.event.playerId;
         gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, addCardToHand);
         break;
 
@@ -166,98 +132,84 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   }, [isConnected, sendData]);
 
   // Функция для локальной проверки возможности атаки
-  const validateAttack = useCallback(async (cardId: string) => {
-    if (!isConnected) return false;
+  const validateAttack = useCallback((cardId: string) => {
+    // Получаем данные карты из ID
+    const [_, rankName] = cardId.split('-');
 
-    try {
-      // Получаем данные карты из ID
-      const [suitName, rankName] = cardId.split('-');
-
-      // Проверяем, может ли игрок атаковать
-      if (state.attackerId !== user.id && !passedPlayers.includes(state.attackerId || '') && !testMode().enabled) {
-        return false;
-      }
-
-      // Проверка пустого стола - можно ходить любой картой
-      const hasCardsOnTable = slots.some(slot => slot.cards.length > 0);
-      if (!hasCardsOnTable) {
-        return true;
-      }
-
-      // Если стол не пустой, проверяем, что на столе есть карта с таким же достоинством
-      const existingRanks = new Set();
-
-      slots.forEach(slot => {
-        slot.cards.forEach(card => {
-          existingRanks.add(card.rank.name);
-        });
-      });
-
-      // Если на столе уже есть карта такого же достоинства, то ход разрешен
-      if (existingRanks.has(rankName)) {
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Ошибка при валидации атаки:", error);
+    // Проверяем, может ли игрок атаковать
+    if (state.attackerId !== user.id && !passedPlayers.includes(state.attackerId || '') && !testMode().enabled) {
       return false;
     }
+
+    // Проверка пустого стола - можно ходить любой картой
+    const hasCardsOnTable = slots.some(slot => slot.cards.length > 0);
+    if (!hasCardsOnTable) {
+      return true;
+    }
+
+    // Если стол не пустой, проверяем, что на столе есть карта с таким же достоинством
+    const existingRanks = new Set();
+
+    slots.forEach(slot => {
+      slot.cards.forEach(card => {
+        existingRanks.add(card.rank.name);
+      });
+    });
+
+    // Если на столе уже есть карта такого же достоинства, то ход разрешен
+    if (existingRanks.has(rankName)) {
+      return true;
+    }
+
+    return false;
   }, [state, user.id, slots, passedPlayers, isConnected]);
 
   // Функция для локальной проверки возможности защиты
-  const validateDefend = useCallback(async (cardId: string, slotId: number) => {
-    if (!isConnected) return false;
+  const validateDefend = useCallback((cardId: string, slotId: number) => {
+    // Получаем данные карты из ID
+    const [suitName, _] = cardId.split('-');
 
-    try {
-      // Получаем данные карты из ID
-      const [suitName, rankName] = cardId.split('-');
-
-      // Проверяем, может ли игрок защищаться
-      if (state.defenderId !== user.id && !testMode().enabled) {
-        return false;
-      }
-
-      // Проверяем существование слота и наличие атакующей карты
-      const slot = slots[slotId];
-      if (!slot || slot.cards.length === 0 || slot.cards.length >= 2) {
-        return false;
-      }
-
-      // Атакующая карта
-      const attackingCard = slot.cards[0];
-
-      // Проверка козыря
-      const isTrump = suitName === state.trumpCard?.suit.name;
-      const isAttackingTrump = attackingCard.suit.name === state.trumpCard?.suit.name;
-
-      // Проверяем правила защиты:
-      // 1. Карта той же масти и старше
-      // 2. Козырь, если атакующая карта не козырь
-      // 3. Козырь, если атакующая карта тоже козырь, но козырь защищающегося старше
-
-      const defendingRankValue = personalState.cardsInHand.find(
-        card => `${card.suit.name}-${card.rank.name}` === cardId
-      )?.rank.value || 0;
-
-      if (suitName === attackingCard.suit.name && defendingRankValue > attackingCard.rank.value) {
-        return true;
-      }
-
-      if (isTrump && !isAttackingTrump) {
-        return true;
-      }
-
-      if (isTrump && isAttackingTrump && defendingRankValue > attackingCard.rank.value) {
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Ошибка при валидации защиты:", error);
+    // Проверяем, может ли игрок защищаться
+    if (state.defenderId !== user.id && !testMode().enabled) {
       return false;
     }
-  }, [state, user.id, slots, personalState.cardsInHand, isConnected]);
+
+    // Проверяем существование слота и наличие атакующей карты
+    const slot = slots[slotId];
+    if (!slot || slot.cards.length === 0 || slot.cards.length >= 2) {
+      return false;
+    }
+
+    // Атакующая карта
+    const attackingCard = slot.cards[0];
+
+    // Проверка козыря
+    const isTrump = suitName === state.trumpCard?.suit.name;
+    const isAttackingTrump = attackingCard.suit.name === state.trumpCard?.suit.name;
+
+    // Проверяем правила защиты:
+    // 1. Карта той же масти и старше
+    // 2. Козырь, если атакующая карта не козырь
+    // 3. Козырь, если атакующая карта тоже козырь, но козырь защищающегося старше
+
+    const defendingRankValue = personalState.cardsInHand.find(
+      card => `${card.suit.name}-${card.rank.name}` === cardId
+    )?.rank.value || 0;
+
+    if (suitName === attackingCard.suit.name && defendingRankValue > attackingCard.rank.value) {
+      return true;
+    }
+
+    if (isTrump && !isAttackingTrump) {
+      return true;
+    }
+
+    if (isTrump && isAttackingTrump && defendingRankValue > attackingCard.rank.value) {
+      return true;
+    }
+
+    return false;
+  }, [state, user.id, slots, personalState.cardsInHand]);
 
   // Функция для отправки атаки
   const attack = useCallback(async (cardId: string) => {
@@ -282,74 +234,98 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const card = event.active.data.current?.card;
     if (!card) return;
 
-    console.log(event.over);
-    
     // Проверяем, куда перетащили карту
-    if (String(event.over?.id).startsWith("slot")) {
+    if (event.over && String(event.over?.id).startsWith("slot")) {
       const slotId = Number(String(event.over?.id).split("-")[1]);
 
       // Защита
-      if (state.defenderId === user.id) {
+      if (state.defenderId === user.id && !testMode().enabled) {
         // Проверяем возможность защиты локально
-        const isValid = await validateDefend(
+        const isValid = validateDefend(
           `${card.suit.name}-${card.rank.name}`,
           slotId
         );
 
         if (isValid) {
-          // Оптимистично выполняем действие
-          removeCardFromHand(`${card.suit.name}-${card.rank.name}`);
-
-          // Анимируем перемещение карты
-          gameService.animateCardToSlot(
+          // Используем новый метод для оптимистичного обновления UI
+          gameService.onDroppedToTableSlot(
             card,
             slotId,
-            event.active.rect.current.translated,
-            play
+            removeCardFromHand,
+            addCardToSlot,
+            defend,
+            attack,
+            play,
+            'defend',
+            event.active.rect.current.translated
           );
-
-          // Отправляем команду серверу
-          defend(`${card.suit.name}-${card.rank.name}`, slotId);
-        }
-      }
-       
-      // Атака
-      else {
-        // Проверяем положение карты относительно середины экрана
-        const offset = 50;
-        const middleOfDropZone = (window.innerHeight / 2) + offset;
-        const activeRect = event.active.rect.current.translated;
-        
-        if (!activeRect?.top) {
-          return;
-        }
-        
-        // Проверяем, что карта находится выше середины экрана
-        if (activeRect.top > middleOfDropZone) {
-          return;
-        }
-        
-        // Проверяем возможность атаки локально
-        const isValid = await validateAttack(`${card.suit.name}-${card.rank.name}`);
-
-        if (isValid) {
-          // Оптимистично выполняем действие
-          removeCardFromHand(`${card.suit.name}-${card.rank.name}`);
-
-          // Анимируем перемещение карты
-          gameService.animateCardToSlot(
-            card,
-            slotId,
-            event.active.rect.current.translated,
-            play
-          );
-
-          // Отправляем команду серверу
-          attack(`${card.suit.name}-${card.rank.name}`);
         }
       }
     }
-  }, [state, user.id, validateDefend, validateAttack, removeCardFromHand, defend, attack, play]);
+
+    // Атака
+    else {
+      // Проверяем положение карты относительно середины экрана
+      const offset = 50;
+      const middleOfDropZone = (window.innerHeight / 2) + offset;
+      const activeRect = event.active.rect.current.translated;
+      let type: 'attack' | 'defend' = 'attack';
+
+      if (!activeRect?.top)
+        return;
+
+      // Проверяем, что карта находится выше середины экрана
+      if (activeRect.top > middleOfDropZone)
+        return;
+
+      let targetSlotId = -1;
+
+      // Если игрок защищается и на столе есть карта, которую можно побить
+      if (state.defenderId === user.id || testMode().enabled) {
+        // Ищем слот с картой, которую можно побить
+        for (let i = 0; i < slots.length; i++) {
+          const slot = slots[i];
+          // Проверяем, что в слоте есть атакующая карта и нет защищающей
+          if (slot.cards.length !== 1)
+            continue;
+
+          // Проверяем, можно ли эту карту побить
+          if (!validateDefend(`${card.suit.name}-${card.rank.name}`, slot.id))
+            continue;
+
+          targetSlotId = slot.id;
+          type = 'defend';
+          break;
+        }
+      }
+
+      // Если не нашли карту для защиты или игрок атакует, ищем пустой слот
+      if (targetSlotId === -1) {
+        // Проверяем возможность атаки локально
+        if (!validateAttack(`${card.suit.name}-${card.rank.name}`))
+          return;
+
+        targetSlotId = slots.findIndex(slot => slot.cards.length === 0);
+        type = 'attack';
+      }
+
+      if (targetSlotId === -1)
+        return;
+
+      // Используем новый метод для оптимистичного обновления UI
+      gameService.onDroppedToTableSlot(
+        card,
+        targetSlotId,
+        removeCardFromHand,
+        addCardToSlot,
+        defend,
+        attack,
+        play,
+        type,
+        event.active.rect.current.translated
+      );
+    }
+  }, [state, user.id, validateDefend, validateAttack, removeCardFromHand, defend, attack, play, addCardToSlot]);
 
   // Мемоизация контекстного значения
   const contextValue = useMemo(() => ({

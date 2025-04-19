@@ -67,12 +67,6 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
                setData(message);
             });
 
-            // Обработчик для симулированных событий
-            connection.on('SimulateServerEvent', (message: any) => {
-               console.log('Simulate server event:', message);
-               setData(message);
-            });
-
          } catch (err) {
             error('Error starting connection:', err);
             setTimeout(startConnection, 5000);

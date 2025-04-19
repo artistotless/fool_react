@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { testMode } from 'src/environments/environment';
 import { IUser, IUserToken } from 'src/types';
 
 interface UserContext {
@@ -9,9 +10,9 @@ interface UserContext {
 
 const getInitialUser = (): IUser => {
   return {
-    avatar: '',
-    id: '',
-    name: 'player'
+    avatar: testMode().enabled ? testMode().testPlayers[0].avatar : '',
+    id: testMode().enabled ? testMode().testPlayers[0].id : '',
+    name: testMode().enabled ? testMode().testPlayers[0].name : 'player'
   }
 }
 

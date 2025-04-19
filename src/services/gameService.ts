@@ -1,12 +1,6 @@
-import { DragEndEvent } from "@dnd-kit/core";
 import animationService from "../contexts/animationService";
 import {
   ICard,
-  IGameState,
-  IPersonalState,
-  IWinnersInfo,
-  ICardActionResult,
-  ICardsMoveEvent,
   IRoundEndedEvent,
   IPlayerActionEvent,
   ICardsDealtEvent,
@@ -15,13 +9,10 @@ import {
   IActionResultEvent
 } from "../types";
 import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
-import { testMode } from "../environments/environment";
-
-// Максимальное количество карт на столе (как на бэкенде)
-const MAX_TABLE_CARDS = 6;
 
 class GameService {
   private static instance: GameService;
+  private pendingActions: { type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[] = [];
   isReloaded: boolean | null = null;
   leftCardsCount: number = 0;
 
@@ -37,23 +28,18 @@ class GameService {
   }
 
   // Метод для анимации перемещения карты в слот
-  animateCardToSlot(
+  MoveCloneCardToSlot(
     card: ICard,
     slotId: number,
-    dropPosition: any,
-    play: Function
+    startPosition: any,
+    play: Function,
+    before: Function,
+    after: Function
   ) {
     const cardId = `${card.suit.name}-${card.rank.name}`;
-    // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-    const cardClone = this.createCardClone(cardId, dropPosition);
+    const cardClone = this.createCardClone(cardId, startPosition);
 
-    // Скрываем оригинальную карту, чтобы она не появлялась в руке
-    const originalCard = document.getElementById(`playercard-${cardId}`);
-    if (originalCard) {
-      originalCard.style.visibility = 'hidden';
-    }
-
-    // Добавляем клон в DOM
+    before && before();
     document.body.appendChild(cardClone!);
 
     // Проигрываем звук
@@ -63,13 +49,50 @@ class GameService {
     animateCardToSlot(`playercard-clone-${cardId}`, `slot-${slotId}`, 300, () => {
       // После завершения анимации удаляем клонированную карту
       const cardClone = document.getElementById(`playercard-clone-${cardId}`);
-      if (cardClone) {
-        if (originalCard) {
-          originalCard.style.visibility = 'visible';
-        }
-        cardClone.remove();
-      }
+      cardClone!.remove();
+      after && after();
     });
+  }
+
+  // Метод для оптимистичного перемещения карты на слот
+  onDroppedToTableSlot(
+    card: ICard,
+    slotId: number,
+    removeCardFromHand: Function,
+    addCardToSlot: Function,
+    defend: Function,
+    attack: Function,
+    play: Function,
+    type: 'attack' | 'defend',
+    dropPosition?: { top: number, left: number, width?: number, height?: number } | null
+  ) {
+
+    const cardId = `${card.suit.name}-${card.rank.name}`;
+    const originalCard = document.getElementById(`playercard-${cardId}`);
+
+    this.MoveCloneCardToSlot(card, slotId, dropPosition, play,
+      () => { originalCard!.style.visibility = 'hidden'; },
+      () => {
+        originalCard!.style.visibility = 'visible';
+        // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
+        card.playPlaceAnim = false;
+        removeCardFromHand(cardId);
+        addCardToSlot(card, slotId);
+
+        // Добавляем действие в список ожидающих подтверждения
+        this.pendingActions.push({
+          type,
+          cardId,
+          slotId,
+          card
+        });
+
+        // Отправляем действие на сервер
+        if (type === 'defend')
+          defend(cardId, slotId);
+        else
+          attack(cardId);
+      });
   }
 
   // Метод для обработки успешного действия с картой
@@ -81,14 +104,14 @@ class GameService {
   // Метод для обработки отклоненного действия с картой
   handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
-    
+
     // Находим оригинальную карту
     if (action.cardId) {
       const originalCard = document.getElementById(`playercard-${action.cardId}`);
       if (originalCard) {
         originalCard.style.visibility = 'visible';
       }
-      
+
       // Возвращаем карту в руку игрока
       // Для этого нам нужно получить данные карты
       // В реальном приложении эти данные должны приходить от сервера
@@ -98,7 +121,7 @@ class GameService {
         suit: { name: suitName, iconChar: '' },
         rank: { name: rankName, value: 0 }
       };
-      
+
       addCardToHand(cardData);
     }
   }
@@ -108,7 +131,7 @@ class GameService {
     moveEvent: ICardsMovedEvent,
     play: Function,
     removeCardFromHand: Function,
-    addCardToHand: Function, 
+    addCardToHand: Function,
     addCardToSlot: Function
   ) {
     moveEvent.cards.forEach(move => {
@@ -117,18 +140,18 @@ class GameService {
         suit: { name: suitName, iconChar: '' },
         rank: { name: rankName, value: 0 }
       };
-      
+
       // Обрабатываем различные типы перемещений
       if (move.fromLocation.type === 'hand' && move.toLocation.type === 'table') {
         // Карта из руки на стол
         if (move.fromLocation.playerId === 'currentPlayer') {
           removeCardFromHand(move.cardId);
-          
+
           // Анимируем перемещение карты в слот
           if (move.toLocation.slotId !== undefined) {
             // Здесь должна быть анимация
             play(Sounds.CardAddedToTable);
-            
+
             // Добавляем карту в слот
             addCardToSlot(cardData, move.toLocation.slotId);
           }
@@ -143,14 +166,14 @@ class GameService {
         // Карта из слота в сброс
         // Здесь должна быть анимация отбоя карты
         play(Sounds.CardSlideLeft);
-          }
-        });
       }
+    });
+  }
 
   // Метод для обработки окончания раунда
   handleRoundEnded(event: IRoundEndedEvent, userId: string, clearTable: Function, play: Function) {
     const { tableCardsRef } = animationService;
-    
+
     if (event.reason === 'allCardsBeaten') {
       // Все карты отбиты
       clearTableAnimated(tableCardsRef,
@@ -174,59 +197,48 @@ class GameService {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType} без карты`);
       return;
     }
-    
-    // Анимируем действия других игроков
-    if (event.cardInfo.isHidden) {
-      // Другой игрок взял карту из колоды
-      play(Sounds.CardFromDeck);
-      moveCardFromDeck(`player-${event.playerId}`, "deck", 400);
-      } else {
-      // Другой игрок сыграл карту
-      play(Sounds.CardAddedToTable);
-      
+
+    // Другой игрок сыграл карту
+    if (event.actionType === 'attack') {
       // Если у нас есть информация о карте и о целевом слоте,
       // мы можем анимировать перемещение карты на стол
-      if (event.cardInfo.card && event.targetSlotId !== undefined) {
-        // Анимация перемещения карты от игрока на стол в конкретный слот
-        // Здесь могла бы быть более сложная анимация
-      }
+      // Анимация перемещения карты от игрока на стол в конкретный слот
+
     }
   }
 
   // Метод для обработки раздачи карт
   handleCardsDealt(event: ICardsDealtEvent, play: Function, addCardToHand: Function) {
     const isCurrentPlayer = event.playerId === 'currentPlayer';
-    
+
     // Проигрываем звук раздачи карт
-    if (event.isInitialDeal) {
-      if (event.count > 3) {
-        play(Sounds.CardsShuffle);
-      } else {
-        play(Sounds.CardFromDeck);
-      }
-    } else {
-      play(Sounds.CardFromDeck);
-    }
-    
+    if (event.isInitialDeal && isCurrentPlayer)
+      play(Sounds.CardsShuffle);
+
     // Если это текущий игрок и есть информация о картах, добавляем карты в руку
     if (isCurrentPlayer && event.cardsInfo && event.cardsInfo.cards) {
       // Добавляем карты в руку игрока
       event.cardsInfo.cards.forEach((card, index) => {
         setTimeout(() => {
+          // if (!event.isInitialDeal)
+          play(Sounds.CardFromDeck);
           moveCardFromDeck("playercards", "deck", 400, () => {
             addCardToHand(card);
           });
         }, index * 200);
       });
     }
-    // Если это другой игрок или карты скрыты, просто анимируем
+    // Если это другой игрок просто анимируем
     else {
       // Анимируем раздачу карт
       for (let i = 0; i < event.count; i++) {
         setTimeout(() => {
-          const target = isCurrentPlayer ? "playercards" : `player-${event.playerId}`;
-          moveCardFromDeck(target, "deck", 400);
-        }, i * 200);
+          const target = `player-${event.playerId}`;
+          moveCardFromDeck(target, "deck", 400, undefined,
+            { x: 0, y: 0 },
+            { width: 20, height: 20 },
+            { width: 24, height: 24 });
+        }, i * 50);
       }
     }
   }
@@ -238,30 +250,29 @@ class GameService {
   }
 
   // Создание клона карты (сохраняем как есть, так как это UI-функция)
-  createCardClone(cardId: string, dropPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null {
+  createCardClone(cardId: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null {
     // Создаем копию карты в той же позиции, где было отпущено перетаскивание
     const originalCardElement = document.getElementById(`playercard-${cardId}`);
-    if (originalCardElement && dropPosition) {
-      // Создаем клон карты
-      const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
-      cardClone.id = `playercard-clone-${cardId}`;
-      cardClone.style.position = 'absolute';
+    
+    if (!originalCardElement || !startPosition)
+      return null;
 
-      // Используем позицию, где было завершено перетаскивание
-      cardClone.style.left = `${dropPosition.left}px`;
-      cardClone.style.top = `${dropPosition.top}px`;
-      cardClone.style.width = `${originalCardElement.offsetWidth}px`;
-      cardClone.style.height = `${originalCardElement.offsetHeight}px`;
-      cardClone.style.transform = '';
-      cardClone.style.zIndex = '1999';
-      cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
+    // Создаем клон карты
+    const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
+    cardClone.id = `playercard-clone-${cardId}`;
+    cardClone.style.position = 'absolute';
 
-      return cardClone;
-    }
+    // Используем позицию, где было завершено перетаскивание
+    cardClone.style.left = `${startPosition.left}px`;
+    cardClone.style.top = `${startPosition.top}px`;
+    cardClone.style.width = `${originalCardElement.offsetWidth}px`;
+    cardClone.style.height = `${originalCardElement.offsetHeight}px`;
+    cardClone.style.transform = '';
+    cardClone.style.zIndex = '1999';
+    cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
 
-    return null;
+    return cardClone;
   }
-}
 
-// Экспортируем синглтон
-export const gameService = GameService.getInstance();
+  // Экспортируем синглтон
+  export const gameService = GameService.getInstance();

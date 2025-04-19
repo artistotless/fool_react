@@ -99,7 +99,7 @@ const TopPanel = () => {
 
    let isRed = state.trumpCard?.suit.iconChar == SuitsSymbols.Diamond || state.trumpCard?.suit.iconChar == SuitsSymbols.Heart;
 
-   // Проверяем скроллинг при изменении количества игроков
+   // Проверка скроллинга при изменении количества игроков
    useEffect(() => {
       checkScrollability();
    }, [state.players.length]);

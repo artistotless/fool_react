@@ -11,6 +11,24 @@
    box-shadow: inset 6px 12px 112px 6px rgba(0, 0, 0, 0.3);
    padding-top: 10px;
    padding-bottom: 10px;
+   z-index: 100;
+}
+
+.invisible_panel_left, .invisible_panel_right {
+   position: absolute;
+   top: 0;
+   height: 72px;
+   z-index: 100;
+}
+
+.invisible_panel_left {
+   left: 0;
+   right: 70%;
+}
+
+.invisible_panel_right {
+   right: 0;
+   left: 70%;
 }
 
 .players {

@@ -38,8 +38,6 @@ const PlayerCompact = ({
    const [shouldShowTimer, setShouldShowTimer] = useState<boolean>(false);
    const { state } = useGameStore();
 
-   console.log('playerCompact rendered');
-
    useEffect(() => {
       // Если аватарка отсутствует, загружаем случайную с DiceBear API
       if (!avatar || avatar.trim() === '') {
