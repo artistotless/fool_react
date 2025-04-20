@@ -1,24 +1,22 @@
 import React, { useState, useRef } from 'react';
 import { useSignalR } from '../contexts/SignalRContext';
 import { 
-  GameUpdateTypes, 
   IActionResultEvent,
   ICardsMovedEvent, 
   IRoundEndedEvent,
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
-  IGameStateSyncEvent,
   Ranks,
   Suits,
   CardLocation
 } from '../types';
-import { useUser } from '../contexts/UserContext';
 import animationService from "../contexts/animationService";
 import { useAudio } from "../contexts/AudioContext";
 import useGameStore from "../store/gameStore";
 import { clearTableAnimated, moveElementTo, Sounds } from "../utils";
 import { testMode } from 'src/environments/environment';
+import styles from './TestEventSimulator.module.css';
 
 // Дополним enum GameUpdateTypes, так как его не хватает в файле types.ts
 enum ExtendedGameUpdateTypes {
@@ -32,82 +30,7 @@ enum ExtendedGameUpdateTypes {
   GameFinished = "GameFinishedDto"
 }
 
-// Стили для компонента
-const styles = {
-  container: {
-    position: 'fixed' as const,
-    bottom: '10px',
-    right: '10px',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    color: 'white',
-    padding: '10px',
-    borderRadius: '5px',
-    zIndex: 3000,
-    maxHeight: '80vh',
-    overflowY: 'auto' as const,
-    width: '300px'
-  },
-  button: {
-    backgroundColor: '#4a5568',
-    color: 'white',
-    padding: '5px 10px',
-    margin: '2px',
-    border: 'none',
-    borderRadius: '3px',
-    cursor: 'pointer',
-    zIndex: 3000
-  },
-  select: {
-    backgroundColor: '#2d3748',
-    color: 'white',
-    padding: '5px',
-    margin: '5px 0',
-    width: '100%',
-    border: 'none',
-    borderRadius: '3px'
-  },
-  input: {
-    backgroundColor: '#2d3748',
-    color: 'white',
-    padding: '5px',
-    margin: '5px 0',
-    width: '100%',
-    border: 'none',
-    borderRadius: '3px'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px'
-  },
-  title: {
-    margin: 0,
-    fontSize: '16px'
-  },
-  buttonGroup: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    gap: '5px',
-    marginTop: '10px',
-    borderTop: '1px solid #4a5568',
-    paddingTop: '10px'
-  },
-  form: {
-    marginTop: '10px',
-    padding: '10px',
-    backgroundColor: 'rgba(45, 55, 72, 0.5)',
-    borderRadius: '3px'
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-    fontSize: '12px'
-  }
-};
-
 const TestEventSimulator: React.FC = () => {
-  const { user } = useUser();
   const { simulateReceiveEvent } = useSignalR();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameState);
@@ -118,18 +41,20 @@ const TestEventSimulator: React.FC = () => {
   const { tableCardsRef } = animationService;
   const elementRef = useRef<HTMLDivElement>(null);
 
-  // Создаем базовую карту для тестирования
-  const testCard = {
-    suit: { name: Suits.Heart, iconChar: '♥' },
-    rank: { name: Ranks.Ace, value: 14 }
-  };
-
   // Состояние для настройки параметров событий
   const [playerActionParams, setPlayerActionParams] = useState({
     playerId: testMode().testPlayers[1].id,
     actionType: 'attack',
     targetSlotId: 0,
     cardIndex: 0
+  });
+
+  // Состояние для настройки параметров RoundEnded
+  const [roundEndedParams, setRoundEndedParams] = useState({
+    reason: 'allCardsBeaten',
+    defenderId: testMode().testPlayers[1].id,
+    attackerId: testMode().testPlayers[0].id,
+    nextAttackerId: testMode().testPlayers[1].id
   });
 
   // Функция для имитации получения события от сервера
@@ -187,10 +112,10 @@ const TestEventSimulator: React.FC = () => {
   const generateRoundEnded = () => {
     simulateEvent(ExtendedGameUpdateTypes.RoundEnded, {
       event: {
-        reason: 'allCardsBeaten',
-        defenderId: testMode().testPlayers[1].id,
-        attackerId: testMode().testPlayers[0].id,
-        nextAttackerId: testMode().testPlayers[1].id
+        reason: roundEndedParams.reason,
+        defenderId: roundEndedParams.defenderId,
+        attackerId: roundEndedParams.attackerId,
+        nextAttackerId: roundEndedParams.nextAttackerId
       } as IRoundEndedEvent
     });
   };
@@ -322,13 +247,13 @@ const TestEventSimulator: React.FC = () => {
   const renderEventForm = () => {
     if (selectedEvent === ExtendedGameUpdateTypes.PlayerAction + '_play') {
       return (
-        <div style={styles.form}>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Настройки атаки</h4>
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки атаки</h4>
           
-          <label style={styles.label}>
+          <label className={styles.label}>
             ID игрока:
             <select 
-              style={styles.select}
+              className={styles.select}
               value={playerActionParams.playerId}
               onChange={(e) => setPlayerActionParams({...playerActionParams, playerId: e.target.value})}
             >
@@ -340,10 +265,10 @@ const TestEventSimulator: React.FC = () => {
             </select>
           </label>
           
-          <label style={styles.label}>
+          <label className={styles.label}>
             Тип действия:
             <select 
-              style={styles.select}
+              className={styles.select}
               value={playerActionParams.actionType}
               onChange={(e) => setPlayerActionParams({...playerActionParams, actionType: e.target.value})}
             >
@@ -352,27 +277,92 @@ const TestEventSimulator: React.FC = () => {
             </select>
           </label>
           
-          <label style={styles.label}>
+          <label className={styles.label}>
             ID слота (0-5):
             <input 
               type="number" 
               min="0" 
               max="5" 
-              style={styles.input}
+              className={styles.input}
               value={playerActionParams.targetSlotId}
               onChange={(e) => setPlayerActionParams({...playerActionParams, targetSlotId: Number(e.target.value)})}
             />
           </label>
           
-          <label style={styles.label}>
+          <label className={styles.label}>
             Индекс карты в тестовых картах:
             <input 
               type="number" 
               min="0" 
-              style={styles.input}
+              className={styles.input}
               value={playerActionParams.cardIndex}
               onChange={(e) => setPlayerActionParams({...playerActionParams, cardIndex: Number(e.target.value)})}
             />
+          </label>
+        </div>
+      );
+    } 
+    
+    if (selectedEvent === ExtendedGameUpdateTypes.RoundEnded) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки завершения раунда</h4>
+          
+          <label className={styles.label}>
+            Причина:
+            <select 
+              className={styles.select}
+              value={roundEndedParams.reason}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, reason: e.target.value})}
+            >
+              <option value="allCardsBeaten">Все карты отбиты</option>
+              <option value="defenderTookCards">Защищающийся взял карты</option>
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            ID защищающегося:
+            <select 
+              className={styles.select}
+              value={roundEndedParams.defenderId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, defenderId: e.target.value})}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            ID атакующего:
+            <select 
+              className={styles.select}
+              value={roundEndedParams.attackerId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, attackerId: e.target.value})}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            ID следующего атакующего:
+            <select 
+              className={styles.select}
+              value={roundEndedParams.nextAttackerId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, nextAttackerId: e.target.value})}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       );
@@ -384,7 +374,7 @@ const TestEventSimulator: React.FC = () => {
   if (!isOpen) {
     return (
       <button 
-        style={{ ...styles.button, position: 'fixed', bottom: '10px', right: '10px' }}
+        className={`${styles.button} ${styles.floatingButton}`}
         onClick={() => setIsOpen(true)}
       >
         🛠 Тест
@@ -422,11 +412,11 @@ const TestEventSimulator: React.FC = () => {
   };
 
   return (
-    <div ref={elementRef} style={styles.container}>
-      <div style={styles.header}>
-        <h3 style={styles.title}>Симулятор событий сервера</h3>
+    <div ref={elementRef} className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Симулятор событий сервера</h3>
         <button 
-          style={{ ...styles.button, backgroundColor: '#e53e3e' }}
+          className={`${styles.button} ${styles.closeButton}`}
           onClick={() => setIsOpen(false)}
         >
           X
@@ -434,7 +424,7 @@ const TestEventSimulator: React.FC = () => {
       </div>
 
       <select 
-        style={styles.select}
+        className={styles.select}
         value={selectedEvent}
         onChange={(e) => setSelectedEvent(e.target.value)}
       >
@@ -448,39 +438,39 @@ const TestEventSimulator: React.FC = () => {
       {renderEventForm()}
 
       <button 
-        style={{...styles.button, marginTop: '10px'}}
+        className={`${styles.button} ${styles.generateButton}`}
         onClick={handleGenerateEvent}
       >
         Отправить событие
       </button>
 
-      <div style={{ marginTop: '10px', fontSize: '12px' }}>
+      <div className={styles.eventInfo}>
         <p>Текущее событие: {getDisplayName(selectedEvent)}</p>
       </div>
       
       {/* Кнопки из Test.tsx */}
-      <div style={styles.buttonGroup}>
-        <h4 style={{ width: '100%', margin: '0 0 5px 0', fontSize: '14px' }}>Быстрые действия</h4>
+      <div className={styles.buttonGroup}>
+        <h4 className={styles.actionTitle}>Быстрые действия</h4>
         <button 
-          style={styles.button}
+          className={styles.button}
           onClick={handleClear}
         >
           Очистить стол
         </button>
         <button 
-          style={styles.button}
+          className={styles.button}
           onClick={handleDown}
         >
           Взять карты
         </button>
         <button 
-          style={styles.button}
+          className={styles.button}
           onClick={() => generateCardsDealt()}
         >
           Раздать карты
         </button>
         <button 
-          style={styles.button}
+          className={styles.button}
           onClick={() => generateRoundEnded()}
         >
           Завершить раунд

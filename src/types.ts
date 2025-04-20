@@ -160,6 +160,11 @@ export interface IGameState {
     * The time allowed for the move.
     */
    moveTime: string | null;
+
+   /**
+    * The personal state of the current player.
+    */
+   personalState: IPersonalState;
 }
 
 export interface IPersonalState {
@@ -243,6 +248,7 @@ export interface IRoundEndedEvent {
    defenderId: string;
    attackerId: string;
    nextAttackerId: string;
+   cards?: ICard[];
 }
 
 /**

@@ -1,3 +1,4 @@
+import { ISlot } from "src/store/gameStore";
 import animationService from "../contexts/animationService";
 import {
   ICard,
@@ -6,7 +7,8 @@ import {
   ICardsDealtEvent,
   IGameFinishedEvent,
   ICardsMovedEvent,
-  IActionResultEvent
+  IActionResultEvent,
+  IGameState
 } from "../types";
 import { animateCardToSlot, clearTableAnimated, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 
@@ -25,6 +27,29 @@ class GameService {
       GameService.instance = new GameService();
     }
     return GameService.instance;
+  }
+
+  handleGameState(state: IGameState, setGameState: Function, setPersonalState: Function, setSlots: Function, setPassedPlayers: Function) {
+
+    setGameState(state);
+    setPersonalState(state.personalState);
+
+    let slots: ISlot[] = [];
+
+    Array.from(Array(6).keys()).forEach(slotIndex => {
+      const card = state.tableCards.find(card => card.slotIndex === slotIndex);
+      slots.push({
+        id: slotIndex,
+        cards: card ? card.defendingCard ? [card.card, card.defendingCard] : [card.card] : []
+      });
+    });
+
+    setSlots(slots);
+    // Обновляем список пасовавших игроков
+    const passedPlayers = state.players
+      .filter((player: any) => player.passed)
+      .map((player: any) => player.id);
+    setPassedPlayers(passedPlayers);
   }
 
   // Метод для обработки успешного действия с картой

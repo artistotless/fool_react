@@ -46,6 +46,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     addCardToSlot,
     setWinnersIds,
     setPassedPlayers,
+    setSlots,
   } = useGameStore();
 
   // Обработка событий от SignalR
@@ -57,13 +58,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     switch (data.updateType) {
       // Базовые события
       case GameUpdateTypes.GameState:
-        setGameState(data.state);
-        setPersonalState(data.state.personalState);
-        // Обновляем список пасовавших игроков
-        const passedPlayers = data.state.players
-          .filter((player: any) => player.passed)
-          .map((player: any) => player.id);
-        setPassedPlayers(passedPlayers);
+        gameService.handleGameState(data.state, setGameState, setPersonalState, setSlots, setPassedPlayers);
         break;
 
       // Оптимизированные события

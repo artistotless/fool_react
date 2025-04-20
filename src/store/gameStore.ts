@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware'
 import { IGameState, IPersonalState, ICard, GameStatus } from 'src/types';
 
 export interface ISlot {
@@ -48,6 +49,9 @@ const getInitialStateValues = () => ({
     deckCardsCount: 0,
     status: 'ReadyToBegin' as GameStatus,
     players: [],
+    personalState: {
+      cardsInHand: [],
+    },
   },
   personalState: {
     cardsInHand: [],
@@ -57,61 +61,66 @@ const getInitialStateValues = () => ({
   passedPlayers: [],
 });
 
-const useGameStore = create<GameStoreState>((set) => ({
-  ...getInitialStateValues(),
+const useGameStore = create<GameStoreState>()(
+  devtools(
+    (set) => ({
+      ...getInitialStateValues(),
 
-  // Реализация методов обновления
-  setSlots: (slots) => set({ slots }),
-  setGameState: (state) => set({ state }),
-  setPersonalState: (personalState) => set({ personalState }),
-  setLeftCardsCount: (count) => set({ leftCardsCount: count }),
-  setWinnersIds: (ids) => set({ winnersIds: ids }),
-  setPassedPlayers: (playerIds) => set({ passedPlayers: playerIds }),
-  addPassedPlayer: (playerId) => set((state) => ({ passedPlayers: [...state.passedPlayers, playerId] })),
-  
-  // Реализация методов для работы с картами
-  addCardToHand: (card) => set((state) => ({
-    personalState: {
-      ...state.personalState,
-      cardsInHand: Array.isArray(card)
-        ? [...state.personalState.cardsInHand, ...card]
-        : [...state.personalState.cardsInHand, card]
-    }
-  })),
+      // Реализация методов обновления
+      setSlots: (slots) => set({ slots }, undefined, 'game/setSlots'),
+      setGameState: (state) => set({ state }, undefined, 'game/setGameState'),
+      setPersonalState: (personalState) => set({ personalState }, undefined, 'game/setPersonalState'),
+      setLeftCardsCount: (count) => set({ leftCardsCount: count }, undefined, 'game/setLeftCardsCount'),
+      setWinnersIds: (ids) => set({ winnersIds: ids }, undefined, 'game/setWinnersIds'),
+      setPassedPlayers: (playerIds) => set({ passedPlayers: playerIds }, undefined, 'game/setPassedPlayers'),
+      addPassedPlayer: (playerId) => set((state) => ({ passedPlayers: [...state.passedPlayers, playerId] }), undefined, 'game/addPassedPlayer'),
+      
+      // Реализация методов для работы с картами
+      addCardToHand: (card) => set((state) => ({
+        personalState: {
+          ...state.personalState,
+          cardsInHand: Array.isArray(card)
+            ? [...state.personalState.cardsInHand, ...card]
+            : [...state.personalState.cardsInHand, card]
+        }
+      }), undefined, 'game/addCardToHand'),
 
-  removeCardFromHand: (cardId) => set((state) => ({
-    personalState: {
-      ...state.personalState,
-      cardsInHand: state.personalState.cardsInHand.filter(
-        (card) => `${card.suit.name}-${card.rank.name}` !== cardId
-      )
-    }
-  })),
+      removeCardFromHand: (cardId) => set((state) => ({
+        personalState: {
+          ...state.personalState,
+          cardsInHand: state.personalState.cardsInHand.filter(
+            (card) => `${card.suit.name}-${card.rank.name}` !== cardId
+          )
+        }
+      }), undefined, 'game/removeCardFromHand'),
 
-  addCardToSlot: (card, slotID) => set((state) => ({
-    slots: state.slots.map((slot) => {
-      if (slot.id === slotID) {
-        return { ...slot, cards: [...slot.cards, card] };
-      }
-      return slot;
-    })
-  })),
+      addCardToSlot: (card, slotID) => set((state) => ({
+        slots: state.slots.map((slot) => {
+          if (slot.id === slotID) {
+            return { ...slot, cards: [...slot.cards, card] };
+          }
+          return slot;
+        })
+      }), undefined, 'game/addCardToSlot'),
 
-  removeFromSlot: (slotId, cardId) => set((state) => ({
-    slots: state.slots.map((slot) => {
-      if (slot.id === slotId) {
-        return {
-          ...slot,
-          cards: slot.cards.filter((card) => `${card.suit.name}-${card.rank.name}` !== cardId)
-        };
-      }
-      return slot;
-    })
-  })),
+      removeFromSlot: (slotId, cardId) => set((state) => ({
+        slots: state.slots.map((slot) => {
+          if (slot.id === slotId) {
+            return {
+              ...slot,
+              cards: slot.cards.filter((card) => `${card.suit.name}-${card.rank.name}` !== cardId)
+            };
+          }
+          return slot;
+        })
+      }), undefined, 'game/removeFromSlot'),
 
-  clearTable: () => set((state) => ({
-    slots: state.slots.map((slot) => ({ ...slot, cards: [] }))
-  })),
-}));
+      clearTable: () => set((state) => ({
+        slots: state.slots.map((slot) => ({ ...slot, cards: [] }))
+      }), undefined, 'game/clearTable'),
+    }),
+    { name: 'Game Store' }
+  )
+);
 
 export default useGameStore; 
