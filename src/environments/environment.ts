@@ -29,11 +29,11 @@ const testTrumpCard = {
     rank: {
         name: '7',
         value: 7,
-        suit: 'hearts'
+        suit: 'spades'
     },
     suit: {
-        name: 'hearts',
-        iconChar: '♥'
+        name: 'spades',
+        iconChar: '♠'
     }
 }
 

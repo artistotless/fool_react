@@ -78,9 +78,21 @@ class GameService {
     // Используем новый метод для получения данных карты
     const cardData = this.getCardDataFromCardId(action.cardId);
 
-    showToast(action.errorMessage!, 'success');
+    const slotPos = {
+      top: document.getElementById(`slot-${action.slotId}`)?.offsetTop!,
+      left: document.getElementById(`slot-${action.slotId}`)?.offsetLeft!
+    };
+
+    showToast(action.errorMessage!, 'error');
     removeFromSlot(action.slotId!, action.cardId);
-    addCardToHand(cardData);
+
+    const fakeCard = this.createFakeCard(cardData, "playercard", slotPos);
+    fakeCard!.style.transform = 'translate(50%, 50%);';
+    document.body.appendChild(fakeCard!);
+    moveElementTo(fakeCard!, "playercards", 300, undefined, undefined, () => {
+      addCardToHand(cardData);
+      fakeCard!.remove();
+    });
   }
 
   // Метод для обработки перемещения карт
@@ -381,6 +393,7 @@ class GameService {
 
     const rank: IRank = {
       name: rankName as Ranks,
+      shortName: rankName as Ranks,
       value: rankValue
     };
 

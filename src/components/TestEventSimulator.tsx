@@ -57,6 +57,15 @@ const TestEventSimulator: React.FC = () => {
     nextAttackerId: testMode().testPlayers[1].id
   });
 
+  // Состояние для настройки параметров ActionResultError
+  const [actionResultErrorParams, setActionResultErrorParams] = useState({
+    slotId: 0,
+    actionType: 'attack',
+    errorCode: 'INVALID_CARD',
+    errorMessage: 'Невозможно атаковать этой картой',
+    cardId: ''
+  });
+
   // Функция для имитации получения события от сервера
   const simulateEvent = (eventType: string, payload: any) => {
     console.log(`Симуляция события ${eventType}`, payload);
@@ -80,13 +89,35 @@ const TestEventSimulator: React.FC = () => {
   };
   
   const generateActionResultError = () => {
+    // Получаем актуальный список карт из выбранного слота
+    const slotId = Number(actionResultErrorParams.slotId);
+    const cardsInSlot = getCardsFromSlot(slotId);
+    
+    // Используем сохраненный cardId, только если он соответствует одной из карт в слоте
+    let cardIdToUse = actionResultErrorParams.cardId;
+    const cardExists = cardsInSlot.some(card => 
+      `${card.suit.name}-${card.rank.name}` === cardIdToUse
+    );
+    
+    // Если выбранной карты больше нет в слоте или cardId пустой, берем первую карту из слота
+    if (!cardExists || !cardIdToUse) {
+      if (cardsInSlot.length > 0) {
+        cardIdToUse = `${cardsInSlot[0].suit.name}-${cardsInSlot[0].rank.name}`;
+        console.log(`Используем первую карту из слота: ${cardIdToUse}`);
+      } else {
+        console.warn('В слоте нет карт для отправки ошибки');
+        return; // Выходим, если нет карт в слоте
+      }
+    }
+    
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
       result: {
         success: false,
-        actionType: 'attack',
-        cardId: `${Suits.Heart}-${Ranks.Ace}`,
-        errorCode: 'INVALID_CARD',
-        errorMessage: 'Невозможно атаковать этой картой'
+        actionType: actionResultErrorParams.actionType,
+        cardId: cardIdToUse,
+        slotId: slotId,
+        errorCode: actionResultErrorParams.errorCode,
+        errorMessage: actionResultErrorParams.errorMessage
       } as IActionResultEvent
     });
   };
@@ -240,6 +271,31 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
+  // Получение карт из выбранного слота
+  const getCardsFromSlot = (slotId: number) => {
+    const slot = slots.find(s => s.id === slotId);
+    return slot ? slot.cards : [];
+  };
+
+  // Обработчик изменения выбранного слота для ошибки ActionResult
+  const handleSlotChange = (slotId: number) => {
+    const cards = getCardsFromSlot(slotId);
+    setActionResultErrorParams({
+      ...actionResultErrorParams,
+      slotId,
+      cardId: cards.length > 0 ? `${cards[0].suit.name}-${cards[0].rank.name}` : ''
+    });
+  };
+
+  // Обработчик изменения выбранной карты
+  const handleCardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log('Выбрана карта:', e.target.value);
+    setActionResultErrorParams({
+      ...actionResultErrorParams,
+      cardId: e.target.value
+    });
+  };
+
   // Рендеринг формы для настройки параметров
   const renderEventForm = () => {
     if (selectedEvent === ExtendedGameUpdateTypes.PlayerAction + '_play') {
@@ -360,6 +416,89 @@ const TestEventSimulator: React.FC = () => {
                 </option>
               ))}
             </select>
+          </label>
+        </div>
+      );
+    }
+    
+    if (selectedEvent === ExtendedGameUpdateTypes.ActionResult + '_error') {
+      // Получаем карты из выбранного слота
+      const selectedSlotId = Number(actionResultErrorParams.slotId);
+      const cardsInSlot = getCardsFromSlot(selectedSlotId);
+      
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки ошибки действия</h4>
+          
+          <label className={styles.label}>
+            ID слота (0-5):
+            <input 
+              type="number" 
+              min="0" 
+              max="5" 
+              className={styles.input}
+              value={actionResultErrorParams.slotId}
+              onChange={(e) => handleSlotChange(Number(e.target.value))}
+            />
+          </label>
+          
+          <label className={styles.label}>
+            Тип действия:
+            <select 
+              className={styles.select}
+              value={actionResultErrorParams.actionType}
+              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, actionType: e.target.value})}
+            >
+              <option value="attack">Атака</option>
+              <option value="defend">Защита</option>
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            Карта:
+            <select 
+              className={styles.select}
+              value={actionResultErrorParams.cardId}
+              onChange={handleCardChange}
+              disabled={cardsInSlot.length === 0}
+            >
+              {cardsInSlot.length === 0 ? (
+                <option value="">Нет карт в слоте</option>
+              ) : (
+                cardsInSlot.map(card => {
+                  const cardId = `${card.suit.name}-${card.rank.name}`;
+                  return (
+                    <option key={cardId} value={cardId}>
+                      {card.suit.name}-{card.rank.name}
+                    </option>
+                  );
+                })
+              )}
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            Код ошибки:
+            <select 
+              className={styles.select}
+              value={actionResultErrorParams.errorCode}
+              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, errorCode: e.target.value})}
+            >
+              <option value="INVALID_CARD">INVALID_CARD</option>
+              <option value="INVALID_SLOT">INVALID_SLOT</option>
+              <option value="NOT_YOUR_TURN">NOT_YOUR_TURN</option>
+              <option value="GAME_ENDED">GAME_ENDED</option>
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            Сообщение об ошибке:
+            <input 
+              type="text" 
+              className={styles.input}
+              value={actionResultErrorParams.errorMessage}
+              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, errorMessage: e.target.value})}
+            />
           </label>
         </div>
       );
