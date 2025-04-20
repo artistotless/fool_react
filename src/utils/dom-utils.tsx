@@ -270,3 +270,4 @@ export const createCardHtmlElement = (rank: IRank, suit: ISuit, tableCard: boole
     
     return cardElement;
 };
+

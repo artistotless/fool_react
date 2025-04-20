@@ -8,8 +8,6 @@ const GameField = () => {
 
    return (
       <div className={styles.field}>
-         <div className={styles.invisible_panel_left}></div>
-         <div className={styles.invisible_panel_right}></div>
          <TopPanel />
          <Table />
          <PlayerCards/>

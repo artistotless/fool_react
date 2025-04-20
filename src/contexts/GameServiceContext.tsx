@@ -104,7 +104,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
-        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play);
+        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, addCardToSlot);
         break;
 
       case GameUpdateTypes.CardsDealt:

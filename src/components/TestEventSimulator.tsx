@@ -66,6 +66,15 @@ const styles = {
     border: 'none',
     borderRadius: '3px'
   },
+  input: {
+    backgroundColor: '#2d3748',
+    color: 'white',
+    padding: '5px',
+    margin: '5px 0',
+    width: '100%',
+    border: 'none',
+    borderRadius: '3px'
+  },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -83,6 +92,17 @@ const styles = {
     marginTop: '10px',
     borderTop: '1px solid #4a5568',
     paddingTop: '10px'
+  },
+  form: {
+    marginTop: '10px',
+    padding: '10px',
+    backgroundColor: 'rgba(45, 55, 72, 0.5)',
+    borderRadius: '3px'
+  },
+  label: {
+    display: 'block',
+    marginBottom: '5px',
+    fontSize: '12px'
   }
 };
 
@@ -103,6 +123,14 @@ const TestEventSimulator: React.FC = () => {
     suit: { name: Suits.Heart, iconChar: '♥' },
     rank: { name: Ranks.Ace, value: 14 }
   };
+
+  // Состояние для настройки параметров событий
+  const [playerActionParams, setPlayerActionParams] = useState({
+    playerId: testMode().testPlayers[1].id,
+    actionType: 'attack',
+    targetSlotId: 0,
+    cardIndex: 0
+  });
 
   // Функция для имитации получения события от сервера
   const simulateEvent = (eventType: string, payload: any) => {
@@ -170,12 +198,12 @@ const TestEventSimulator: React.FC = () => {
   const generatePlayerAction = () => {
     simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
-        playerId: testMode().testPlayers[1].id,
-        actionType: 'attack',
-        targetSlotId: 0,
+        playerId: playerActionParams.playerId,
+        actionType: playerActionParams.actionType,
+        targetSlotId: Number(playerActionParams.targetSlotId),
         cardInfo: {
           isHidden: false,
-          card: testMode().testCards[0]
+          card: testMode().testCards[Number(playerActionParams.cardIndex)]
         }
       } as IPlayerActionEvent
     });
@@ -290,6 +318,69 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
+  // Рендеринг формы для настройки параметров
+  const renderEventForm = () => {
+    if (selectedEvent === ExtendedGameUpdateTypes.PlayerAction + '_play') {
+      return (
+        <div style={styles.form}>
+          <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Настройки атаки</h4>
+          
+          <label style={styles.label}>
+            ID игрока:
+            <select 
+              style={styles.select}
+              value={playerActionParams.playerId}
+              onChange={(e) => setPlayerActionParams({...playerActionParams, playerId: e.target.value})}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          
+          <label style={styles.label}>
+            Тип действия:
+            <select 
+              style={styles.select}
+              value={playerActionParams.actionType}
+              onChange={(e) => setPlayerActionParams({...playerActionParams, actionType: e.target.value})}
+            >
+              <option value="attack">Атака</option>
+              <option value="defend">Защита</option>
+            </select>
+          </label>
+          
+          <label style={styles.label}>
+            ID слота (0-5):
+            <input 
+              type="number" 
+              min="0" 
+              max="5" 
+              style={styles.input}
+              value={playerActionParams.targetSlotId}
+              onChange={(e) => setPlayerActionParams({...playerActionParams, targetSlotId: Number(e.target.value)})}
+            />
+          </label>
+          
+          <label style={styles.label}>
+            Индекс карты в тестовых картах:
+            <input 
+              type="number" 
+              min="0" 
+              style={styles.input}
+              value={playerActionParams.cardIndex}
+              onChange={(e) => setPlayerActionParams({...playerActionParams, cardIndex: Number(e.target.value)})}
+            />
+          </label>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   if (!isOpen) {
     return (
       <button 
@@ -354,8 +445,10 @@ const TestEventSimulator: React.FC = () => {
         ))}
       </select>
 
+      {renderEventForm()}
+
       <button 
-        style={styles.button}
+        style={{...styles.button, marginTop: '10px'}}
         onClick={handleGenerateEvent}
       >
         Отправить событие

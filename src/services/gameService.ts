@@ -123,7 +123,7 @@ class GameService {
   }
 
   // Метод для обработки действий других игроков
-  handlePlayerAction(event: IPlayerActionEvent, play: Function) {
+  handlePlayerAction(event: IPlayerActionEvent, play: Function, addCardToSlot: Function) {
     // Если карта не указана (например, игрок пасовал)
     if (!event.cardInfo) {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType} без карты`);
@@ -131,11 +131,20 @@ class GameService {
     }
 
     // Другой игрок сыграл карту
-    if (event.actionType === 'attack') {
-      // Если у нас есть информация о карте и о целевом слоте,
-      // мы можем анимировать перемещение карты на стол
-      // Анимация перемещения карты от игрока на стол в конкретный слот
+    if (event.actionType === 'attack' || event.actionType === 'defend') {
+      const cardPrefix = `othercard-${event.playerId}`;
+      const position = { top: -100, left: window.innerWidth / 2 };
+      const fakeCard = this.createFakeCard(event.cardInfo.card!, cardPrefix, position);
+      if (!fakeCard) throw new Error("Fake card not found");
 
+      // Анимация перемещения карты от игрока на стол в конкретный слот
+      this.moveFakeCardToSlot(fakeCard, event.targetSlotId!, play, undefined,
+        () => {
+          fakeCard.remove();
+          event.cardInfo!.card!.playPlaceAnim = event.actionType === 'attack';
+          addCardToSlot(event.cardInfo!.card!, event.targetSlotId!);
+        }
+      );
     }
   }
 
@@ -186,8 +195,8 @@ class GameService {
     fakeCard: HTMLElement,
     slotId: number,
     play: Function,
-    before: Function,
-    after: Function
+    before?: Function,
+    after?: Function
   ) {
 
     if (!fakeCard) throw new Error("Fake Card not found");
@@ -200,8 +209,6 @@ class GameService {
 
     // Анимируем перемещение карты
     animateCardToSlot(fakeCard, `slot-${slotId}`, 300, () => {
-      // После завершения анимации удаляем клонированную карту
-      fakeCard.remove();
       after && after();
     });
   }
@@ -234,6 +241,8 @@ class GameService {
     this.moveFakeCardToSlot(fakeCard, slotId, play,
       () => { originalCard!.style.visibility = 'hidden'; },
       () => {
+        // После завершения анимации удаляем клонированную карту
+        fakeCard.remove();
         originalCard!.style.visibility = 'visible';
         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
         card.playPlaceAnim = false;
@@ -257,7 +266,7 @@ class GameService {
   }
 
   // Создание фейковой карты
-  createFakeCard(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width?: number, height?: number }): HTMLElement | null {
+  createFakeCard(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width: number, height: number }): HTMLElement | null {
     const cardId = `${card.suit.name}-${card.rank.name}`;
     // Создаем HTML элемент карты
     const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-fake-${cardId}`);
@@ -270,8 +279,12 @@ class GameService {
     // Используем позицию, где было завершено перетаскивание
     cardClone.style.left = `${startPosition?.left}px`;
     cardClone.style.top = `${startPosition?.top}px`;
-    cardClone.style.width = `${size?.width}px`;
-    cardClone.style.height = `${size?.height}px`;
+
+    if (size) {
+      cardClone.style.width = `${size?.width}px`;
+      cardClone.style.height = `${size?.height}px`;
+    }
+
     cardClone.style.transform = '';
     cardClone.style.zIndex = '1999';
     cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
