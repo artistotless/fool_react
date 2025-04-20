@@ -1,4 +1,3 @@
-import { S } from "node_modules/framer-motion/dist/types.d-6pKw1mTI";
 import animationService from "../contexts/animationService";
 import {
   ICard,
@@ -9,7 +8,7 @@ import {
   ICardsMovedEvent,
   IActionResultEvent
 } from "../types";
-import { animateCardToSlot, clearTableAnimated, createCardElement, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
+import { animateCardToSlot, clearTableAnimated, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 
 class GameService {
   private static instance: GameService;
@@ -26,82 +25,6 @@ class GameService {
       GameService.instance = new GameService();
     }
     return GameService.instance;
-  }
-
-  // Метод для анимации перемещения карты в слот
-  MoveCloneCardToSlot(
-    card: ICard,
-    cardPrefix: string,
-    slotId: number,
-    startPosition: any,
-    size: { width?: number, height?: number },
-    play: Function,
-    before: Function,
-    after: Function
-  ) {
-
-    const cardClone = this.createCardCloneNew(card, cardPrefix, startPosition, size);
-    if (!cardClone) throw new Error("Card clone not found");
-
-    before && before();
-    document.body.appendChild(cardClone!);
-
-    // Проигрываем звук
-    play(Sounds.CardAddedToTable);
-
-    // Анимируем перемещение карты
-    animateCardToSlot(cardClone, `slot-${slotId}`, 300, () => {
-      // После завершения анимации удаляем клонированную карту
-      cardClone.remove();
-      after && after();
-    });
-  }
-
-  // Метод для оптимистичного перемещения карты на слот
-  onDroppedToTableSlot(
-    card: ICard,
-    slotId: number,
-    removeCardFromHand: Function,
-    addCardToSlot: Function,
-    defend: Function,
-    attack: Function,
-    play: Function,
-    type: 'attack' | 'defend',
-    dropPosition?: { top: number, left: number, width?: number, height?: number } | null
-  ) {
-
-    const cardId = `${card.suit.name}-${card.rank.name}`;
-    const originalCard = document.getElementById(`playercard-${cardId}`);
-    if (!originalCard) throw new Error("Original card not found");
-
-    const size = {
-      width: originalCard.offsetWidth,
-      height: originalCard.offsetHeight
-    };
-
-    this.MoveCloneCardToSlot(card, "playercard", slotId, dropPosition, size, play,
-      () => { originalCard!.style.visibility = 'hidden'; },
-      () => {
-        originalCard!.style.visibility = 'visible';
-        // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
-        card.playPlaceAnim = false;
-        removeCardFromHand(cardId);
-        addCardToSlot(card, slotId);
-
-        // Добавляем действие в список ожидающих подтверждения
-        this.pendingActions.push({
-          type,
-          cardId,
-          slotId,
-          card
-        });
-
-        // Отправляем действие на сервер
-        if (type === 'defend')
-          defend(cardId, slotId);
-        else
-          attack(cardId);
-      });
   }
 
   // Метод для обработки успешного действия с картой
@@ -258,15 +181,90 @@ class GameService {
     console.log('Статистика игры:', event.statistics);
   }
 
-  // Создание клона карты (сохраняем как есть, так как это UI-функция)
-  createCardCloneNew(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width?: number, height?: number }): HTMLElement | null {
+  // Метод для перемещения фейковой карты в слот
+  moveFakeCardToSlot(
+    fakeCard: HTMLElement,
+    slotId: number,
+    play: Function,
+    before: Function,
+    after: Function
+  ) {
+
+    if (!fakeCard) throw new Error("Fake Card not found");
+
+    before && before();
+    document.body.appendChild(fakeCard);
+
+    // Проигрываем звук
+    play(Sounds.CardAddedToTable);
+
+    // Анимируем перемещение карты
+    animateCardToSlot(fakeCard, `slot-${slotId}`, 300, () => {
+      // После завершения анимации удаляем клонированную карту
+      fakeCard.remove();
+      after && after();
+    });
+  }
+
+  // Метод для оптимистичного перемещения карты на слот
+  onDroppedToTableSlot(
+    card: ICard,
+    slotId: number,
+    removeCardFromHand: Function,
+    addCardToSlot: Function,
+    defend: Function,
+    attack: Function,
+    play: Function,
+    type: 'attack' | 'defend',
+    dropPosition?: { top: number, left: number, width?: number, height?: number } | null
+  ) {
+
+    const cardId = `${card.suit.name}-${card.rank.name}`;
+    const originalCard = document.getElementById(`playercard-${cardId}`);
+    if (!originalCard) throw new Error("Original card not found");
+
+    const size = {
+      width: originalCard.offsetWidth,
+      height: originalCard.offsetHeight
+    };
+
+    const fakeCard = this.createFakeCard(card, "playercard", dropPosition, size);
+    if (!fakeCard) throw new Error("Fake card not found");
+
+    this.moveFakeCardToSlot(fakeCard, slotId, play,
+      () => { originalCard!.style.visibility = 'hidden'; },
+      () => {
+        originalCard!.style.visibility = 'visible';
+        // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
+        card.playPlaceAnim = false;
+        removeCardFromHand(cardId);
+        addCardToSlot(card, slotId);
+
+        // Добавляем действие в список ожидающих подтверждения
+        this.pendingActions.push({
+          type,
+          cardId,
+          slotId,
+          card
+        });
+
+        // Отправляем действие на сервер
+        if (type === 'defend')
+          defend(cardId, slotId);
+        else
+          attack(cardId);
+      });
+  }
+
+  // Создание фейковой карты
+  createFakeCard(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width?: number, height?: number }): HTMLElement | null {
     const cardId = `${card.suit.name}-${card.rank.name}`;
     // Создаем HTML элемент карты
-    const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-clone-${cardId}`);
+    const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-fake-${cardId}`);
 
     // Создаем клон карты
     // const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
-    cardClone.id = `${cardPrefix}-clone-${cardId}`;
+    cardClone.id = `${cardPrefix}-fake-${cardId}`;
     cardClone.style.position = 'absolute';
 
     // Используем позицию, где было завершено перетаскивание
@@ -281,30 +279,6 @@ class GameService {
     return cardClone;
   }
 
-  // Создание клона карты (сохраняем как есть, так как это UI-функция)
-  createCardClone(cardId: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null {
-    // Создаем копию карты в той же позиции, где было отпущено перетаскивание
-    const originalCardElement = document.getElementById(`playercard-${cardId}`);
-
-    if (!originalCardElement || !startPosition)
-      return null;
-
-    // Создаем клон карты
-    const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
-    cardClone.id = `playercard-clone-${cardId}`;
-    cardClone.style.position = 'absolute';
-
-    // Используем позицию, где было завершено перетаскивание
-    cardClone.style.left = `${startPosition.left}px`;
-    cardClone.style.top = `${startPosition.top}px`;
-    cardClone.style.width = `${originalCardElement.offsetWidth}px`;
-    cardClone.style.height = `${originalCardElement.offsetHeight}px`;
-    cardClone.style.transform = '';
-    cardClone.style.zIndex = '1999';
-    cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
-
-    return cardClone;
-  }
 }
 
 // Экспортируем синглтон
