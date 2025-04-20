@@ -15,6 +15,7 @@ import {
   IGameFinishedEvent,
 } from '../types';
 import { testMode } from 'src/environments/environment';
+import { useToast } from '../services/ToastService';
 
 interface GameServiceContextType {
   handleDragEnd: (event: DragEndEvent) => void;
@@ -31,6 +32,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   const { isConnected, data, sendData } = useSignalR();
   const { play } = useAudio();
   const { user } = useUser();
+  const { showToast } = useToast();
 
   // Методы и состояние из gameStore
   const {
@@ -47,6 +49,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     setWinnersIds,
     setPassedPlayers,
     setSlots,
+    removeFromSlot,
   } = useGameStore();
 
   // Обработка событий от SignalR
@@ -66,25 +69,11 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         // Обработка результата действия текущего игрока
         const actionResult = data.result as IActionResultEvent;
 
-        if (actionResult.success) {
-          // Успешное действие
-          console.log(`Действие ${actionResult.actionType} успешно выполнено`);
+        if (actionResult.success)
+          gameService.handleSuccessfulAction(actionResult, user.id, setPassedPlayers);
+        else
+          gameService.handleFailedCardAction(actionResult, addCardToHand, removeFromSlot, showToast);
 
-          // Если это было атакой или защитой с указанной картой, возможно нужны дополнительные действия
-          if (actionResult.cardId && (actionResult.actionType === 'attack' || actionResult.actionType === 'defend')) {
-            gameService.handleSuccessfulCardAction(actionResult);
-          }
-        } else {
-          // Действие отклонено
-          console.error(`Действие ${actionResult.actionType} отклонено: ${actionResult.errorMessage}`);
-
-          // Если произошла ошибка с картой, возвращаем её в руку
-          if (actionResult.cardId) {
-            gameService.handleFailedCardAction(actionResult, addCardToHand);
-          }
-
-          // Можно показать сообщение об ошибке
-        }
         break;
 
       case GameUpdateTypes.CardsMoved:

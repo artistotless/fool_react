@@ -7,18 +7,21 @@ import { AudioProvider } from "./contexts/AudioContext.tsx";
 import { UserProvider } from "./contexts/UserContext.tsx";
 import GameWrapper from "./components/shared/GameWrapper.tsx";
 import { GameServiceProvider } from "./contexts/GameServiceContext.tsx";
+import { ToastProvider } from "./services/ToastService.tsx";
 
 createRoot(document.getElementById("root")!).render(
    <StrictMode>
       <UserProvider initialToken={null}>
          <AudioProvider>
-            <SignalRProvider>
-               <GameServiceProvider>
-                  <GameWrapper>
-                     <App />
-                  </GameWrapper>
-               </GameServiceProvider>
-            </SignalRProvider>
+            <ToastProvider>
+               <SignalRProvider>
+                  <GameServiceProvider>
+                     <GameWrapper>
+                        <App />
+                     </GameWrapper>
+                  </GameServiceProvider>
+               </SignalRProvider>
+            </ToastProvider>
          </AudioProvider>
       </UserProvider>
    </StrictMode>

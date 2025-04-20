@@ -8,7 +8,12 @@ import {
   IGameFinishedEvent,
   ICardsMovedEvent,
   IActionResultEvent,
-  IGameState
+  IGameState,
+  Suits,
+  Ranks,
+  RankValues,
+  ISuit,
+  IRank
 } from "../types";
 import { animateCardToSlot, clearTableAnimated, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 
@@ -30,7 +35,6 @@ class GameService {
   }
 
   handleGameState(state: IGameState, setGameState: Function, setPersonalState: Function, setSlots: Function, setPassedPlayers: Function) {
-
     setGameState(state);
     setPersonalState(state.personalState);
 
@@ -52,35 +56,31 @@ class GameService {
     setPassedPlayers(passedPlayers);
   }
 
-  // Метод для обработки успешного действия с картой
-  handleSuccessfulCardAction(action: IActionResultEvent) {
-    console.log(`Действие ${action.actionType} с картой ${action.cardId} успешно принято`);
-    // Здесь может быть код для обновления UI или воспроизведения звука
+  // Метод для обработки успешного действия безы карты
+  handleSuccessfulAction(action: IActionResultEvent, playerId: string, addPassedPlayer: Function) {
+    // Пока что используется только для обработки пасса
+    if (action.actionType !== 'pass')
+      return;
+
+    console.log(`Действие ${action.actionType} успешно выполнено`);
+    addPassedPlayer(playerId);
   }
 
   // Метод для обработки отклоненного действия с картой
-  handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function) {
+  handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function, removeFromSlot: Function, showToast: Function) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
 
     // Находим оригинальную карту
-    if (action.cardId) {
-      const originalCard = document.getElementById(`playercard-${action.cardId}`);
-      if (originalCard) {
-        originalCard.style.visibility = 'visible';
-      }
+    if (!action.cardId)
+      return;
 
-      // Возвращаем карту в руку игрока
-      // Для этого нам нужно получить данные карты
-      // В реальном приложении эти данные должны приходить от сервера
-      const [suitName, rankName] = action.cardId.split('-');
-      // Заглушка, в реальном приложении данные должны приходить от сервера
-      const cardData = {
-        suit: { name: suitName, iconChar: '' },
-        rank: { name: rankName, value: 0 }
-      };
+    // Возвращаем карту в руку игрока
+    // Используем новый метод для получения данных карты
+    const cardData = this.getCardDataFromCardId(action.cardId);
 
-      addCardToHand(cardData);
-    }
+    showToast(action.errorMessage!, 'success');
+    removeFromSlot(action.slotId!, action.cardId);
+    addCardToHand(cardData);
   }
 
   // Метод для обработки перемещения карт
@@ -92,11 +92,8 @@ class GameService {
     addCardToSlot: Function
   ) {
     moveEvent.cards.forEach(move => {
-      const [suitName, rankName] = move.cardId.split('-');
-      const cardData = {
-        suit: { name: suitName, iconChar: '' },
-        rank: { name: rankName, value: 0 }
-      };
+      // Используем новый метод для получения данных карты
+      const cardData = this.getCardDataFromCardId(move.cardId);
 
       // Обрабатываем различные типы перемещений
       if (move.fromLocation.type === 'hand' && move.toLocation.type === 'table') {
@@ -153,6 +150,14 @@ class GameService {
     if (!event.cardInfo) {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType} без карты`);
       return;
+    }
+
+    // Если информация о карте скрыта, но есть ID карты
+    if (event.cardInfo.isHidden && event.cardInfo.card && !event.cardInfo.card.suit) {
+      const cardId = (event.cardInfo.card as any).id;
+      if (cardId) {
+        event.cardInfo.card = this.getCardDataFromCardId(cardId);
+      }
     }
 
     // Другой игрок сыграл карту
@@ -250,7 +255,6 @@ class GameService {
     type: 'attack' | 'defend',
     dropPosition?: { top: number, left: number, width?: number, height?: number } | null
   ) {
-
     const cardId = `${card.suit.name}-${card.rank.name}`;
     const originalCard = document.getElementById(`playercard-${cardId}`);
     if (!originalCard) throw new Error("Original card not found");
@@ -293,11 +297,11 @@ class GameService {
   // Создание фейковой карты
   createFakeCard(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width: number, height: number }): HTMLElement | null {
     const cardId = `${card.suit.name}-${card.rank.name}`;
+
     // Создаем HTML элемент карты
     const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-fake-${cardId}`);
 
-    // Создаем клон карты
-    // const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
+    // Настраиваем позицию и размеры карты
     cardClone.id = `${cardPrefix}-fake-${cardId}`;
     cardClone.style.position = 'absolute';
 
@@ -317,6 +321,71 @@ class GameService {
     return cardClone;
   }
 
+  // Метод для получения данных карты из её идентификатора
+  getCardDataFromCardId(cardId: string): ICard {
+    const [suitName, rankName] = cardId.split('-');
+
+    // Получаем символ масти
+    let iconChar = '';
+    switch (suitName) {
+      case Suits.Diamond:
+        iconChar = '♦';
+        break;
+      case Suits.Club:
+        iconChar = '♣';
+        break;
+      case Suits.Heart:
+        iconChar = '♥';
+        break;
+      case Suits.Spade:
+        iconChar = '♠';
+        break;
+    }
+
+    // Получаем значение ранга
+    let rankValue = 0;
+    switch (rankName) {
+      case Ranks.Ace:
+        rankValue = RankValues.Ace;
+        break;
+      case Ranks.King:
+        rankValue = RankValues.King;
+        break;
+      case Ranks.Queen:
+        rankValue = RankValues.Queen;
+        break;
+      case Ranks.Jack:
+        rankValue = RankValues.Jack;
+        break;
+      case Ranks.Ten:
+        rankValue = RankValues.Ten;
+        break;
+      case Ranks.Nine:
+        rankValue = RankValues.Nine;
+        break;
+      case Ranks.Eight:
+        rankValue = RankValues.Eight;
+        break;
+      case Ranks.Seven:
+        rankValue = RankValues.Seven;
+        break;
+      case Ranks.Six:
+        rankValue = RankValues.Six;
+        break;
+    }
+
+    const suit: ISuit = {
+      name: suitName as Suits,
+      iconChar
+    };
+
+    const rank: IRank = {
+      name: rankName as Ranks,
+      value: rankValue
+    };
+
+    return { suit, rank };
+  }
 }
 
 // Экспортируем синглтон

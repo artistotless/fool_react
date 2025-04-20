@@ -2,13 +2,12 @@ import { DraggableAttributes } from "@dnd-kit/core";
 import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export enum GameUpdateTypes {
-   // Базовые события состояния игры
+   // Cобытия состояния игры
    GameState = "GameStateDto",
-   // Оптимизированный набор событий
-   CardsMoved = "CardsMovedDto", // Для всех перемещений карт (объединяет CardMoved и CardsMoved)
-   CardsDealt = "CardsDealtDto", // Получение карт игроком (объединяет PlayerDrewCards and CardsDealt)
-   PlayerAction = "PlayerActionDto", // Действия других игроков (заменяет PlayerPlayedCard)
-   ActionResult = "ActionResultDto", // Результат действия текущего игрока (объединяет CardActionAccepted, CardActionRejected, ActionError)
+   CardsMoved = "CardsMovedDto", // Для всех перемещений карт
+   CardsDealt = "CardsDealtDto", // Получение карт игроком
+   PlayerAction = "PlayerActionDto", // Действия других игроков
+   ActionResult = "ActionResultDto", // Результат действия текущего игрока
    RoundEnded = "RoundEndedDto", // Информация о завершении раунда
    GameFinished = "GameFinishedDto" // Завершение игры и статистика
 }

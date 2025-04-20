@@ -178,10 +178,7 @@ const TestEventSimulator: React.FC = () => {
         attackerId: testMode().testPlayers[0].id,
         defenderId: testMode().testPlayers[1].id,
         tableCards: [],
-        trumpCard: {
-          suit: { name: Suits.Spade, iconChar: '♠' },
-          rank: { name: Ranks.Ten, value: 10 }
-        },
+        trumpCard: testMode().testTrumpCard,
         personalState: {
           cardsInHand: testMode().testCards
         },
