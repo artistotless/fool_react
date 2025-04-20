@@ -1,3 +1,4 @@
+import { S } from "node_modules/framer-motion/dist/types.d-6pKw1mTI";
 import animationService from "../contexts/animationService";
 import {
   ICard,
@@ -8,7 +9,7 @@ import {
   ICardsMovedEvent,
   IActionResultEvent
 } from "../types";
-import { animateCardToSlot, clearTableAnimated, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
+import { animateCardToSlot, clearTableAnimated, createCardElement, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 
 class GameService {
   private static instance: GameService;
@@ -30,14 +31,17 @@ class GameService {
   // Метод для анимации перемещения карты в слот
   MoveCloneCardToSlot(
     card: ICard,
+    cardPrefix: string,
     slotId: number,
     startPosition: any,
+    size: { width?: number, height?: number },
     play: Function,
     before: Function,
     after: Function
   ) {
-    const cardId = `${card.suit.name}-${card.rank.name}`;
-    const cardClone = this.createCardClone(cardId, startPosition);
+
+    const cardClone = this.createCardCloneNew(card, cardPrefix, startPosition, size);
+    if (!cardClone) throw new Error("Card clone not found");
 
     before && before();
     document.body.appendChild(cardClone!);
@@ -46,10 +50,9 @@ class GameService {
     play(Sounds.CardAddedToTable);
 
     // Анимируем перемещение карты
-    animateCardToSlot(`playercard-clone-${cardId}`, `slot-${slotId}`, 300, () => {
+    animateCardToSlot(cardClone, `slot-${slotId}`, 300, () => {
       // После завершения анимации удаляем клонированную карту
-      const cardClone = document.getElementById(`playercard-clone-${cardId}`);
-      cardClone!.remove();
+      cardClone.remove();
       after && after();
     });
   }
@@ -69,8 +72,14 @@ class GameService {
 
     const cardId = `${card.suit.name}-${card.rank.name}`;
     const originalCard = document.getElementById(`playercard-${cardId}`);
+    if (!originalCard) throw new Error("Original card not found");
 
-    this.MoveCloneCardToSlot(card, slotId, dropPosition, play,
+    const size = {
+      width: originalCard.offsetWidth,
+      height: originalCard.offsetHeight
+    };
+
+    this.MoveCloneCardToSlot(card, "playercard", slotId, dropPosition, size, play,
       () => { originalCard!.style.visibility = 'hidden'; },
       () => {
         originalCard!.style.visibility = 'visible';
@@ -250,10 +259,33 @@ class GameService {
   }
 
   // Создание клона карты (сохраняем как есть, так как это UI-функция)
+  createCardCloneNew(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width?: number, height?: number }): HTMLElement | null {
+    const cardId = `${card.suit.name}-${card.rank.name}`;
+    // Создаем HTML элемент карты
+    const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-clone-${cardId}`);
+
+    // Создаем клон карты
+    // const cardClone = originalCardElement.cloneNode(true) as HTMLElement;
+    cardClone.id = `${cardPrefix}-clone-${cardId}`;
+    cardClone.style.position = 'absolute';
+
+    // Используем позицию, где было завершено перетаскивание
+    cardClone.style.left = `${startPosition?.left}px`;
+    cardClone.style.top = `${startPosition?.top}px`;
+    cardClone.style.width = `${size?.width}px`;
+    cardClone.style.height = `${size?.height}px`;
+    cardClone.style.transform = '';
+    cardClone.style.zIndex = '1999';
+    cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
+
+    return cardClone;
+  }
+
+  // Создание клона карты (сохраняем как есть, так как это UI-функция)
   createCardClone(cardId: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null): HTMLElement | null {
     // Создаем копию карты в той же позиции, где было отпущено перетаскивание
     const originalCardElement = document.getElementById(`playercard-${cardId}`);
-    
+
     if (!originalCardElement || !startPosition)
       return null;
 
@@ -273,6 +305,7 @@ class GameService {
 
     return cardClone;
   }
+}
 
-  // Экспортируем синглтон
-  export const gameService = GameService.getInstance();
+// Экспортируем синглтон
+export const gameService = GameService.getInstance();

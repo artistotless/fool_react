@@ -187,7 +187,7 @@ export const clearTableAnimated = (
  * 
  * Анимирует плавное перемещение карты в слот после её перетаскивания
  * 
- * @param {string} cardId - ID DOM элемента карты
+ * @param {string} card - ID DOM элемента карты
  * @param {string} slotId - ID DOM элемента слота
  * @param {number} animationDuration - Длительность анимации в миллисекундах
  * @param {Function} onComplete - Функция, вызываемая после завершения анимации
@@ -195,19 +195,17 @@ export const clearTableAnimated = (
  * @returns {void}
  */
 export const animateCardToSlot = (
-   cardId: string,
+   card: string | HTMLElement,
    slotId: string,
    animationDuration: number = 300,
    onComplete?: () => void
 ) => {
-   const cardElement = document.getElementById(cardId);
-   const slotElement = document.getElementById(slotId);
 
-   if (!cardElement || !slotElement) {
-      console.error("Card or slot element not found");
-      onComplete && onComplete();
-      return;
-   }
+   const cardElement: HTMLElement | null = typeof card === 'string' ? document.getElementById(card) : card;
+   if (!cardElement) throw new Error("Card element not found");
+
+   const slotElement = document.getElementById(slotId);
+   if (!slotElement) throw new Error("Slot element not found");
 
    const getAbsolutePosition = (element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
@@ -220,10 +218,10 @@ export const animateCardToSlot = (
    };
 
    const cardRect = getAbsolutePosition(cardElement);
-   
+
    // Проверяем, есть ли у слота дочерние элементы (карты)
    const isEmptySlot = slotElement.children.length === 0;
-   
+
    // Если слот пустой, сначала изменяем его размер до размера карты,
    // но делаем невидимым и только потом запускаем анимацию
    if (isEmptySlot) {
@@ -234,30 +232,30 @@ export const animateCardToSlot = (
       tempCard.style.height = `${cardRect.height}px`;
       tempCard.style.visibility = 'hidden';
       tempCard.style.position = 'relative';
-      
+
       // Добавляем временную карту в слот перед началом анимации
       slotElement.appendChild(tempCard);
-      
+
       // Функция для удаления временной карты после завершения анимации
       const cleanupTempCard = () => {
          if (tempCard.parentNode === slotElement) {
             slotElement.removeChild(tempCard);
          }
       };
-      
+
       // Задержка перед получением новых координат, чтобы DOM успел обновиться
       setTimeout(() => {
          // Теперь слот имеет размер карты, получаем его актуальные координаты
          const slotRect = getAbsolutePosition(slotElement);
-         
+
          // Рассчитываем перемещение относительно актуальных координат слота
          const translateX = slotRect.x - cardRect.x;
          const translateY = slotRect.y - cardRect.y;
-         
+
          // Запускаем анимацию перемещения карты
          cardElement.style.transition = `transform ${animationDuration}ms ease-out`;
          cardElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
-         
+
          // Запускаем красивый эффект появления "призрака" карты
          const cardGhost = document.createElement('div');
          cardGhost.className = 'card-ghost';
@@ -275,23 +273,23 @@ export const animateCardToSlot = (
          cardGhost.style.transformStyle = 'flat';
          cardGhost.style.zIndex = '1';
          cardGhost.style.opacity = '0';
-         
+
          // Важно: устанавливаем CSS-правила, которые переопределят любые наследуемые эффекты вращения
          cardGhost.style.rotate = '0deg';
          cardGhost.style.setProperty('rotate', '0deg', 'important');
          cardGhost.style.setProperty('transform', 'translate(-50%, -50%) rotate(0deg)', 'important');
-         
+
          // Вставляем призрака КАК ПЕРВЫЙ ЭЛЕМЕНТ, чтобы избежать автоматического применения rotate: 5deg
          if (slotElement.firstChild) {
             slotElement.insertBefore(cardGhost, slotElement.firstChild);
          } else {
             slotElement.appendChild(cardGhost);
          }
-         
+
          setTimeout(() => {
             cardGhost.style.opacity = '1';
          }, 10);
-         
+
          // Удаляем "призрака" перед завершением анимации
          setTimeout(() => {
             if (cardGhost.parentNode === slotElement) {
@@ -303,7 +301,7 @@ export const animateCardToSlot = (
                }, 100);
             }
          }, animationDuration - 150);
-         
+
          // Вызываем функцию завершения анимации
          setTimeout(() => {
             cleanupTempCard();
@@ -313,13 +311,13 @@ export const animateCardToSlot = (
    } else {
       // Для непустого слота просто выполняем стандартную анимацию
       const slotRect = getAbsolutePosition(slotElement);
-      
+
       const translateX = slotRect.x - cardRect.x;
       const translateY = slotRect.y - cardRect.y;
-      
+
       cardElement.style.transition = `transform ${animationDuration}ms ease-out`;
       cardElement.style.transform = `translate(${translateX}px, ${translateY}px)`;
-      
+
       setTimeout(() => {
          onComplete && onComplete();
       }, animationDuration);
