@@ -105,25 +105,18 @@ class GameService {
   }
 
   // Метод для обработки действий других игроков
-  handlePlayerAction(event: IPlayerActionEvent, play: Function, addCardToSlot: Function) {
-    // Если карта не указана (например, игрок пасовал)
-    if (!event.cardInfo) {
-      console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType} без карты`);
-      return;
-    }
+  handlePlayerAction(event: IPlayerActionEvent, play: Function, addCardToSlot: Function, addPassedPlayer: Function) {
 
-    // Если информация о карте скрыта, но есть ID карты
-    if (event.cardInfo.isHidden && event.cardInfo.card && !event.cardInfo.card.suit) {
-      const cardId = (event.cardInfo.card as any).id;
-      if (cardId) {
-        event.cardInfo.card = this.getCardDataFromCardId(cardId);
-      }
+    if (event.actionType === "pass") {
+      console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
+      addPassedPlayer(event.playerId);
+      return;
     }
 
     // Другой игрок сыграл карту
     if (event.actionType === 'attack' || event.actionType === 'defend') {
       const cardPrefix = `othercard-${event.playerId}`;
-
+      const cardData = event.cardInfo?.card as ICard;
       // Получаем координаты отображения карты другого игрока
       const playerElement = document.getElementById(`player-${event.playerId}`);
       let position;
@@ -135,7 +128,7 @@ class GameService {
         position = { top: -100, left: window.innerWidth / 2 };
       }
 
-      const fakeCard = this.createFakeCard(event.cardInfo.card!, cardPrefix, position);
+      const fakeCard = this.createFakeCard(cardData, cardPrefix, position);
       if (!fakeCard) throw new Error("Fake card not found");
 
       // Анимация перемещения карты от игрока на стол в конкретный слот

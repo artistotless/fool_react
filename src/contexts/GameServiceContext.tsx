@@ -49,6 +49,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     setPassedPlayers,
     setSlots,
     removeFromSlot,
+    addPassedPlayer,
   } = useGameStore();
 
   // Обработка событий от SignalR
@@ -82,7 +83,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
-        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, addCardToSlot);
+        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, addCardToSlot, addPassedPlayer);
         break;
 
       case GameUpdateTypes.CardsDealt:
