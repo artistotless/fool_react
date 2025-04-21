@@ -55,7 +55,7 @@ const testPlayers = [
     {
         name: "Player 3",
         avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
-        id: "player3",
+        id: "fb20be9e-f06c-4c75-91a0-c58f842147cb",
         passed: false,
         cardsCount: 6
     }
