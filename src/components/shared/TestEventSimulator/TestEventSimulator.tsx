@@ -2,14 +2,12 @@ import React, { useState, useRef } from 'react';
 import { useSignalR } from '../../../contexts/SignalRContext';
 import { 
   IActionResultEvent,
-  ICardsMovedEvent, 
   IRoundEndedEvent,
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
   Ranks,
   Suits,
-  CardLocation
 } from '../../../types';
 import animationService from "../../../contexts/animationService";
 import { useAudio } from "../../../contexts/AudioContext";
@@ -22,7 +20,6 @@ import styles from './TestEventSimulator.module.css';
 enum ExtendedGameUpdateTypes {
   GameState = "GameStateDto",
   GameStateSync = "GameStateSyncDto",
-  CardsMoved = "CardsMovedDto",
   CardsDealt = "CardsDealtDto",
   PlayerAction = "PlayerActionDto",
   ActionResult = "ActionResultDto",
@@ -122,24 +119,6 @@ const TestEventSimulator: React.FC = () => {
     });
   };
   
-  const generateCardsMoved = () => {
-    const fromLocation: CardLocation = { type: 'hand', playerId: testMode().testPlayers[1].id };
-    const toLocation: CardLocation = { type: 'table', slotId: 0 };
-    
-    simulateEvent(ExtendedGameUpdateTypes.CardsMoved, {
-      moves: {
-        cards: [
-          {
-            cardId: `${Suits.Heart}-${Ranks.Ace}`,
-            fromLocation,
-            toLocation,
-            isRevealed: true
-          }
-        ]
-      } as ICardsMovedEvent
-    });
-  };
-  
   const generateRoundEnded = () => {
     simulateEvent(ExtendedGameUpdateTypes.RoundEnded, {
       event: {
@@ -228,7 +207,6 @@ const TestEventSimulator: React.FC = () => {
     [ExtendedGameUpdateTypes.GameState]: generateGameState,
     [ExtendedGameUpdateTypes.ActionResult + '_success']: generateActionResult,
     [ExtendedGameUpdateTypes.ActionResult + '_error']: generateActionResultError,
-    [ExtendedGameUpdateTypes.CardsMoved]: generateCardsMoved,
     [ExtendedGameUpdateTypes.RoundEnded]: generateRoundEnded,
     [ExtendedGameUpdateTypes.PlayerAction + '_play']: generatePlayerAction,
     [ExtendedGameUpdateTypes.PlayerAction + '_pass']: generatePlayerPass,

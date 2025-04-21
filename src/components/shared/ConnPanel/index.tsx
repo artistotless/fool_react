@@ -4,9 +4,11 @@ import * as env from "../../../environments/environment";
 import { motion } from "framer-motion";
 import { useUser } from "src/contexts/UserContext";
 import { IUserToken } from "src/types";
+import { useToast } from "src/services/ToastService";
 
 const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, token: IUserToken, subs: string[]) => void }) => {
 
+  const { showToast } = useToast();
   const [matchId, setMatchId] = useState<string>(() => {
     return localStorage.getItem('lastMatchId') || '';
   });
@@ -44,7 +46,7 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
         startConnection(`${env.gsEndpoint}/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
       }
     } else {
-      alert("Please select a player and enter a match ID.");
+      showToast("Выберите игрока и введите идентификатор матча.", "error");
     }
   };
 
@@ -54,21 +56,57 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
     setMatchId(newMatchId);
   };
 
+  // Варианты анимации
+  const containerVariants = {
+    hidden: { opacity: 0, y: -50 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.6,
+        ease: "easeOut",
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  const buttonVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.4, delay: 0.5 }
+    },
+    hover: { 
+      scale: 1.05,
+      boxShadow: "0px 8px 15px rgba(0, 0, 0, 0.4)"
+    },
+    tap: { 
+      scale: 0.98,
+      boxShadow: "0px 3px 8px rgba(0, 0, 0, 0.3)"
+    }
+  };
+
   return (
     <motion.div
       className={styles.connPanel}
-      initial={{ opacity: 0, y: -1000 }} // Начальное состояние (появление)
-      animate={{ opacity: 1, y: 50 }} // Анимация появления
-      transition={{ duration: 0.5 }} // Параметры анимации
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
-      <h2>Select a Player</h2>
+      <motion.h2 variants={itemVariants}>Выберите игрока</motion.h2>
 
-      {/* Анимация для каждого элемента формы */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
           <label>
             <input
@@ -77,16 +115,12 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
               type="radio"
               checked={selectedPlayer === "0"}
             />{" "}
-            Player 1
+            Игрок 1
           </label>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.4 }}
-      >
+      <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
           <label>
             <input
@@ -95,16 +129,12 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
               type="radio"
               checked={selectedPlayer === "1"}
             />{" "}
-            Player 2
+            Игрок 2
           </label>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.6 }}
-      >
+      <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
           <label>
             <input
@@ -113,16 +143,12 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
               type="radio"
               checked={selectedPlayer === "2"}
             />{" "}
-            Player 3
+            Игрок 3
           </label>
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.8 }}
-      >
+      <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
           <label>
             <input
@@ -131,30 +157,30 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
               type="radio"
               checked={selectedPlayer === "3"}
             />{" "}
-            Player 4
+            Игрок 4
           </label>
         </div>
       </motion.div>
 
-      {/* Анимация для нижней части формы */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 }}
-      >
+      <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
-          <h1>Durak Game</h1>
           <input
             value={matchId}
             onChange={handleMatchIdChange}
             type="text"
-            placeholder="matchId (Example: 60b59ce0-e2c0-4777-9c94-6b7d7c9b17df)"
+            placeholder="ID матча (Пример: 60b59ce0-e2c0-4777-9c94-6b7d7c9b17df)"
             name="matchId"
             id="matchIdInput"
           />
-          <button onClick={handleConnect} id="connectButton">
-            Connect to match
-          </button>
+          <motion.button 
+            onClick={handleConnect} 
+            id="connectButton"
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            Подключиться к игре
+          </motion.button>
         </div>
       </motion.div>
     </motion.div>

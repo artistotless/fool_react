@@ -8,7 +8,6 @@ import { DragEndEvent } from '@dnd-kit/core';
 import {
   GameUpdateTypes,
   IActionResultEvent,
-  ICardsMovedEvent,
   IRoundEndedEvent,
   IPlayerActionEvent,
   ICardsDealtEvent,
@@ -74,11 +73,6 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         else
           gameService.handleFailedCardAction(actionResult, addCardToHand, removeFromSlot, showToast);
 
-        break;
-
-      case GameUpdateTypes.CardsMoved:
-        // Обработка перемещения карт
-        gameService.handleCardsMoved(data.moves as ICardsMovedEvent, play, removeCardFromHand, addCardToHand, addCardToSlot);
         break;
 
       case GameUpdateTypes.RoundEnded:
@@ -218,7 +212,9 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const card = event.active.data.current?.card;
     if (!card) return;
 
-    // Проверяем, куда перетащили карту
+    let handled = false;
+
+    // Отпустили карту над слотом
     if (event.over && String(event.over?.id).startsWith("slot")) {
       const slotId = Number(String(event.over?.id).split("-")[1]);
 
@@ -232,6 +228,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
         if (isValid) {
           // Используем новый метод для оптимистичного обновления UI
+          handled = true;
           gameService.onDroppedToTableSlot(
             card,
             slotId,
@@ -247,68 +244,68 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // Атака
-    else {
-      // Проверяем положение карты относительно середины экрана
-      const offset = 50;
-      const middleOfDropZone = (window.innerHeight / 2) + offset;
-      const activeRect = event.active.rect.current.translated;
-      let type: 'attack' | 'defend' = 'attack';
+    if (handled)
+      return;
 
-      if (!activeRect?.top)
-        return;
+    // Отпустили карту над столом
+    const offset = 120;
+    const activeRect = event.active.rect.current.translated;
+    let type: 'attack' | 'defend' = 'attack';
 
-      // Проверяем, что карта находится выше середины экрана
-      if (activeRect.top > middleOfDropZone)
-        return;
+    if (!activeRect?.top || !activeRect?.height)
+      return;
 
-      let targetSlotId = -1;
+    const cardHeight = activeRect.height;
+    const bottomOfScreen = window.innerHeight;
+    if (activeRect.top > ((bottomOfScreen - cardHeight) - offset))
+      return;
 
-      // Если игрок защищается и на столе есть карта, которую можно побить
-      if (state.defenderId === user.id || testMode().enabled) {
-        // Ищем слот с картой, которую можно побить
-        for (let i = 0; i < slots.length; i++) {
-          const slot = slots[i];
-          // Проверяем, что в слоте есть атакующая карта и нет защищающей
-          if (slot.cards.length !== 1)
-            continue;
+    let targetSlotId = -1;
 
-          // Проверяем, можно ли эту карту побить
-          if (!validateDefend(`${card.suit.name}-${card.rank.name}`, slot.id))
-            continue;
+    // Если игрок защищается и на столе есть карта, которую можно побить
+    if (state.defenderId === user.id || testMode().enabled) {
+      // Ищем слот с картой, которую можно побить
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        // Проверяем, что в слоте есть атакующая карта и нет защищающей
+        if (slot.cards.length !== 1)
+          continue;
 
-          targetSlotId = slot.id;
-          type = 'defend';
-          break;
-        }
+        // Проверяем, можно ли эту карту побить
+        if (!validateDefend(`${card.suit.name}-${card.rank.name}`, slot.id))
+          continue;
+
+        targetSlotId = slot.id;
+        type = 'defend';
+        break;
       }
-
-      // Если не нашли карту для защиты или игрок атакует, ищем пустой слот
-      if (targetSlotId === -1) {
-        // Проверяем возможность атаки локально
-        if (!validateAttack(`${card.suit.name}-${card.rank.name}`))
-          return;
-
-        targetSlotId = slots.findIndex(slot => slot.cards.length === 0);
-        type = 'attack';
-      }
-
-      if (targetSlotId === -1)
-        return;
-
-      // Используем новый метод для оптимистичного обновления UI
-      gameService.onDroppedToTableSlot(
-        card,
-        targetSlotId,
-        removeCardFromHand,
-        addCardToSlot,
-        defend,
-        attack,
-        play,
-        type,
-        event.active.rect.current.translated
-      );
     }
+
+    // Если не нашли карту для защиты или игрок атакует, ищем пустой слот
+    if (targetSlotId === -1) {
+      // Проверяем возможность атаки локально
+      if (!validateAttack(`${card.suit.name}-${card.rank.name}`))
+        return;
+
+      targetSlotId = slots.findIndex(slot => slot.cards.length === 0);
+      type = 'attack';
+    }
+
+    if (targetSlotId === -1)
+      return;
+
+    // Используем новый метод для оптимистичного обновления UI
+    gameService.onDroppedToTableSlot(
+      card,
+      targetSlotId,
+      removeCardFromHand,
+      addCardToSlot,
+      defend,
+      attack,
+      play,
+      type,
+      event.active.rect.current.translated
+    );
   }, [state, user.id, validateDefend, validateAttack, removeCardFromHand, defend, attack, play, addCardToSlot]);
 
   // Мемоизация контекстного значения

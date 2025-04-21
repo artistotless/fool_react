@@ -176,32 +176,6 @@ export interface IPersonalState {
 export type CardActionType = 'attack' | 'defend' | 'pass';
 
 /**
- * Типы локаций, где могут находиться карты
- */
-export type CardLocationType = 'hand' | 'table' | 'deck' | 'discard';
-
-/**
- * Локация карты
- */
-export interface CardLocation {
-   type: CardLocationType;
-   playerId?: string;
-   slotId?: number;
-}
-
-/**
- * Событие перемещения карт
- */
-export interface ICardsMovedEvent {
-   cards: {
-      cardId: string;
-      fromLocation: CardLocation;
-      toLocation: CardLocation;
-      isRevealed: boolean; // Показывать ли карту при перемещении
-   }[];
-}
-
-/**
  * Событие раздачи карт
  */
 export interface ICardsDealtEvent {

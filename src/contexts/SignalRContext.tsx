@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useContext, ReactNode, useCallback,
 import * as signalR from '@microsoft/signalr';
 import { HubConnection } from '@microsoft/signalr';
 import { signalRLoggingEnabled } from "src/environments/environment";
+import { useToast } from 'src/services/ToastService';
 
 // Тип контекста SignalR
 export interface SignalRContextType {
@@ -36,6 +37,7 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
    const [connection, setConnection] = useState<HubConnection | null>(null);
    const [isConnected, setIsConnected] = useState(false);
    const [data, setData] = useState<any>(null);
+   const { showToast } = useToast();
 
    // Создание соединения
    useEffect(() => {
@@ -58,8 +60,8 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
       if (connection) {
          try {
             await connection.start();
-            console.log('SignalR connection started');
             setIsConnected(true);
+            showToast('Подключение к серверу установлено', 'success');
 
             // Обработчик входящих сообщений от сервера
             connection.on('ReceiveMessage', (message: any) => {
@@ -68,8 +70,8 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
             });
 
          } catch (err) {
+            showToast('Ошибка при подключении к серверу', 'error');
             error('Error starting connection:', err);
-            setTimeout(startConnection, 5000);
          }
       }
    }, [connection]);
@@ -134,10 +136,3 @@ export const useSignalR = () => {
    }
    return context;
 };
-
-const log = (value: string): void => {
-   if (!signalRLoggingEnabled)
-      return;
-
-   console.log(value);
-}

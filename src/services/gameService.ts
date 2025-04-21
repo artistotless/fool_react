@@ -6,7 +6,6 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
-  ICardsMovedEvent,
   IActionResultEvent,
   IGameState,
   Suits,
@@ -83,47 +82,6 @@ class GameService {
       delete tableCardsRef.current[action.cardId!];
       addCardToHand(cardData);
       removeFromSlot(action.slotId!, action.cardId);
-    });
-  }
-
-  // Метод для обработки перемещения карт
-  handleCardsMoved(
-    moveEvent: ICardsMovedEvent,
-    play: Function,
-    removeCardFromHand: Function,
-    addCardToHand: Function,
-    addCardToSlot: Function
-  ) {
-    moveEvent.cards.forEach(move => {
-      // Используем новый метод для получения данных карты
-      const cardData = this.getCardDataFromCardId(move.cardId);
-
-      // Обрабатываем различные типы перемещений
-      if (move.fromLocation.type === 'hand' && move.toLocation.type === 'table') {
-        // Карта из руки на стол
-        if (move.fromLocation.playerId === 'currentPlayer') {
-          removeCardFromHand(move.cardId);
-
-          // Анимируем перемещение карты в слот
-          if (move.toLocation.slotId !== undefined) {
-            // Здесь должна быть анимация
-            play(Sounds.CardAddedToTable);
-
-            // Добавляем карту в слот
-            addCardToSlot(cardData, move.toLocation.slotId);
-          }
-        }
-      } else if (move.fromLocation.type === 'deck' && move.toLocation.type === 'hand') {
-        // Карта из колоды в руку
-        play(Sounds.CardFromDeck);
-        moveCardFromDeck("playercards", "deck", 400, () => {
-          addCardToHand(cardData);
-        });
-      } else if (move.fromLocation.type === 'table' && move.toLocation.type === 'discard') {
-        // Карта из слота в сброс
-        // Здесь должна быть анимация отбоя карты
-        play(Sounds.CardSlideLeft);
-      }
     });
   }
 
