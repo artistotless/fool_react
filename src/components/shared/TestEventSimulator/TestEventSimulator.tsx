@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useSignalR } from '../contexts/SignalRContext';
+import { useSignalR } from '../../../contexts/SignalRContext';
 import { 
   IActionResultEvent,
   ICardsMovedEvent, 
@@ -10,11 +10,11 @@ import {
   Ranks,
   Suits,
   CardLocation
-} from '../types';
-import animationService from "../contexts/animationService";
-import { useAudio } from "../contexts/AudioContext";
-import useGameStore from "../store/gameStore";
-import { clearTableAnimated, moveElementTo, Sounds } from "../utils";
+} from '../../../types';
+import animationService from "../../../contexts/animationService";
+import { useAudio } from "../../../contexts/AudioContext";
+import useGameStore from "../../../store/gameStore";
+import { clearTableAnimated, moveElementTo, Sounds } from "../../../utils";
 import { testMode } from 'src/environments/environment';
 import styles from './TestEventSimulator.module.css';
 
