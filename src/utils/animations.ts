@@ -56,7 +56,7 @@ export const moveElementTo = (
       const translateY = (destinationRect.y + destinationRect.height / 2 - elementRect.y - elementRect.height / 2) + (destinationOffset ? destinationOffset.y : 0);
 
       element.style.willChange = `transform${targetSize ? ', width, height' : ''}`;
-      element.style.transition = `transform ${animationDuration}ms linear ${targetSize ? `, width ${animationDuration}ms ease , height ${animationDuration}ms ease ` : ''}`;
+      element.style.transition = `transform ${animationDuration}ms ease-out ${targetSize ? `, width ${animationDuration}ms ease , height ${animationDuration}ms ease ` : ''}`;
       element.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px)`;
 
       if (targetSize) {

@@ -1,7 +1,4 @@
-import { ICard, IRank, ISuit, Ranks, RankValues, Suits, SuitsSymbols } from "../types";
-import queenImg from '../assets/cards/queen.png';
-import kingImg from '../assets/cards/king.png';
-import jackImg from '../assets/cards/jack.png';
+import { ICard, Ranks, RankValues, Suits, SuitsSymbols } from "../types";
 
 /**
  * createRandomCard function
@@ -20,29 +17,3 @@ export const createRandomCard = (): ICard => {
 
    return { suit, rank };
 }
-
-/**
- * loadCardImage function
- * 
- * Загружает изображение карты по её масти и значению
- * 
- * @param {IRank} rank - Значение карты
- * @param {ISuit} suit - Масть карты
- * @param {Function} setSrc - Функция для установки источника изображения
- */
-export const loadCardImage = async (rank: IRank, suit: ISuit, setSrc: any) => {
-   let imagePath = '';
-
-   if (rank.name === Ranks.Queen) {
-      imagePath = queenImg;
-   } else if (rank.name === Ranks.King) {
-      imagePath = kingImg;
-   } else if (rank.name === Ranks.Jack) {
-      imagePath = jackImg;
-   } else {
-      imagePath = `src/assets/cards/${rank.value}_of_${suit.name.toLowerCase()}.png`;
-   }
-
-   setSrc(imagePath);
-}; 
-

@@ -45,7 +45,7 @@ const Slot = memo(({ slot, playerId, defenderId, trumpCard }: SlotProps) => {
                {...card}
                ref={(node: HTMLDivElement | null) => {
                   if (node) {
-                     animationService.tableCardsRef.current[`${slot.id}-${index}`] = node;
+                     animationService.tableCardsRef.current[`${card.suit.name}-${card.rank.name}`] = node;
                   }
                }}
                randomRotate

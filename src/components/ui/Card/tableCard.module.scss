@@ -15,7 +15,7 @@
    box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
    transform-style: preserve-3d;
  
-   transition: transform 1s ease-out !important;
+   transition: transform 1s ease-out;
    animation: card-appear 0.25s ease-in-out;
    transform: translateZ(5px);
 

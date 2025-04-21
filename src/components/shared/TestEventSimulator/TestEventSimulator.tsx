@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useSignalR } from '../contexts/SignalRContext';
+import { useSignalR } from '../../../contexts/SignalRContext';
 import { 
   IActionResultEvent,
   ICardsMovedEvent, 
@@ -10,11 +10,11 @@ import {
   Ranks,
   Suits,
   CardLocation
-} from '../types';
-import animationService from "../contexts/animationService";
-import { useAudio } from "../contexts/AudioContext";
-import useGameStore from "../store/gameStore";
-import { clearTableAnimated, moveElementTo, Sounds } from "../utils";
+} from '../../../types';
+import animationService from "../../../contexts/animationService";
+import { useAudio } from "../../../contexts/AudioContext";
+import useGameStore from "../../../store/gameStore";
+import { clearTableAnimated, moveElementTo, Sounds } from "../../../utils";
 import { testMode } from 'src/environments/environment';
 import styles from './TestEventSimulator.module.css';
 
@@ -51,7 +51,7 @@ const TestEventSimulator: React.FC = () => {
 
   // Состояние для настройки параметров RoundEnded
   const [roundEndedParams, setRoundEndedParams] = useState({
-    reason: 'allCardsBeaten',
+    reason: 'defenderTookCards',
     defenderId: testMode().testPlayers[1].id,
     attackerId: testMode().testPlayers[0].id,
     nextAttackerId: testMode().testPlayers[1].id

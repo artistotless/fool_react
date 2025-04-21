@@ -69,29 +69,20 @@ class GameService {
   // Метод для обработки отклоненного действия с картой
   handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function, removeFromSlot: Function, showToast: Function) {
     console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
+    const { tableCardsRef } = animationService;
 
-    // Находим оригинальную карту
     if (!action.cardId)
       return;
 
-    // Возвращаем карту в руку игрока
-    // Используем новый метод для получения данных карты
     const cardData = this.getCardDataFromCardId(action.cardId);
-
-    const slotPos = {
-      top: document.getElementById(`slot-${action.slotId}`)?.offsetTop!,
-      left: document.getElementById(`slot-${action.slotId}`)?.offsetLeft!
-    };
+    const cardElement = tableCardsRef.current[action.cardId];
 
     showToast(action.errorMessage!, 'error');
-    removeFromSlot(action.slotId!, action.cardId);
 
-    const fakeCard = this.createFakeCard(cardData, "playercard", slotPos);
-    fakeCard!.style.transform = 'translate(50%, 50%);';
-    document.body.appendChild(fakeCard!);
-    moveElementTo(fakeCard!, "playercards", 300, undefined, undefined, () => {
+    moveElementTo(cardElement!, "playercards", 300, undefined, undefined, () => {
+      delete tableCardsRef.current[action.cardId!];
       addCardToHand(cardData);
-      fakeCard!.remove();
+      removeFromSlot(action.slotId!, action.cardId);
     });
   }
 
@@ -147,9 +138,8 @@ class GameService {
     } else if (event.reason === 'defenderTookCards') {
       // Защищающийся взял карты
       const toElement = event.defenderId === userId ? "playercards" : `player-${event.defenderId}`;
-      const offsetY = event.defenderId === userId ? 800 : -400;
 
-      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: offsetY }, () => {
+      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: 0 }, () => {
         clearTable();
         tableCardsRef.current = {};
       });
@@ -175,7 +165,18 @@ class GameService {
     // Другой игрок сыграл карту
     if (event.actionType === 'attack' || event.actionType === 'defend') {
       const cardPrefix = `othercard-${event.playerId}`;
-      const position = { top: -100, left: window.innerWidth / 2 };
+
+      // Получаем координаты отображения карты другого игрока
+      const playerElement = document.getElementById(`player-${event.playerId}`);
+      let position;
+
+      if (playerElement) {
+        const playerRect = playerElement.getBoundingClientRect();
+        position = { top: playerRect.top, left: playerRect.left };
+      } else {
+        position = { top: -100, left: window.innerWidth / 2 };
+      }
+
       const fakeCard = this.createFakeCard(event.cardInfo.card!, cardPrefix, position);
       if (!fakeCard) throw new Error("Fake card not found");
 
