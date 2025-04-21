@@ -78,9 +78,12 @@ class GameService {
     // Используем новый метод для получения данных карты
     const cardData = this.getCardDataFromCardId(action.cardId);
 
+    const slotElement = document.getElementById(`slot-${action.slotId}`);
+    const slotRect = slotElement?.getBoundingClientRect();
+    
     const slotPos = {
-      top: document.getElementById(`slot-${action.slotId}`)?.offsetTop!,
-      left: document.getElementById(`slot-${action.slotId}`)?.offsetLeft!
+      top: slotRect ? slotRect.top : 0,
+      left: slotRect ? slotRect.left : 0
     };
 
     showToast(action.errorMessage!, 'error');
@@ -149,7 +152,7 @@ class GameService {
       const toElement = event.defenderId === userId ? "playercards" : `player-${event.defenderId}`;
       const offsetY = event.defenderId === userId ? 800 : -400;
 
-      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: offsetY }, () => {
+      moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: 0 }, () => {
         clearTable();
         tableCardsRef.current = {};
       });
@@ -175,7 +178,18 @@ class GameService {
     // Другой игрок сыграл карту
     if (event.actionType === 'attack' || event.actionType === 'defend') {
       const cardPrefix = `othercard-${event.playerId}`;
-      const position = { top: -100, left: window.innerWidth / 2 };
+      
+      // Получаем координаты отображения карты другого игрока
+      const playerElement = document.getElementById(`player-${event.playerId}`);
+      let position;
+      
+      if (playerElement) {
+        const playerRect = playerElement.getBoundingClientRect();
+        position = { top: playerRect.top, left: playerRect.left };
+      } else {
+        position = { top: -100, left: window.innerWidth / 2 };
+      }
+      
       const fakeCard = this.createFakeCard(event.cardInfo.card!, cardPrefix, position);
       if (!fakeCard) throw new Error("Fake card not found");
 

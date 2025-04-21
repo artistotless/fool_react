@@ -51,7 +51,7 @@ const TestEventSimulator: React.FC = () => {
 
   // Состояние для настройки параметров RoundEnded
   const [roundEndedParams, setRoundEndedParams] = useState({
-    reason: 'allCardsBeaten',
+    reason: 'defenderTookCards',
     defenderId: testMode().testPlayers[1].id,
     attackerId: testMode().testPlayers[0].id,
     nextAttackerId: testMode().testPlayers[1].id
