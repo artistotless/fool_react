@@ -6,25 +6,26 @@ import { memo } from "react";
 
 const PassButton = () => {
    const { user } = useUser();
-   const { state } = useGameStore();
+   const { slots, defenderId, players } = useGameStore();
    const { pass } = useGameService();
 
-   const allBeaten = state.tableCards.every(slot => slot.defendingCard);
-   const defender = state.players.find(player => player.id == state.defenderId);
+   const allBeaten = slots.every(slot => slot.cards.length === 2);
+   const defender = players.find(player => player.id == defenderId);
+   const isDefender = user.id == defenderId;
 
    let passBtnTitle = '';
    let className = '';
 
-   if (state.tableCards.length == 0)
+   if (slots.every(slot => slot.cards.length == 0))
       passBtnTitle = ''
-   else if (user.id == state.defenderId && !allBeaten){
+   else if (isDefender && !allBeaten) {
       passBtnTitle = 'Беру'
       className = styles.take
    }
-   else if (user.id != state.defenderId && allBeaten){
+   else if (!isDefender && allBeaten) {
       passBtnTitle = 'Бито'
    }
-   else if (user.id != state.defenderId && !allBeaten && defender?.passed){
+   else if (!isDefender && !allBeaten && defender?.passed) {
       passBtnTitle = 'Пасс'
    }
 

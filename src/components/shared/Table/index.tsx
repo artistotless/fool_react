@@ -1,4 +1,4 @@
-import { useRef, useEffect, memo } from "react";
+import { useRef, memo } from "react";
 import Card from "src/components/ui/Card";
 import styles from "./table.module.scss";
 import useGameStore from "src/store/gameStore";
@@ -57,32 +57,19 @@ const Slot = memo(({ slot, playerId, defenderId, trumpCard }: SlotProps) => {
 
 // Оборачиваем Table в memo для предотвращения ненужных ререндеров
 const Table = memo(() => {
-   const { slots, state } = useGameStore();
+   const { slots, defenderId, trumpCard } = useGameStore();
    const { user } = useUser();
    const tableRef = useRef<HTMLDivElement>(null);
 
-   // Когда изменяются слоты, плавно адаптируем grid-контейнер
-   useEffect(() => {
-      // Убедимся, что DOM полностью обновлен перед применением стилей
-      if (tableRef.current) {
-         // Ничего не делаем активно, CSS transition будет работать автоматически
-         // Просто убеждаемся, что у всех элементов правильные классы
-         const slotElements = tableRef.current.querySelectorAll(`.${styles.slot}`);
-         slotElements.forEach(slot => {
-            // Если нужно, можно добавить дополнительную логику для smooth-анимации
-         });
-      }
-   }, [slots]);
-
    return (
-      <div className={`${styles.table_container} ${user.id != state.defenderId ? styles.drop : ""}`} >
+      <div className={`${styles.table_container} ${user.id != defenderId ? styles.drop : ""}`} >
          <div className={`${styles.table}`} ref={tableRef}>
-            {slots.map((slot, index) => (
+            {slots.map((slot, _) => (
                <Slot 
                   key={`slot-${slot.id}`} 
                   slot={slot} 
-                  trumpCard={state.trumpCard} 
-                  defenderId={state.defenderId} 
+                  trumpCard={trumpCard} 
+                  defenderId={defenderId} 
                   playerId={user.id} 
                />
             ))}

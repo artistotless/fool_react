@@ -4,7 +4,7 @@ import styles from "./gameOver.module.scss";
 import { useEffect, useState } from "react";
 
 const GameOverPanel = () => {
-   const { state, winnersIds } = useGameStore();
+   const { players, winnersIds } = useGameStore();
    const { stopConnection } = useSignalR();
    const [isActive, setIsActive] = useState<boolean>(false);
 
@@ -16,7 +16,7 @@ const GameOverPanel = () => {
    }, [winnersIds]);
 
    const winnersSet = new Set(winnersIds);
-   const winner = state.players.find(p => winnersSet.has(p.id));
+   const winner = players.find(p => winnersSet.has(p.id));
 
    return (
       <div className={`${styles.game_over_panel} ${isActive ? styles.active : ''}`}>

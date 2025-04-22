@@ -108,7 +108,7 @@ export interface ITableCard {
    slotIndex: number;
 }
 
-export interface IGameState {
+export interface IGameSyncState {
    /**
     * The unique identifier of the attacking player.
     */

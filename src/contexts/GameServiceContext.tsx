@@ -34,34 +34,17 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   const { showToast } = useToast();
 
   // Методы и состояние из gameStore
-  const {
-    state,
-    personalState,
-    slots,
-    passedPlayers,
-    setGameState,
-    setPersonalState,
-    addCardToHand,
-    removeCardFromHand,
-    clearTable,
-    addCardToSlot,
-    setWinnersIds,
-    setPassedPlayers,
-    setSlots,
-    removeFromSlot,
-    addPassedPlayer,
-  } = useGameStore();
+  const store = useGameStore();
 
   // Обработка событий от SignalR
   useEffect(() => {
     if (!data || !isConnected && !testMode().enabled) return;
-
     console.log(data);
 
     switch (data.updateType) {
       // Базовые события
       case GameUpdateTypes.GameState:
-        gameService.handleGameState(data.state, setGameState, setPersonalState, setSlots, setPassedPlayers);
+        gameService.handleSyncGameState(data.state, store);
         break;
 
       // Оптимизированные события
@@ -70,31 +53,31 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         const actionResult = data.result as IActionResultEvent;
 
         if (actionResult.success)
-          gameService.handleSuccessfulAction(actionResult, user.id, setPassedPlayers);
+          gameService.handleSuccessfulAction(actionResult, user.id, store.setPassedPlayers);
         else
-          gameService.handleFailedCardAction(actionResult, addCardToHand, removeFromSlot, showToast);
+          gameService.handleFailedCardAction(actionResult, store.addCardToHand, store.removeFromSlot, showToast);
 
         break;
 
       case GameUpdateTypes.RoundEnded:
         // Обработка окончания раунда
-        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, clearTable, play);
+        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, store.clearTable, play);
         break;
 
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
-        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, addCardToSlot, addPassedPlayer);
+        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, store.addCardToSlot, store.setPassedPlayers);
         break;
 
       case GameUpdateTypes.CardsDealt:
         // Обработка раздачи карт
         data.event.playerId = user.id === data.event.playerId ? "currentPlayer" : data.event.playerId;
-        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, addCardToHand);
+        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, store.addCardToHand);
         break;
 
       case GameUpdateTypes.GameFinished:
         // Обработка окончания игры
-        gameService.handleGameFinished(data.event as IGameFinishedEvent, setWinnersIds);
+        gameService.handleGameFinished(data.event as IGameFinishedEvent, store.setWinnersIds);
         break;
 
       default:
@@ -116,12 +99,12 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const [_, rankName] = cardId.split('-');
 
     // Проверяем, может ли игрок атаковать
-    if (state.attackerId !== user.id && !passedPlayers.includes(state.attackerId || '') && !testMode().enabled) {
+    if (store.attackerId !== user.id && !store.passedPlayers.includes(store.attackerId || '') && !testMode().enabled) {
       return false;
     }
 
     // Проверка пустого стола - можно ходить любой картой
-    const hasCardsOnTable = slots.some(slot => slot.cards.length > 0);
+    const hasCardsOnTable = store.slots.some(slot => slot.cards.length > 0);
     if (!hasCardsOnTable) {
       return true;
     }
@@ -129,7 +112,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     // Если стол не пустой, проверяем, что на столе есть карта с таким же достоинством
     const existingRanks = new Set();
 
-    slots.forEach(slot => {
+    store.slots.forEach(slot => {
       slot.cards.forEach(card => {
         existingRanks.add(card.rank.name);
       });
@@ -141,7 +124,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return false;
-  }, [state, user.id, slots, passedPlayers, isConnected]);
+  }, [user.id, store.slots, store.passedPlayers, isConnected]);
 
   // Функция для локальной проверки возможности защиты
   const validateDefend = useCallback((cardId: string, slotId: number) => {
@@ -149,12 +132,12 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const [suitName, _] = cardId.split('-');
 
     // Проверяем, может ли игрок защищаться
-    if (state.defenderId !== user.id && !testMode().enabled) {
+    if (store.defenderId !== user.id && !testMode().enabled) {
       return false;
     }
 
     // Проверяем существование слота и наличие атакующей карты
-    const slot = slots[slotId];
+    const slot = store.slots[slotId];
     if (!slot || slot.cards.length === 0 || slot.cards.length >= 2) {
       return false;
     }
@@ -163,15 +146,15 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const attackingCard = slot.cards[0];
 
     // Проверка козыря
-    const isTrump = suitName === state.trumpCard?.suit.name;
-    const isAttackingTrump = attackingCard.suit.name === state.trumpCard?.suit.name;
+    const isTrump = suitName === store.trumpCard?.suit.name;
+    const isAttackingTrump = attackingCard.suit.name === store.trumpCard?.suit.name;
 
     // Проверяем правила защиты:
     // 1. Карта той же масти и старше
     // 2. Козырь, если атакующая карта не козырь
     // 3. Козырь, если атакующая карта тоже козырь, но козырь защищающегося старше
 
-    const defendingRankValue = personalState.cardsInHand.find(
+    const defendingRankValue = store.personalState.cardsInHand.find(
       card => `${card.suit.name}-${card.rank.name}` === cardId
     )?.rank.value || 0;
 
@@ -188,7 +171,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return false;
-  }, [state, user.id, slots, personalState.cardsInHand]);
+  }, [user.id, store.slots, store.personalState.cardsInHand]);
 
   // Функция для отправки атаки
   const attack = useCallback(async (cardId: string) => {
@@ -220,7 +203,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       const slotId = Number(String(event.over?.id).split("-")[1]);
 
       // Защита
-      if (state.defenderId === user.id && !testMode().enabled) {
+      if (store.defenderId === user.id && !testMode().enabled) {
         // Проверяем возможность защиты локально
         const isValid = validateDefend(
           `${card.suit.name}-${card.rank.name}`,
@@ -233,8 +216,8 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
           gameService.onDroppedToTableSlot(
             card,
             slotId,
-            removeCardFromHand,
-            addCardToSlot,
+            store.removeCardFromHand,
+            store.addCardToSlot,
             defend,
             attack,
             play,
@@ -264,10 +247,10 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     let targetSlotId = -1;
 
     // Если игрок защищается и на столе есть карта, которую можно побить
-    if (state.defenderId === user.id || testMode().enabled) {
+    if (store.defenderId === user.id || testMode().enabled) {
       // Ищем слот с картой, которую можно побить
-      for (let i = 0; i < slots.length; i++) {
-        const slot = slots[i];
+      for (let i = 0; i < store.slots.length; i++) {
+        const slot = store.slots[i];
         // Проверяем, что в слоте есть атакующая карта и нет защищающей
         if (slot.cards.length !== 1)
           continue;
@@ -288,7 +271,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       if (!validateAttack(`${card.suit.name}-${card.rank.name}`))
         return;
 
-      targetSlotId = slots.findIndex(slot => slot.cards.length === 0);
+      targetSlotId = store.slots.findIndex(slot => slot.cards.length === 0);
       type = 'attack';
     }
 
@@ -299,15 +282,15 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     gameService.onDroppedToTableSlot(
       card,
       targetSlotId,
-      removeCardFromHand,
-      addCardToSlot,
+      store.removeCardFromHand,
+      store.addCardToSlot,
       defend,
       attack,
       play,
       type,
       event.active.rect.current.translated
     );
-  }, [state, user.id, validateDefend, validateAttack, removeCardFromHand, defend, attack, play, addCardToSlot]);
+  }, [user.id, validateDefend, validateAttack, store.removeCardFromHand, store.addCardToSlot, defend, attack, play]);
 
   // Мемоизация контекстного значения
   const contextValue = useMemo(() => ({

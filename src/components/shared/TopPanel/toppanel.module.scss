@@ -23,7 +23,28 @@
    border: 1px solid rgba(120, 140, 255, 0.2);
    z-index: 30;
    position: relative;
-   overflow: hidden;
+   
+   @media (max-width: 768px) {
+      padding: 8px 10px;
+      max-height: 65px;
+      border-radius: 14px;
+   }
+   
+   @media (max-width: 480px) {
+      padding: 6px 8px;
+      max-height: 60px;
+      border-radius: 12px;
+   }
+   
+   &.mobile {
+      .players_compact {
+         gap: 6px;
+      }
+      
+      .left_section {
+         margin-right: 5px;
+      }
+   }
    
    &::after {
       content: '';
@@ -63,6 +84,11 @@
    flex: 0 0 auto;
    width: auto;
    margin-right: 8px;
+   
+   @media (max-width: 480px) {
+      gap: 10px;
+      margin-right: 5px;
+   }
 }
 
 .center_section {
@@ -124,15 +150,58 @@
    }
 }
 
+.players_compact {
+   display: flex;
+   gap: 10px;
+   overflow-x: auto;
+   scroll-behavior: smooth;
+   -webkit-overflow-scrolling: touch;
+   scrollbar-width: none;
+   -ms-overflow-style: none;
+   padding: 0 4px;
+   align-items: center;
+   max-width: 100%;
+   
+   &::-webkit-scrollbar {
+      display: none;
+   }
+   
+   @media (max-width: 768px) {
+      gap: 8px;
+   }
+   
+   @media (max-width: 480px) {
+      gap: 6px;
+   }
+   
+   @media (max-width: 360px) {
+      gap: 4px;
+   }
+}
+
 .deck_info {
    display: flex;
    align-items: center;
    gap: 10px;
+   
+   @media (max-width: 480px) {
+      gap: 6px;
+   }
 
    .deck_container {
       position: relative;
       width: 24px;
       height: 32px;
+      
+      @media (max-width: 480px) {
+         width: 22px;
+         height: 30px;
+      }
+      
+      @media (max-width: 360px) {
+         width: 20px;
+         height: 28px;
+      }
    }
    
    .deck_image {
@@ -182,14 +251,17 @@
       }
       
       @media (max-width: 768px) {
+         --trump-suit-size: 12px;
+         width: 18px;
+         height: 18px;
          bottom: -4px;
          right: -4px;
       }
       
       @media (max-width: 480px) {
          --trump-suit-size: 11px;
-         width: 18px;
-         height: 18px;
+         width: 16px;
+         height: 16px;
          bottom: -3px;
          right: -3px;
       }
@@ -249,72 +321,41 @@
          0 1px 3px rgba(0, 0, 0, 0.2),
          inset 0 1px 0 rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(100, 150, 255, 0.3);
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-      letter-spacing: 0.3px;
-      position: relative;
-      overflow: hidden;
-      
-      &::before {
-         content: '';
-         position: absolute;
-         top: 0;
-         left: -100%;
-         width: 100%;
-         height: 100%;
-         background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.2),
-            transparent
-         );
-         transition: left 0.7s ease;
-      }
       
       &:hover {
-         background: linear-gradient(to bottom, #3B82F6, #2563EB);
-         transform: translateY(-2px);
+         background: linear-gradient(to bottom, #2563EB, #175BE5);
          box-shadow: 
             0 4px 8px rgba(0, 0, 0, 0.3),
-            0 2px 4px rgba(0, 0, 0, 0.2),
+            0 2px 4px rgba(0, 0, 0, 0.25),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            
-         &::before {
-            left: 100%;
-         }
       }
       
       &:active {
          transform: translateY(1px);
          box-shadow: 
-            0 2px 4px rgba(0, 0, 0, 0.3),
-            inset 0 1px 3px rgba(0, 0, 0, 0.2);
+            0 2px 4px rgba(0, 0, 0, 0.2),
+            0 1px 2px rgba(0, 0, 0, 0.15),
+            inset 0 1px 1px rgba(0, 0, 0, 0.1);
       }
       
       &.take {
-         background: linear-gradient(to bottom, #F43F5E, #E11D48);
-         border-color: rgba(255, 120, 150, 0.3);
+         background: linear-gradient(to bottom, #E64D36, #CD372B);
          
          &:hover {
-            background: linear-gradient(to bottom, #FB7185, #F43F5E);
+            background: linear-gradient(to bottom, #F0533B, #DB392C);
          }
       }
-   }
-}
-
-.players_compact {
-   display: flex;
-   gap: 6px;
-   overflow-x: auto;
-   padding: 0 10px;
-   scrollbar-width: none;
-   -ms-overflow-style: none;
-   scroll-behavior: smooth;
-   flex: 1;
-   max-width: 100%;
-   align-items: center;
-   height: 100%;
-   
-   &::-webkit-scrollbar {
-      display: none;
+      
+      @media (max-width: 768px) {
+         padding: 4px 10px;
+         font-size: 12px;
+         border-radius: 8px;
+      }
+      
+      @media (max-width: 480px) {
+         padding: 3px 8px;
+         font-size: 11px;
+         border-radius: 6px;
+      }
    }
 } 

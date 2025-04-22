@@ -1,4 +1,4 @@
-import { ISlot } from "src/store/gameStore";
+import { GameStoreState, ISlot } from "src/store/gameStore";
 import animationService from "../contexts/animationService";
 import {
   ICard,
@@ -7,7 +7,7 @@ import {
   ICardsDealtEvent,
   IGameFinishedEvent,
   IActionResultEvent,
-  IGameState,
+  IGameSyncState,
   Suits,
   Ranks,
   RankValues,
@@ -17,6 +17,7 @@ import {
 import { animateCardToSlot, clearTableAnimated, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
 
 class GameService {
+
   private static instance: GameService;
   private pendingActions: { type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[] = [];
   isReloaded: boolean | null = null;
@@ -33,26 +34,36 @@ class GameService {
     return GameService.instance;
   }
 
-  handleGameState(state: IGameState, setGameState: Function, setPersonalState: Function, setSlots: Function, setPassedPlayers: Function) {
-    setGameState(state);
-    setPersonalState(state.personalState);
 
+  handleSyncGameState(state: IGameSyncState, store: GameStoreState) {
     let slots: ISlot[] = [];
 
     Array.from(Array(6).keys()).forEach(slotIndex => {
-      const card = state.tableCards.find(card => card.slotIndex === slotIndex);
+      const card = state.tableCards.find((card: any) => card.slotIndex === slotIndex);
       slots.push({
         id: slotIndex,
         cards: card ? card.defendingCard ? [card.card, card.defendingCard] : [card.card] : []
       });
     });
 
-    setSlots(slots);
+    store.setPersonalState(state.personalState);
+    store.setDefender(state.defenderId!);
+    store.setAttacker(state.attackerId!);
+    store.setTrumpCard(state.trumpCard!);
+    store.setSlots(slots);
+    store.setRounds(state.rounds);
+    store.setDeckCardsCount(state.deckCardsCount);
+    store.setStatus(state.status);
+    store.setPlayers(state.players);
+    store.setMoveAt(state.movedAt!);
+    store.setMoveTime(state.moveTime!);
+
     // Обновляем список пасовавших игроков
     const passedPlayers = state.players
       .filter((player: any) => player.passed)
       .map((player: any) => player.id);
-    setPassedPlayers(passedPlayers);
+
+    store.setPassedPlayers(passedPlayers);
   }
 
   // Метод для обработки успешного действия безы карты

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware'
-import { IGameState, IPersonalState, ICard, GameStatus } from 'src/types';
+import { IPersonalState, ICard, GameStatus, IFoolPlayer } from 'src/types';
 
 export interface ISlot {
   id: number;
@@ -8,24 +8,38 @@ export interface ISlot {
 }
 
 export interface GameStoreState {
-  // Состояния
+  // Состояние
   slots: ISlot[];
-  state: IGameState;
+  attackerId: string,
+  defenderId: string,
+  trumpCard: ICard | null;
+  deckCardsCount: number;
+  rounds: number;
+  status: GameStatus;
+  players: IFoolPlayer[];
+  movedAt: string | null;
+  moveTime: string | null;
   personalState: IPersonalState;
-  leftCardsCount: number;
   winnersIds: string[] | null;
   passedPlayers: string[];
-  
+
   // Методы для обновления состояния
   setSlots: (slots: ISlot[]) => void;
-  setGameState: (state: IGameState) => void;
+  setAttacker: (id: string) => void;
+  setDefender: (id: string) => void;
+  setRounds: (rounds: number) => void;
+  setDeckCardsCount: (deckCardsCount: number) => void;
+  setMoveAt: (moveAt: string) => void;
+  setMoveTime: (moveTime: string) => void;
+  setPlayers: (players: IFoolPlayer[]) => void;
+  setStatus: (status: GameStatus) => void;
   setPersonalState: (personalState: IPersonalState) => void;
-  setLeftCardsCount: (count: number) => void;
   setWinnersIds: (ids: string[] | null) => void;
   setPassedPlayers: (playerIds: string[]) => void;
   addPassedPlayer: (playerId: string) => void;
- 
+
   // Методы для работы с картами
+  setTrumpCard: (trump: ICard) => void;
   addCardToHand: (card: ICard | ICard[]) => void;
   removeCardFromHand: (cardId: string) => void;
   addCardToSlot: (card: ICard, slotID: number) => void;
@@ -38,25 +52,18 @@ const getInitialStateValues = () => ({
   slots: Array(6)
     .fill(null)
     .map((_, index) => ({ id: index, cards: [] })),
-  state: {
-    movedAt: null,
-    moveTime: null,
-    attackerId: null,
-    defenderId: null,
-    tableCards: [],
-    rounds: 0,
-    trumpCard: null,
-    deckCardsCount: 0,
-    status: 'ReadyToBegin' as GameStatus,
-    players: [],
-    personalState: {
-      cardsInHand: [],
-    },
-  },
+  attackerId: '',
+  defenderId: '',
+  trumpCard: null,
+  deckCardsCount: 0,
+  rounds: 0,
+  status: 'ReadyToBegin' as GameStatus,
+  players: [],
+  movedAt: null,
+  moveTime: null,
   personalState: {
     cardsInHand: [],
   },
-  leftCardsCount: 0,
   winnersIds: null,
   passedPlayers: [],
 });
@@ -67,14 +74,21 @@ const useGameStore = create<GameStoreState>()(
       ...getInitialStateValues(),
 
       // Реализация методов обновления
+      setPlayers: (players) => set({ players }, undefined, 'game/setPlayers'),
+      setStatus: (status) => set({ status }, undefined, 'game/setStatus'),
       setSlots: (slots) => set({ slots }, undefined, 'game/setSlots'),
-      setGameState: (state) => set({ state }, undefined, 'game/setGameState'),
+      setAttacker: (id) => set({ attackerId: id }, undefined, 'game/setAttacker'),
+      setDefender: (id) => set({ defenderId: id }, undefined, 'game/setDefender'),
+      setRounds: (rounds) => set({ rounds }, undefined, 'game/setRounds'),
+      setDeckCardsCount: (deckCardsCount) => set({ deckCardsCount }, undefined, 'game/setDeckCardsCount'),
+      setMoveAt: (moveAt) => set({ movedAt: moveAt }, undefined, 'game/setMoveAt'),
+      setMoveTime: (moveTime) => set({ moveTime }, undefined, 'game/setMoveTime'),
+      setTrumpCard: (trump) => set({ trumpCard: trump }, undefined, 'game/setTrumpCard'),
       setPersonalState: (personalState) => set({ personalState }, undefined, 'game/setPersonalState'),
-      setLeftCardsCount: (count) => set({ leftCardsCount: count }, undefined, 'game/setLeftCardsCount'),
       setWinnersIds: (ids) => set({ winnersIds: ids }, undefined, 'game/setWinnersIds'),
       setPassedPlayers: (playerIds) => set({ passedPlayers: playerIds }, undefined, 'game/setPassedPlayers'),
       addPassedPlayer: (playerId) => set((state) => ({ passedPlayers: [...state.passedPlayers, playerId] }), undefined, 'game/addPassedPlayer'),
-      
+
       // Реализация методов для работы с картами
       addCardToHand: (card) => set((state) => ({
         personalState: {
