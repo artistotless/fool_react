@@ -10,6 +10,18 @@ const CurrentPlayerPanel = () => {
     
     // Находим текущего игрока из списка игроков
     const currentPlayer = players.find(player => player.id === user.id);
+
+    useEffect(() => {
+        // Если аватарка отсутствует, загружаем случайную с DiceBear API
+        if (!user.avatar || user.avatar.trim() === '') {
+            // Используем id игрока как seed для получения одинаковой аватарки
+            const seed = user.id || user.name || Math.random().toString(36).substring(2, 8);
+            const style = 'open-peeps';
+            setAvatarSrc(`https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`);
+        } else {
+            setAvatarSrc(user.avatar);
+        }
+    }, [user.avatar, user.id, user.name]);
     
     // Если игрок не найден, возвращаем пустой компонент
     if (!currentPlayer) {
@@ -28,18 +40,6 @@ const CurrentPlayerPanel = () => {
         isDefending && styles.defending,
         isPassed && styles.passed
     ].filter(Boolean).join(' ');
-    
-    useEffect(() => {
-        // Если аватарка отсутствует, загружаем случайную с DiceBear API
-        if (!user.avatar || user.avatar.trim() === '') {
-            // Используем id игрока как seed для получения одинаковой аватарки
-            const seed = user.id || user.name || Math.random().toString(36).substring(2, 8);
-            const style = 'open-peeps';
-            setAvatarSrc(`https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`);
-        } else {
-            setAvatarSrc(user.avatar);
-        }
-    }, [user.avatar, user.id, user.name]);
 
     return (
         <div className={statusClass} title={user.name}>

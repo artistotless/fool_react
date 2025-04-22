@@ -79,8 +79,7 @@ const TestEventSimulator: React.FC = () => {
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
       result: {
         success: true,
-        actionType: 'attack',
-        cardId: `${Suits.Heart}-${Ranks.Ace}`
+        actionType: 'pass',
       } as IActionResultEvent
     });
   };

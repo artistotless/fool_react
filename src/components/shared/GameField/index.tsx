@@ -12,7 +12,7 @@ const GameField = () => {
          <Table />
          <div className={styles.player_area}>
             <PlayerCards/>
-            {/* <CurrentPlayerPanel /> */}
+            <CurrentPlayerPanel />
          </div>
          <PassButton />
       </div>
