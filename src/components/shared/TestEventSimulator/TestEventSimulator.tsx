@@ -6,8 +6,6 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
-  Ranks,
-  Suits,
 } from '../../../types';
 import animationService from "../../../contexts/animationService";
 import { useAudio } from "../../../contexts/AudioContext";
@@ -18,7 +16,6 @@ import styles from './TestEventSimulator.module.css';
 
 // Дополним enum GameUpdateTypes, так как его не хватает в файле types.ts
 enum ExtendedGameUpdateTypes {
-  GameState = "GameStateDto",
   GameStateSync = "GameStateSyncDto",
   CardsDealt = "CardsDealtDto",
   PlayerAction = "PlayerActionDto",
@@ -30,7 +27,7 @@ enum ExtendedGameUpdateTypes {
 const TestEventSimulator: React.FC = () => {
   const { simulateReceiveEvent } = useSignalR();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameState);
+  const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameStateSync);
   
   // Получаем необходимые функции и ссылки для кнопок из Test.tsx
   const { clearTable, slots, addCardToHand } = useGameStore();
@@ -182,7 +179,7 @@ const TestEventSimulator: React.FC = () => {
   };
 
   const generateGameState = () => {
-    simulateEvent(ExtendedGameUpdateTypes.GameState, {
+    simulateEvent(ExtendedGameUpdateTypes.GameStateSync, {
       state: {
         attackerId: testMode().testPlayers[0].id,
         defenderId: testMode().testPlayers[1].id,
@@ -203,7 +200,7 @@ const TestEventSimulator: React.FC = () => {
 
   // Карта событий и их обработчиков
   const eventHandlers: Record<string, () => void> = {
-    [ExtendedGameUpdateTypes.GameState]: generateGameState,
+    [ExtendedGameUpdateTypes.GameStateSync]: generateGameState,
     [ExtendedGameUpdateTypes.ActionResult + '_success']: generateActionResult,
     [ExtendedGameUpdateTypes.ActionResult + '_error']: generateActionResultError,
     [ExtendedGameUpdateTypes.RoundEnded]: generateRoundEnded,

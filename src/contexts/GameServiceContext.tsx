@@ -43,7 +43,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
     switch (data.updateType) {
       // Базовые события
-      case GameUpdateTypes.GameState:
+      case GameUpdateTypes.GameStateSync:
         gameService.handleSyncGameState(data.state, store);
         break;
 

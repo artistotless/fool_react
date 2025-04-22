@@ -44,3 +44,31 @@
         }
     }
 } 
+
+// Стили для таймера-оверлея
+.timer_overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--progress, 100%);
+    height: 100%;
+    background: rgba(8, 172, 95, 0.7);
+    pointer-events: none;
+    z-index: 2;
+    animation: pulse-overlay 1s infinite;
+    transition: width 0.2s linear;
+    
+    &.warning {
+        background: rgba(255, 50, 50, 0.7);
+        animation: pulse-overlay 1s infinite;
+    }
+}
+
+@keyframes pulse-overlay {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+} 

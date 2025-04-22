@@ -25,7 +25,7 @@ const PlayerCompact = ({
    id,
 }: PlayerCompactProps) => {
    const [avatarSrc, setAvatarSrc] = useState<string>(avatar);
-   const { defenderId, moveTime, movedAt, passedPlayers, slots } = useGameStore();
+   const { defenderId, moveTime, movedAt, passedPlayers, slots, attackerId } = useGameStore();
 
    const isPassed = passedPlayers.includes(id);
    const unbeatenCardsCount = slots.filter(slot => slot.cards.length === 1).length;
@@ -43,6 +43,9 @@ const PlayerCompact = ({
       }
    }, [avatar, id, name]);
 
+   // Показываем таймер только для текущего атакующего или защищающегося игрока
+   const shouldShowTimer = (testMode().enabled || (moveTime && movedAt)) && 
+                          (id === attackerId || id === defenderId);
 
    return (
       <div className={styles.player_compact} id={`player-${id}`}>
@@ -57,7 +60,7 @@ const PlayerCompact = ({
             <div className={styles.name}>{name}</div>
             <div className={styles.cards_count}>{cardsCount}</div>
          </div>
-         {false && (testMode().enabled || (moveTime && movedAt)) && (
+         {shouldShowTimer && (
             <ProgressTimer
                moveTime={testMode().enabled ? testMode().testMoveTime : (moveTime ?? "00:00:30")}
                movedAt={testMode().enabled ? testMode().testMovedAt : (movedAt ?? new Date().toISOString())}

@@ -99,7 +99,7 @@ export const testMode = (): {
         enabled: testModeEnabled,
         testTrumpCard: testTrumpCard as ICard,
         testPlayers: testPlayers,
-        testMoveTime: "00:00:10",
+        testMoveTime: "00:00:40",
         testMovedAt: new Date().toISOString()
     };
 }

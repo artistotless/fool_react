@@ -3,7 +3,7 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export enum GameUpdateTypes {
    // Cобытия состояния игры
-   GameState = "GameStateDto",
+   GameStateSync = "GameStateSyncDto",
    CardsMoved = "CardsMovedDto", // Для всех перемещений карт
    CardsDealt = "CardsDealtDto", // Получение карт игроком
    PlayerAction = "PlayerActionDto", // Действия других игроков
