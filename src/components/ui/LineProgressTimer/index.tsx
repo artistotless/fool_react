@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./progressTimer.module.scss";
 
-import { useAudio } from "src/contexts/AudioContext";
-import { Sounds } from "src/utils/sounds";
-
 interface ProgressTimerProps {
   moveTime: string; // Формат "HH:mm:ss"
   movedAt: string; // ISO 8601 дата и время
@@ -11,7 +8,7 @@ interface ProgressTimerProps {
   updateInterval?: number; // Интервал обновления в мс (по умолчанию 10мс)
 }
 
-const ProgressTimer = ({
+const LineProgressTimer = ({
   moveTime,
   movedAt,
   className,
@@ -19,14 +16,10 @@ const ProgressTimer = ({
 }: ProgressTimerProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [progress, setProgress] = useState(100);
-  const { play, stop } = useAudio();
-  const soundPlayedRef = useRef(false);
 
   useEffect(() => {
     if (moveTime && movedAt) {
       // Сбрасываем флаг воспроизведения при новых значениях времени
-      soundPlayedRef.current = false;
-      
       const updateProgress = () => {
         const movedAtTime = new Date(movedAt).getTime();
         const [hours, minutes, seconds] = moveTime.split(":").map(Number);
@@ -36,22 +29,10 @@ const ProgressTimer = ({
         const remainingPercent = Math.max(0, 100 - (elapsed / totalMoveTimeMs * 100));
         setProgress(remainingPercent);
         
-        // Управление звуком тикания часов
-        if (remainingPercent <= 60 && !soundPlayedRef.current) {
-          play(Sounds.Timer, true);
-          soundPlayedRef.current = true;
-        }
-        
-        if(remainingPercent > 60 && soundPlayedRef.current) {
-          stop(Sounds.Timer.id);
-          soundPlayedRef.current = false;
-        }
-        
         // Остановка таймера при достижении 0
         if (remainingPercent === 0 && intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
-          stop(Sounds.Timer.id);
         }
       };
 
@@ -64,7 +45,7 @@ const ProgressTimer = ({
         }
       };
     }
-  }, [moveTime, movedAt, updateInterval, play]);
+  }, [moveTime, movedAt, updateInterval]);
 
   const style = {
     '--progress': `${progress}%`
@@ -80,4 +61,4 @@ const ProgressTimer = ({
   );
 };
 
-export default ProgressTimer; 
+export default LineProgressTimer; 

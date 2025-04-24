@@ -30,7 +30,7 @@ const TestEventSimulator: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameStateSync);
   
   // Получаем необходимые функции и ссылки для кнопок из Test.tsx
-  const { clearTable, slots, addCardToHand } = useGameStore();
+  const { clearTable, slots, addCardToHand, attackerId: currentAttackerId, defenderId: currentDefenderId } = useGameStore();
   const { play } = useAudio();
   const { tableCardsRef } = animationService;
   const elementRef = useRef<HTMLDivElement>(null);
@@ -45,10 +45,11 @@ const TestEventSimulator: React.FC = () => {
 
   // Состояние для настройки параметров RoundEnded
   const [roundEndedParams, setRoundEndedParams] = useState({
-    reason: 'defenderTookCards',
-    defenderId: testMode().testPlayers[1].id,
-    attackerId: testMode().testPlayers[0].id,
-    nextAttackerId: testMode().testPlayers[1].id
+    reason: 'allCardsBeaten',
+    pastDefenderId: testMode().testPlayers[1].id,
+    pastAttackerId: testMode().testPlayers[0].id,
+    newDefenderId: testMode().testPlayers[0].id,
+    newAttackerId: testMode().testPlayers[1].id
   });
 
   // Состояние для настройки параметров ActionResultError
@@ -119,9 +120,10 @@ const TestEventSimulator: React.FC = () => {
     simulateEvent(ExtendedGameUpdateTypes.RoundEnded, {
       event: {
         reason: roundEndedParams.reason,
-        defenderId: roundEndedParams.defenderId,
-        attackerId: roundEndedParams.attackerId,
-        nextAttackerId: roundEndedParams.nextAttackerId
+        pastAttackerId: roundEndedParams.pastAttackerId,
+        pastDefenderId: roundEndedParams.pastDefenderId,
+        newAttackerId: roundEndedParams.newAttackerId,
+        newDefenderId: roundEndedParams.newDefenderId
       } as IRoundEndedEvent
     });
   };
@@ -179,10 +181,34 @@ const TestEventSimulator: React.FC = () => {
   };
 
   const generateGameState = () => {
+    // Определяем, меняем ли роли для нулевого игрока
+    const player0Id = testMode().testPlayers[0].id;
+    const player1Id = testMode().testPlayers[1].id;
+    
+    let newAttackerId, newDefenderId;
+    
+    // Если нулевой игрок сейчас защищающийся (defender)
+    if (currentDefenderId === player0Id) {
+      // Делаем его атакующим
+      newAttackerId = player0Id;
+      newDefenderId = player1Id;
+    } 
+    // Если нулевой игрок сейчас атакующий (attacker)
+    else if (currentAttackerId === player0Id) {
+      // Делаем его защищающимся
+      newAttackerId = player1Id;
+      newDefenderId = player0Id;
+    }
+    // Если роли другие или не определены, устанавливаем значения по умолчанию
+    else {
+      newAttackerId = player0Id;
+      newDefenderId = player1Id;
+    }
+    
     simulateEvent(ExtendedGameUpdateTypes.GameStateSync, {
       state: {
-        attackerId: testMode().testPlayers[0].id,
-        defenderId: testMode().testPlayers[1].id,
+        attackerId: newAttackerId,
+        defenderId: newDefenderId,
         tableCards: [],
         trumpCard: testMode().testTrumpCard,
         personalState: {
@@ -351,8 +377,8 @@ const TestEventSimulator: React.FC = () => {
             ID защищающегося:
             <select 
               className={styles.select}
-              value={roundEndedParams.defenderId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, defenderId: e.target.value})}
+              value={roundEndedParams.pastDefenderId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, pastDefenderId: e.target.value})}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -366,8 +392,8 @@ const TestEventSimulator: React.FC = () => {
             ID атакующего:
             <select 
               className={styles.select}
-              value={roundEndedParams.attackerId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, attackerId: e.target.value})}
+              value={roundEndedParams.pastAttackerId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, pastAttackerId: e.target.value})}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -381,8 +407,8 @@ const TestEventSimulator: React.FC = () => {
             ID следующего атакующего:
             <select 
               className={styles.select}
-              value={roundEndedParams.nextAttackerId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, nextAttackerId: e.target.value})}
+              value={roundEndedParams.newAttackerId}
+              onChange={(e) => setRoundEndedParams({...roundEndedParams, newAttackerId: e.target.value})}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>

@@ -218,9 +218,10 @@ export interface IActionResultEvent {
  */
 export interface IRoundEndedEvent {
    reason: 'allCardsBeaten' | 'defenderTookCards';
-   defenderId: string;
-   attackerId: string;
-   nextAttackerId: string;
+   pastAttackerId: string;
+   pastDefenderId: string;
+   newAttackerId: string;
+   newDefenderId: string;
    cards?: ICard[];
 }
 

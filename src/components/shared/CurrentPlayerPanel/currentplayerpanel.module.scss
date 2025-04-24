@@ -43,32 +43,37 @@
             height: 9px;
         }
     }
-} 
-
-// Стили для таймера-оверлея
-.timer_overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: var(--progress, 100%);
-    height: 100%;
-    background: rgba(8, 172, 95, 0.7);
-    pointer-events: none;
-    z-index: 2;
-    animation: pulse-overlay 1s infinite;
-    transition: width 0.2s linear;
     
-    &.warning {
-        background: rgba(255, 50, 50, 0.7);
-        animation: pulse-overlay 1s infinite;
+    &.attacking {
+        box-shadow: 0 0 0 3px #ff5722, 0 4px 10px rgb(9 9 9);
+        animation: pulse-attack 1.5s infinite;
+    }
+    
+    &.defending {
+        box-shadow: 0 0 0 3px #2196f3, 0 4px 10px rgb(9 9 9);
+        animation: pulse-defend 1.5s infinite;
+    }
+    
+    &.passed {
+        opacity: 0.7;
+        filter: grayscale(0.8);
     }
 }
 
-@keyframes pulse-overlay {
+@keyframes pulse-attack {
     0%, 100% {
-        opacity: 0.5;
+        box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.8), 0 4px 10px rgb(9 9 9);
     }
     50% {
-        opacity: 1;
+        box-shadow: 0 0 0 4px rgba(255, 87, 34, 1), 0 4px 15px rgb(255, 87, 34);
+    }
+}
+
+@keyframes pulse-defend {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.8), 0 4px 10px rgb(9 9 9);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(33, 150, 243, 1), 0 4px 15px rgb(33, 150, 243);
     }
 } 

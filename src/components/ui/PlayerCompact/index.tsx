@@ -1,29 +1,17 @@
 import { useState, useEffect } from 'react';
 import { IFoolPlayer } from 'src/types';
 import styles from './playercompact.module.scss';
-import ProgressTimer from '../ProgressTimer';
+import LineProgressTimer from '../LineProgressTimer';
 import { testMode } from 'src/environments/environment';
 import useGameStore from 'src/store/gameStore';
 import { AnimatePresence, motion } from 'framer-motion';
-
-interface PlayerCompactProps extends IFoolPlayer {
-   isAttacking?: boolean;
-   isDefending?: boolean;
-   isPassed?: boolean;
-   isCurrentUser?: boolean;
-   isActive?: boolean;
-   isWaiting?: boolean;
-   timeLeft?: number;
-   passedPlayers?: string[]; // Массив ID игроков, которые "пасанули"
-   unbeatenCardsCount?: number; // Количество непобитых карт на столе
-}
 
 const PlayerCompact = ({
    name,
    avatar,
    cardsCount,
    id,
-}: PlayerCompactProps) => {
+}: IFoolPlayer) => {
    const [avatarSrc, setAvatarSrc] = useState<string>(avatar);
    const { defenderId, moveTime, movedAt, passedPlayers, slots, attackerId } = useGameStore();
 
@@ -61,7 +49,7 @@ const PlayerCompact = ({
             <div className={styles.cards_count}>{cardsCount}</div>
          </div>
          {shouldShowTimer && (
-            <ProgressTimer
+            <LineProgressTimer
                moveTime={testMode().enabled ? testMode().testMoveTime : (moveTime ?? "00:00:30")}
                movedAt={testMode().enabled ? testMode().testMovedAt : (movedAt ?? new Date().toISOString())}
                className={styles.progress}
