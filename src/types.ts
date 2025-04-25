@@ -4,7 +4,6 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 export enum GameUpdateTypes {
    // Cобытия состояния игры
    GameStateSync = "GameStateSyncDto",
-   CardsMoved = "CardsMovedDto", // Для всех перемещений карт
    CardsDealt = "CardsDealtDto", // Получение карт игроком
    PlayerAction = "PlayerActionDto", // Действия других игроков
    ActionResult = "ActionResultDto", // Результат действия текущего игрока
@@ -218,8 +217,8 @@ export interface IActionResultEvent {
  */
 export interface IRoundEndedEvent {
    reason: 'allCardsBeaten' | 'defenderTookCards';
-   pastAttackerId: string;
-   pastDefenderId: string;
+   attackerId: string;
+   defenderId: string;
    newAttackerId: string;
    newDefenderId: string;
    cards?: ICard[];

@@ -61,7 +61,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
       case GameUpdateTypes.RoundEnded:
         // Обработка окончания раунда
-        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, store.clearTable, play);
+        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, store, play);
         break;
 
       case GameUpdateTypes.PlayerAction:

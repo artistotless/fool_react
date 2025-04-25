@@ -97,22 +97,28 @@ class GameService {
   }
 
   // Метод для обработки окончания раунда
-  handleRoundEnded(event: IRoundEndedEvent, userId: string, clearTable: Function, play: Function) {
+  handleRoundEnded(event: IRoundEndedEvent, userId: string, store: GameStoreState, play: Function) {
     const { tableCardsRef } = animationService;
+    const clearTable = store.clearTable;
+
+    play(Sounds.CardSlideLeft);
 
     if (event.reason === 'allCardsBeaten') {
       // Все карты отбиты
-      clearTableAnimated(tableCardsRef,
-        () => play(Sounds.CardSlideLeft), clearTable as () => void);
+      clearTableAnimated(tableCardsRef, undefined, clearTable as () => void);
     } else if (event.reason === 'defenderTookCards') {
       // Защищающийся взял карты
       const toElement = event.defenderId === userId ? "playercards" : `player-${event.defenderId}`;
-
       moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: 0 }, () => {
         clearTable();
+        store.addCardToHand(event.cards!);
         tableCardsRef.current = {};
       });
     }
+
+    store.setAttacker(event.newAttackerId);
+    store.setDefender(event.newDefenderId);
+    store.setRounds(store.rounds + 1);
   }
 
   // Метод для обработки действий других игроков

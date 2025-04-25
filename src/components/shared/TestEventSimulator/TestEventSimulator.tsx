@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useSignalR } from '../../../contexts/SignalRContext';
-import { 
+import {
   IActionResultEvent,
   IRoundEndedEvent,
   IPlayerActionEvent,
@@ -28,7 +28,7 @@ const TestEventSimulator: React.FC = () => {
   const { simulateReceiveEvent } = useSignalR();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<string>(ExtendedGameUpdateTypes.GameStateSync);
-  
+
   // Получаем необходимые функции и ссылки для кнопок из Test.tsx
   const { clearTable, slots, addCardToHand, attackerId: currentAttackerId, defenderId: currentDefenderId } = useGameStore();
   const { play } = useAudio();
@@ -46,8 +46,8 @@ const TestEventSimulator: React.FC = () => {
   // Состояние для настройки параметров RoundEnded
   const [roundEndedParams, setRoundEndedParams] = useState({
     reason: 'allCardsBeaten',
-    pastDefenderId: testMode().testPlayers[1].id,
-    pastAttackerId: testMode().testPlayers[0].id,
+    defenderId: testMode().testPlayers[1].id,
+    attackerId: testMode().testPlayers[0].id,
     newDefenderId: testMode().testPlayers[0].id,
     newAttackerId: testMode().testPlayers[1].id
   });
@@ -64,14 +64,14 @@ const TestEventSimulator: React.FC = () => {
   // Функция для имитации получения события от сервера
   const simulateEvent = (eventType: string, payload: any) => {
     console.log(`Симуляция события ${eventType}`, payload);
-    
+
     // Вместо отправки на сервер напрямую используем метод simulateReceiveEvent
-    simulateReceiveEvent({ 
-      updateType: eventType, 
-      ...payload 
+    simulateReceiveEvent({
+      updateType: eventType,
+      ...payload
     });
   };
-  
+
   // Генераторы различных событий
   const generateActionResult = () => {
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
@@ -81,18 +81,18 @@ const TestEventSimulator: React.FC = () => {
       } as IActionResultEvent
     });
   };
-  
+
   const generateActionResultError = () => {
     // Получаем актуальный список карт из выбранного слота
     const slotId = Number(actionResultErrorParams.slotId);
     const cardsInSlot = getCardsFromSlot(slotId);
-    
+
     // Используем сохраненный cardId, только если он соответствует одной из карт в слоте
     let cardIdToUse = actionResultErrorParams.cardId;
-    const cardExists = cardsInSlot.some(card => 
+    const cardExists = cardsInSlot.some(card =>
       `${card.suit.name}-${card.rank.name}` === cardIdToUse
     );
-    
+
     // Если выбранной карты больше нет в слоте или cardId пустой, берем первую карту из слота
     if (!cardExists || !cardIdToUse) {
       if (cardsInSlot.length > 0) {
@@ -103,7 +103,7 @@ const TestEventSimulator: React.FC = () => {
         return; // Выходим, если нет карт в слоте
       }
     }
-    
+
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
       result: {
         success: false,
@@ -115,19 +115,20 @@ const TestEventSimulator: React.FC = () => {
       } as IActionResultEvent
     });
   };
-  
+
   const generateRoundEnded = () => {
     simulateEvent(ExtendedGameUpdateTypes.RoundEnded, {
       event: {
         reason: roundEndedParams.reason,
-        pastAttackerId: roundEndedParams.pastAttackerId,
-        pastDefenderId: roundEndedParams.pastDefenderId,
+        attackerId: roundEndedParams.attackerId,
+        defenderId: roundEndedParams.defenderId,
         newAttackerId: roundEndedParams.newAttackerId,
-        newDefenderId: roundEndedParams.newDefenderId
+        newDefenderId: roundEndedParams.newDefenderId,
+        cards: slots.map(slot => slot.cards).flat()
       } as IRoundEndedEvent
     });
   };
-  
+
   const generatePlayerAction = () => {
     simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
@@ -141,20 +142,20 @@ const TestEventSimulator: React.FC = () => {
       } as IPlayerActionEvent
     });
   };
-  
+
   const generatePlayerPass = () => {
     simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
-        playerId:  testMode().testPlayers[1].id,
+        playerId: testMode().testPlayers[1].id,
         actionType: 'pass'
       } as IPlayerActionEvent
     });
   };
-  
+
   const generateCardsDealt = () => {
     simulateEvent(ExtendedGameUpdateTypes.CardsDealt, {
       event: {
-        playerId:  testMode().testPlayers[2].id,
+        playerId: testMode().testPlayers[2].id,
         count: 3,
         isInitialDeal: false,
         cardsInfo: {
@@ -164,14 +165,14 @@ const TestEventSimulator: React.FC = () => {
       } as ICardsDealtEvent
     });
   };
-  
+
   const generateGameFinished = () => {
     simulateEvent(ExtendedGameUpdateTypes.GameFinished, {
       event: {
-        winners: [ testMode().testPlayers[0].id],
+        winners: [testMode().testPlayers[0].id],
         statistics: [
           {
-            playerId:  testMode().testPlayers[0].id,
+            playerId: testMode().testPlayers[0].id,
             cardsPlayed: 12,
             roundsWon: 3
           }
@@ -184,15 +185,15 @@ const TestEventSimulator: React.FC = () => {
     // Определяем, меняем ли роли для нулевого игрока
     const player0Id = testMode().testPlayers[0].id;
     const player1Id = testMode().testPlayers[1].id;
-    
+
     let newAttackerId, newDefenderId;
-    
+
     // Если нулевой игрок сейчас защищающийся (defender)
     if (currentDefenderId === player0Id) {
       // Делаем его атакующим
       newAttackerId = player0Id;
       newDefenderId = player1Id;
-    } 
+    }
     // Если нулевой игрок сейчас атакующий (attacker)
     else if (currentAttackerId === player0Id) {
       // Делаем его защищающимся
@@ -204,7 +205,7 @@ const TestEventSimulator: React.FC = () => {
       newAttackerId = player0Id;
       newDefenderId = player1Id;
     }
-    
+
     simulateEvent(ExtendedGameUpdateTypes.GameStateSync, {
       state: {
         attackerId: newAttackerId,
@@ -245,29 +246,29 @@ const TestEventSimulator: React.FC = () => {
       console.error(`Обработчик для события ${selectedEvent} не найден`);
     }
   };
-  
+
   // Функции для кнопок из Test.tsx
   const handleClear = () => {
     clearTableAnimated(
       tableCardsRef,
-      () => play(Sounds.CardSlideLeft,false),
+      () => play(Sounds.CardSlideLeft, false),
       () => clearTable()
     );
   };
-  
+
   const handleDown = () => {
     slots.filter((slot) => slot.cards.length > 0).forEach((slot) => {
       const slotElement = document.getElementById(`slot-${slot.id}`);
       if (!slotElement) return;
-      
-      moveElementTo(Array.from(slotElement.children) as HTMLElement[], 
+
+      moveElementTo(Array.from(slotElement.children) as HTMLElement[],
         "playercards", 200, undefined, { x: 0, y: 800 }, () => {
           slot.cards.forEach((card) => {
             addCardToHand(card);
             clearTable();
             tableCardsRef.current = {};
           });
-      });
+        });
     });
   };
 
@@ -302,13 +303,13 @@ const TestEventSimulator: React.FC = () => {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки атаки</h4>
-          
+
           <label className={styles.label}>
             ID игрока:
-            <select 
+            <select
               className={styles.select}
               value={playerActionParams.playerId}
-              onChange={(e) => setPlayerActionParams({...playerActionParams, playerId: e.target.value})}
+              onChange={(e) => setPlayerActionParams({ ...playerActionParams, playerId: e.target.value })}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -317,68 +318,68 @@ const TestEventSimulator: React.FC = () => {
               ))}
             </select>
           </label>
-          
+
           <label className={styles.label}>
             Тип действия:
-            <select 
+            <select
               className={styles.select}
               value={playerActionParams.actionType}
-              onChange={(e) => setPlayerActionParams({...playerActionParams, actionType: e.target.value})}
+              onChange={(e) => setPlayerActionParams({ ...playerActionParams, actionType: e.target.value })}
             >
               <option value="attack">Атака</option>
               <option value="defend">Защита</option>
             </select>
           </label>
-          
+
           <label className={styles.label}>
             ID слота (0-5):
-            <input 
-              type="number" 
-              min="0" 
-              max="5" 
+            <input
+              type="number"
+              min="0"
+              max="5"
               className={styles.input}
               value={playerActionParams.targetSlotId}
-              onChange={(e) => setPlayerActionParams({...playerActionParams, targetSlotId: Number(e.target.value)})}
+              onChange={(e) => setPlayerActionParams({ ...playerActionParams, targetSlotId: Number(e.target.value) })}
             />
           </label>
-          
+
           <label className={styles.label}>
             Индекс карты в тестовых картах:
-            <input 
-              type="number" 
-              min="0" 
+            <input
+              type="number"
+              min="0"
               className={styles.input}
               value={playerActionParams.cardIndex}
-              onChange={(e) => setPlayerActionParams({...playerActionParams, cardIndex: Number(e.target.value)})}
+              onChange={(e) => setPlayerActionParams({ ...playerActionParams, cardIndex: Number(e.target.value) })}
             />
           </label>
         </div>
       );
-    } 
-    
+    }
+
     if (selectedEvent === ExtendedGameUpdateTypes.RoundEnded) {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки завершения раунда</h4>
-          
+
           <label className={styles.label}>
             Причина:
-            <select 
+            <select
               className={styles.select}
               value={roundEndedParams.reason}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, reason: e.target.value})}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, reason: e.target.value })}
             >
               <option value="allCardsBeaten">Все карты отбиты</option>
               <option value="defenderTookCards">Защищающийся взял карты</option>
             </select>
           </label>
-          
+
           <label className={styles.label}>
             ID защищающегося:
-            <select 
+            <select
               className={styles.select}
-              value={roundEndedParams.pastDefenderId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, pastDefenderId: e.target.value})}
+              value={roundEndedParams.defenderId}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, defenderId: e.target.value })}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -387,13 +388,13 @@ const TestEventSimulator: React.FC = () => {
               ))}
             </select>
           </label>
-          
+
           <label className={styles.label}>
             ID атакующего:
-            <select 
+            <select
               className={styles.select}
-              value={roundEndedParams.pastAttackerId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, pastAttackerId: e.target.value})}
+              value={roundEndedParams.attackerId}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, attackerId: e.target.value })}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -402,13 +403,28 @@ const TestEventSimulator: React.FC = () => {
               ))}
             </select>
           </label>
-          
+
           <label className={styles.label}>
             ID следующего атакующего:
-            <select 
+            <select
               className={styles.select}
               value={roundEndedParams.newAttackerId}
-              onChange={(e) => setRoundEndedParams({...roundEndedParams, newAttackerId: e.target.value})}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, newAttackerId: e.target.value })}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.label}>
+            ID следующего защищающегося:
+            <select
+              className={styles.select}
+              value={roundEndedParams.newDefenderId}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, newDefenderId: e.target.value })}
             >
               {testMode().testPlayers.map((player, index) => (
                 <option key={player.id} value={player.id}>
@@ -420,43 +436,43 @@ const TestEventSimulator: React.FC = () => {
         </div>
       );
     }
-    
+
     if (selectedEvent === ExtendedGameUpdateTypes.ActionResult + '_error') {
       // Получаем карты из выбранного слота
       const selectedSlotId = Number(actionResultErrorParams.slotId);
       const cardsInSlot = getCardsFromSlot(selectedSlotId);
-      
+
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки ошибки действия</h4>
-          
+
           <label className={styles.label}>
             ID слота (0-5):
-            <input 
-              type="number" 
-              min="0" 
-              max="5" 
+            <input
+              type="number"
+              min="0"
+              max="5"
               className={styles.input}
               value={actionResultErrorParams.slotId}
               onChange={(e) => handleSlotChange(Number(e.target.value))}
             />
           </label>
-          
+
           <label className={styles.label}>
             Тип действия:
-            <select 
+            <select
               className={styles.select}
               value={actionResultErrorParams.actionType}
-              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, actionType: e.target.value})}
+              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, actionType: e.target.value })}
             >
               <option value="attack">Атака</option>
               <option value="defend">Защита</option>
             </select>
           </label>
-          
+
           <label className={styles.label}>
             Карта:
-            <select 
+            <select
               className={styles.select}
               value={actionResultErrorParams.cardId}
               onChange={handleCardChange}
@@ -476,13 +492,13 @@ const TestEventSimulator: React.FC = () => {
               )}
             </select>
           </label>
-          
+
           <label className={styles.label}>
             Код ошибки:
-            <select 
+            <select
               className={styles.select}
               value={actionResultErrorParams.errorCode}
-              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, errorCode: e.target.value})}
+              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, errorCode: e.target.value })}
             >
               <option value="INVALID_CARD">INVALID_CARD</option>
               <option value="INVALID_SLOT">INVALID_SLOT</option>
@@ -490,26 +506,26 @@ const TestEventSimulator: React.FC = () => {
               <option value="GAME_ENDED">GAME_ENDED</option>
             </select>
           </label>
-          
+
           <label className={styles.label}>
             Сообщение об ошибке:
-            <input 
-              type="text" 
+            <input
+              type="text"
               className={styles.input}
               value={actionResultErrorParams.errorMessage}
-              onChange={(e) => setActionResultErrorParams({...actionResultErrorParams, errorMessage: e.target.value})}
+              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, errorMessage: e.target.value })}
             />
           </label>
         </div>
       );
     }
-    
+
     return null;
   };
 
   if (!isOpen) {
     return (
-      <button 
+      <button
         className={`${styles.button} ${styles.floatingButton}`}
         onClick={() => setIsOpen(true)}
       >
@@ -524,7 +540,7 @@ const TestEventSimulator: React.FC = () => {
     if (eventKey.includes('_')) {
       const [baseType, suffix] = eventKey.split('_');
       const baseName = Object.entries(ExtendedGameUpdateTypes).find(([_, value]) => value === baseType)?.[0] || baseType;
-      
+
       switch (suffix) {
         case 'success':
           return `${baseName} (успех)`;
@@ -542,7 +558,7 @@ const TestEventSimulator: React.FC = () => {
           return `${baseName} (${suffix})`;
       }
     }
-    
+
     // Иначе просто ищем имя в перечислении
     return Object.entries(ExtendedGameUpdateTypes).find(([_, value]) => value === eventKey)?.[0] || eventKey;
   };
@@ -551,7 +567,7 @@ const TestEventSimulator: React.FC = () => {
     <div ref={elementRef} className={styles.container}>
       <div className={styles.header}>
         <h3 className={styles.title}>Симулятор событий сервера</h3>
-        <button 
+        <button
           className={`${styles.button} ${styles.closeButton}`}
           onClick={() => setIsOpen(false)}
         >
@@ -559,7 +575,7 @@ const TestEventSimulator: React.FC = () => {
         </button>
       </div>
 
-      <select 
+      <select
         className={styles.select}
         value={selectedEvent}
         onChange={(e) => setSelectedEvent(e.target.value)}
@@ -573,7 +589,7 @@ const TestEventSimulator: React.FC = () => {
 
       {renderEventForm()}
 
-      <button 
+      <button
         className={`${styles.button} ${styles.generateButton}`}
         onClick={handleGenerateEvent}
       >
@@ -583,29 +599,29 @@ const TestEventSimulator: React.FC = () => {
       <div className={styles.eventInfo}>
         <p>Текущее событие: {getDisplayName(selectedEvent)}</p>
       </div>
-      
+
       {/* Кнопки из Test.tsx */}
       <div className={styles.buttonGroup}>
         <h4 className={styles.actionTitle}>Быстрые действия</h4>
-        <button 
+        <button
           className={styles.button}
           onClick={handleClear}
         >
           Очистить стол
         </button>
-        <button 
+        <button
           className={styles.button}
           onClick={handleDown}
         >
           Взять карты
         </button>
-        <button 
+        <button
           className={styles.button}
           onClick={() => generateCardsDealt()}
         >
           Раздать карты
         </button>
-        <button 
+        <button
           className={styles.button}
           onClick={() => generateRoundEnded()}
         >
