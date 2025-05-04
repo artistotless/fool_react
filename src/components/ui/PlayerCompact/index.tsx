@@ -13,7 +13,7 @@ const PlayerCompact = ({
    id,
 }: IFoolPlayer) => {
    const [avatarSrc, setAvatarSrc] = useState<string>(avatar);
-   const { defenderId, moveTime, movedAt, passedPlayers, slots, attackerId } = useGameStore();
+   const { defenderId, moveTime, movedAt, passedPlayers, slots, activePlayers } = useGameStore();
 
    const isPassed = passedPlayers.includes(id);
    const unbeatenCardsCount = slots.filter(slot => slot.cards.length === 1).length;
@@ -32,8 +32,9 @@ const PlayerCompact = ({
    }, [avatar, id, name]);
 
    // Показываем таймер только для текущего атакующего или защищающегося игрока
-   const shouldShowTimer = (testMode().enabled || (moveTime && movedAt)) && 
-                          (id === attackerId || id === defenderId);
+   const shouldShowTimer =
+   // testMode().enabled ? (currentPlayer.id === attackerId || currentPlayer.id === defenderId) :
+       (moveTime && movedAt && activePlayers.includes(id));
 
    return (
       <div className={styles.player_compact} id={`player-${id}`}>
@@ -63,7 +64,7 @@ const PlayerCompact = ({
                   animate={{ opacity: 1, top: 40 }}
                   exit={{ opacity: 0, top: 40 }}
                   transition={{ duration: 0.3 }}
-               >
+               > 
                   {id === defenderId ? 'Беру' : (unbeatenCardsCount > 0 ? 'Пасс' : 'Бито')}
                </motion.div>
             )}

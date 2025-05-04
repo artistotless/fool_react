@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import styles from './currentplayerpanel.module.scss';
 import { useUser } from 'src/contexts/UserContext';
 import useGameStore from 'src/store/gameStore';
-import { testMode } from 'src/environments/environment';
 import CircleProgressTimer from 'src/components/ui/CircleProgressTimer';
 
 const CurrentPlayerPanel = () => {
     const { user } = useUser();
-    const { players, attackerId, defenderId, passedPlayers, moveTime, movedAt } = useGameStore();
+    const { players, attackerId, defenderId, passedPlayers, moveTime, movedAt, activePlayers } = useGameStore();
     const [avatarSrc, setAvatarSrc] = useState<string>(user.avatar || '');
-    
+
     // Находим текущего игрока из списка игроков
     const currentPlayer = players.find(player => player.id === user.id);
 
@@ -24,7 +23,7 @@ const CurrentPlayerPanel = () => {
             setAvatarSrc(user.avatar);
         }
     }, [user.avatar, user.id, user.name]);
-    
+
     // Если игрок не найден, возвращаем пустой компонент
     if (!currentPlayer) {
         return null;
@@ -34,7 +33,7 @@ const CurrentPlayerPanel = () => {
     const isAttacking = currentPlayer.id === attackerId;
     const isDefending = currentPlayer.id === defenderId;
     const isPassed = passedPlayers.includes(currentPlayer.id);
-    
+
     // Определяем класс на основе статуса
     const statusClass = [
         styles.avatar_container,
@@ -43,25 +42,25 @@ const CurrentPlayerPanel = () => {
         isPassed && styles.passed
     ].filter(Boolean).join(' ');
 
-    const shouldShowTimer = (testMode().enabled || (moveTime && movedAt)) && 
-                           (currentPlayer.id === attackerId || currentPlayer.id === defenderId);
+    const shouldShowTimer =
+        // testMode().enabled ? (currentPlayer.id === attackerId || currentPlayer.id === defenderId) :
+        (moveTime && movedAt && activePlayers.includes(user.id));
 
     return (
         <div className={statusClass} title={user.name}>
-            <img 
-                src={avatarSrc} 
-                alt={user.name} 
+            <img
+                src={avatarSrc}
+                alt={user.name}
                 onError={() => {
                     // Запасной вариант, если даже DiceBear не загрузился
                     const fallbackSeed = Math.random().toString(36).substring(2, 8);
                     setAvatarSrc(`https://api.dicebear.com/7.x/bottts/svg?seed=${fallbackSeed}`);
-                }} 
+                }}
             />
             {shouldShowTimer && (
-                <CircleProgressTimer 
+                <CircleProgressTimer
                     moveTime={moveTime}
                     movedAt={movedAt}
-                    isActive={currentPlayer.id === attackerId || currentPlayer.id === defenderId}
                 />
             )}
         </div>

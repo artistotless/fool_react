@@ -6,9 +6,12 @@ export enum GameUpdateTypes {
    GameStateSync = "GameStateSyncDto",
    CardsDealt = "CardsDealtDto", // Получение карт игроком
    PlayerAction = "PlayerActionDto", // Действия других игроков
-   ActionResult = "ActionResultDto", // Результат действия текущего игрока
+   ActionResult = "ActionResultDto", // Результат действия
    RoundEnded = "RoundEndedDto", // Информация о завершении раунда
-   GameFinished = "GameFinishedDto" // Завершение игры и статистика
+   GameFinished = "GameFinishedDto", // Завершение игры
+   GameCanceled = "GameCanceledDto", // Отмена игры
+   ActivePlayersUpdated = "ActivePlayersUpdatedDto", // Обновление списка активных игроков
+   WinnersUpdated = "WinnersUpdatedDto" // Обновление списка победителей
 }
 
 export enum Suits {
@@ -163,6 +166,9 @@ export interface IGameSyncState {
     * The personal state of the current player.
     */
    personalState: IPersonalState;
+
+   /** Список активных игроков, которые могут ходить */
+   activePlayers: string[];
 }
 
 export interface IPersonalState {
@@ -172,7 +178,11 @@ export interface IPersonalState {
 /**
  * Действия с картами, которые возможны в игре
  */
-export type CardActionType = 'attack' | 'defend' | 'pass';
+export enum CardActionType {
+   Pass = 0,
+   Attack = 1,
+   Defend = 2,
+}
 
 /**
  * Событие раздачи карт
@@ -193,22 +203,18 @@ export interface ICardsDealtEvent {
 export interface IPlayerActionEvent {
    playerId: string;
    actionType: CardActionType;
-   targetSlotId?: number;
    cardInfo?: {
-      isHidden: boolean;
-      card?: ICard;
+      slotIndex: number;
+      card: ICard;
    };
 }
 
 /**
- * Результат действия текущего игрока
+ * Результат действия игрока
  */
 export interface IActionResultEvent {
    success: boolean;
-   actionType: CardActionType;
-   cardId?: string;
-   slotId?: number;
-   errorCode?: string;
+   actionId: string;
    errorMessage?: string;
 }
 
@@ -225,13 +231,30 @@ export interface IRoundEndedEvent {
 }
 
 /**
+ * Событие обновления списка активных игроков
+ */
+export interface IActivePlayersUpdatedEvent {
+   activePlayers: string[];
+}
+
+/**
  * Событие окончания игры
  */
 export interface IGameFinishedEvent {
    winners: string[];
-   statistics: {
-      playerId: string;
-      cardsPlayed: number;
-      roundsWon: number;
-   }[];
 }
+
+/**
+ * Событие отмены игры
+ */
+export interface IGameCanceledEvent {
+   reason: string;
+}
+
+/**
+ * Событие обновления списка победителей
+ */
+export interface IWinnersUpdatedEvent {
+   winners: string[];
+}
+

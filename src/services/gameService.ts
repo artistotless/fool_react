@@ -1,4 +1,4 @@
-import { GameStoreState, ISlot } from "src/store/gameStore";
+import { GameStoreState, ISlot, IPendingAction } from "src/store/gameStore";
 import animationService from "../contexts/animationService";
 import {
   ICard,
@@ -8,18 +8,23 @@ import {
   IGameFinishedEvent,
   IActionResultEvent,
   IGameSyncState,
-  Suits,
-  Ranks,
-  RankValues,
-  ISuit,
-  IRank
+  IGameCanceledEvent,
+  CardActionType,
+  IActivePlayersUpdatedEvent,
+  IWinnersUpdatedEvent,
 } from "../types";
-import { animateCardToSlot, clearTableAnimated, createCardHtmlElement, moveCardFromDeck, moveElementTo, Sounds } from "../utils";
+import {
+  animateCardToSlot,
+  clearTableAnimated,
+  moveCardFromDeck,
+  moveElementTo,
+  Sounds,
+  generateGuid,
+  createFakeCard
+} from "../utils";
 
 class GameService {
-
   private static instance: GameService;
-  private pendingActions: { type: 'attack' | 'defend', cardId: string, slotId?: number, card: ICard }[] = [];
   isReloaded: boolean | null = null;
   leftCardsCount: number = 0;
 
@@ -33,7 +38,6 @@ class GameService {
     }
     return GameService.instance;
   }
-
 
   handleSyncGameState(state: IGameSyncState, store: GameStoreState) {
     let slots: ISlot[] = [];
@@ -64,40 +68,71 @@ class GameService {
       .map((player: any) => player.id);
 
     store.setPassedPlayers(passedPlayers);
+    store.setActivePlayers(state.activePlayers || []);
   }
 
   // Метод для обработки успешного действия безы карты
-  handleSuccessfulAction(action: IActionResultEvent, playerId: string, addPassedPlayer: Function) {
-    // Пока что используется только для обработки пасса
-    if (action.actionType !== 'pass')
-      return;
+  handleSuccessfulAction(action: IActionResultEvent, playerId: string, store: GameStoreState) {
+    // Находим соответствующее действие в pendingActions
+    const pendingAction = store.findPendingActionById(action.actionId);
 
-    console.log(`Действие ${action.actionType} успешно выполнено`);
-    addPassedPlayer(playerId);
+    if (!pendingAction) {
+      console.warn(`Действие с actionId ${action.actionId} не найдено в pendingActions`);
+      return;
+    }
+
+    // Удаляем обработанное действие из списка ожидающих
+    store.removePendingAction(action.actionId);
+
+    if (pendingAction.type === 'pass') {
+      console.log(`Действие pass успешно выполнено`);
+      store.addPassedPlayer(playerId);
+    }
+    else {
+      console.log(`Действие ${pendingAction.type} успешно выполнено`);
+    }
+  }
+
+  /**
+   * Обрабатывает событие обновления списка активных игроков
+   */
+  handleActivePlayersUpdated(event: IActivePlayersUpdatedEvent, store: GameStoreState) {
+    store.setActivePlayers(event.activePlayers);
   }
 
   // Метод для обработки отклоненного действия с картой
-  handleFailedCardAction(action: IActionResultEvent, addCardToHand: Function, removeFromSlot: Function, showToast: Function) {
-    console.log(`Действие ${action.actionType} с картой ${action.cardId} отклонено: ${action.errorMessage}`);
+  handleFailedCardAction(action: IActionResultEvent, showToast: Function, store: GameStoreState) {
+    // Находим соответствующее действие в pendingActions
+    const pendingAction = store.findPendingActionById(action.actionId);
+
+    if (!pendingAction) {
+      console.warn(`Действие с actionId ${action.actionId} не найдено в pendingActions`);
+      return;
+    }
+
+    console.log(`Действие ${pendingAction.type} с картой ${pendingAction.cardId} отклонено: ${action.errorMessage}`);
     const { tableCardsRef } = animationService;
 
-    if (!action.cardId)
+    // Удаляем обработанное действие из списка ожидающих
+    store.removePendingAction(action.actionId);
+
+    if (!pendingAction.cardId || !pendingAction.card)
       return;
 
-    const cardData = this.getCardDataFromCardId(action.cardId);
-    const cardElement = tableCardsRef.current[action.cardId];
+    const cardData = pendingAction.card;
+    const cardElement = tableCardsRef.current[pendingAction.cardId];
 
     showToast(action.errorMessage!, 'error');
 
     moveElementTo(cardElement!, "playercards", 300, undefined, undefined, () => {
-      delete tableCardsRef.current[action.cardId!];
-      addCardToHand(cardData);
-      removeFromSlot(action.slotId!, action.cardId);
+      delete tableCardsRef.current[pendingAction.cardId!];
+      store.addCardToHand(cardData);
+      store.removeFromSlot(pendingAction.slotId!, pendingAction.cardId!);
     });
   }
 
   // Метод для обработки окончания раунда
-  handleRoundEnded(event: IRoundEndedEvent, userId: string, store: GameStoreState, play: Function) {
+  handleRoundEnded(event: IRoundEndedEvent, userId: string, play: Function, store: GameStoreState,) {
     const { tableCardsRef } = animationService;
     const clearTable = store.clearTable;
 
@@ -122,16 +157,15 @@ class GameService {
   }
 
   // Метод для обработки действий других игроков
-  handlePlayerAction(event: IPlayerActionEvent, play: Function, addCardToSlot: Function, addPassedPlayer: Function) {
-
-    if (event.actionType === "pass") {
+  handlePlayerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
+    if (event.actionType == CardActionType.Pass) {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
-      addPassedPlayer(event.playerId);
+      store.addPassedPlayer(event.playerId);
       return;
     }
 
     // Другой игрок сыграл карту
-    if (event.actionType === 'attack' || event.actionType === 'defend') {
+    if (event.actionType === CardActionType.Attack || event.actionType === CardActionType.Defend) {
       const cardPrefix = `othercard-${event.playerId}`;
       const cardData = event.cardInfo?.card as ICard;
       // Получаем координаты отображения карты другого игрока
@@ -145,22 +179,22 @@ class GameService {
         position = { top: -100, left: window.innerWidth / 2 };
       }
 
-      const fakeCard = this.createFakeCard(cardData, cardPrefix, position);
+      const fakeCard = createFakeCard(cardData, cardPrefix, position);
       if (!fakeCard) throw new Error("Fake card not found");
 
       // Анимация перемещения карты от игрока на стол в конкретный слот
-      this.moveFakeCardToSlot(fakeCard, event.targetSlotId!, play, undefined,
+      this.moveFakeCardToSlot(fakeCard, event.cardInfo?.slotIndex!, play, undefined,
         () => {
           fakeCard.remove();
-          event.cardInfo!.card!.playPlaceAnim = event.actionType === 'attack';
-          addCardToSlot(event.cardInfo!.card!, event.targetSlotId!);
+          event.cardInfo!.card!.playPlaceAnim = event.actionType === CardActionType.Attack;
+          store.addCardToSlot(event.cardInfo!.card!, event.cardInfo?.slotIndex!);
         }
       );
     }
   }
 
   // Метод для обработки раздачи карт
-  handleCardsDealt(event: ICardsDealtEvent, play: Function, addCardToHand: Function) {
+  handleCardsDealt(event: ICardsDealtEvent, play: Function, store: GameStoreState) {
     const isCurrentPlayer = event.playerId === 'currentPlayer';
 
     // Проигрываем звук раздачи карт
@@ -175,7 +209,7 @@ class GameService {
           // if (!event.isInitialDeal)
           play(Sounds.CardFromDeck);
           moveCardFromDeck("playercards", "deck", 400, () => {
-            addCardToHand(card);
+            store.addCardToHand(card);
           });
         }, index * 200);
       });
@@ -196,9 +230,20 @@ class GameService {
   }
 
   // Метод для обработки окончания игры
-  handleGameFinished(event: IGameFinishedEvent, setWinnersIds: Function) {
-    setWinnersIds(event.winners);
-    console.log('Статистика игры:', event.statistics);
+  handleGameFinished(event: IGameFinishedEvent, store: GameStoreState) {
+    store.setWinnersIds(event.winners);
+    store.setStatus('Finished');
+  }
+
+  // Метод для обработки отмены игры
+  handleGameCanceled(event: IGameCanceledEvent, store: GameStoreState, showToast: Function) {
+    store.setStatus('Canceled');
+    showToast(`Игра отменена: ${event.reason}`, 'error');
+  }
+
+  // Метод для обработки обновления списка победителей
+  handleWinnersUpdated(event: IWinnersUpdatedEvent, store: GameStoreState) {
+    store.setWinnersIds(event.winners);
   }
 
   // Метод для перемещения фейковой карты в слот
@@ -228,12 +273,11 @@ class GameService {
   onDroppedToTableSlot(
     card: ICard,
     slotId: number,
-    removeCardFromHand: Function,
-    addCardToSlot: Function,
-    defend: Function,
-    attack: Function,
-    play: Function,
+    defend: (cardDefendingId: string, cardAttackingIndex: number, actionId: string) => Promise<void>,
+    attack: (cardAttackingId: string, actionId: string) => Promise<void>,
+    play: ({ id, src }: { id: number, src: string }, loop: boolean) => void,
     type: 'attack' | 'defend',
+    store: GameStoreState,
     dropPosition?: { top: number, left: number, width?: number, height?: number } | null
   ) {
     const cardId = `${card.suit.name}-${card.rank.name}`;
@@ -245,8 +289,11 @@ class GameService {
       height: originalCard.offsetHeight
     };
 
-    const fakeCard = this.createFakeCard(card, "playercard", dropPosition, size);
+    const fakeCard = createFakeCard(card, "playercard", dropPosition, size);
     if (!fakeCard) throw new Error("Fake card not found");
+
+    // Генерируем actionId для действия
+    const actionId = generateGuid();
 
     this.moveFakeCardToSlot(fakeCard, slotId, play,
       () => { originalCard!.style.visibility = 'hidden'; },
@@ -256,117 +303,43 @@ class GameService {
         originalCard!.style.visibility = 'visible';
         // Сначала добавляем карту в слот, чтобы пользователь сразу видел результат
         card.playPlaceAnim = false;
-        removeCardFromHand(cardId);
-        addCardToSlot(card, slotId);
+        store.removeCardFromHand(cardId);
+        store.addCardToSlot(card, slotId);
 
         // Добавляем действие в список ожидающих подтверждения
-        this.pendingActions.push({
+        const pendingAction: IPendingAction = {
           type,
           cardId,
           slotId,
-          card
-        });
+          card,
+          actionId
+        };
+
+        store.addPendingAction(pendingAction);
 
         // Отправляем действие на сервер
         if (type === 'defend')
-          defend(cardId, slotId);
+          defend(cardId, slotId, actionId);
         else
-          attack(cardId);
+          attack(cardId, actionId);
       });
   }
 
-  // Создание фейковой карты
-  createFakeCard(card: ICard, cardPrefix: string, startPosition?: { top: number, left: number, width?: number, height?: number } | null, size?: { width: number, height: number }): HTMLElement | null {
-    const cardId = `${card.suit.name}-${card.rank.name}`;
+  // Метод для выполнения действия "пасс"
+  executePass(pass: Function, store: GameStoreState) {
+    // Генерируем actionId для действия
+    const actionId = generateGuid();
 
-    // Создаем HTML элемент карты
-    const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-fake-${cardId}`);
-
-    // Настраиваем позицию и размеры карты
-    cardClone.id = `${cardPrefix}-fake-${cardId}`;
-    cardClone.style.position = 'absolute';
-
-    // Используем позицию, где было завершено перетаскивание
-    cardClone.style.left = `${startPosition?.left}px`;
-    cardClone.style.top = `${startPosition?.top}px`;
-
-    if (size) {
-      cardClone.style.width = `${size?.width}px`;
-      cardClone.style.height = `${size?.height}px`;
-    }
-
-    cardClone.style.transform = '';
-    cardClone.style.zIndex = '1999';
-    cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
-
-    return cardClone;
-  }
-
-  // Метод для получения данных карты из её идентификатора
-  getCardDataFromCardId(cardId: string): ICard {
-    const [suitName, rankName] = cardId.split('-');
-
-    // Получаем символ масти
-    let iconChar = '';
-    switch (suitName) {
-      case Suits.Diamond:
-        iconChar = '♦';
-        break;
-      case Suits.Club:
-        iconChar = '♣';
-        break;
-      case Suits.Heart:
-        iconChar = '♥';
-        break;
-      case Suits.Spade:
-        iconChar = '♠';
-        break;
-    }
-
-    // Получаем значение ранга
-    let rankValue = 0;
-    switch (rankName) {
-      case Ranks.Ace:
-        rankValue = RankValues.Ace;
-        break;
-      case Ranks.King:
-        rankValue = RankValues.King;
-        break;
-      case Ranks.Queen:
-        rankValue = RankValues.Queen;
-        break;
-      case Ranks.Jack:
-        rankValue = RankValues.Jack;
-        break;
-      case Ranks.Ten:
-        rankValue = RankValues.Ten;
-        break;
-      case Ranks.Nine:
-        rankValue = RankValues.Nine;
-        break;
-      case Ranks.Eight:
-        rankValue = RankValues.Eight;
-        break;
-      case Ranks.Seven:
-        rankValue = RankValues.Seven;
-        break;
-      case Ranks.Six:
-        rankValue = RankValues.Six;
-        break;
-    }
-
-    const suit: ISuit = {
-      name: suitName as Suits,
-      iconChar
+    // Добавляем действие в список ожидающих подтверждения
+    const pendingAction: IPendingAction = {
+      type: 'pass',
+      actionId
     };
 
-    const rank: IRank = {
-      name: rankName as Ranks,
-      shortName: rankName as Ranks,
-      value: rankValue
-    };
+    store.addPendingAction(pendingAction);
 
-    return { suit, rank };
+    // Отправляем действие на сервер
+    pass(actionId);
   }
 }
 

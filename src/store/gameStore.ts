@@ -7,6 +7,14 @@ export interface ISlot {
   cards: ICard[];
 }
 
+export interface IPendingAction {
+  type: 'attack' | 'defend' | 'pass';
+  cardId?: string;
+  slotId?: number;
+  card?: ICard;
+  actionId: string;
+}
+
 export interface GameStoreState {
   // Состояние
   slots: ISlot[];
@@ -22,6 +30,8 @@ export interface GameStoreState {
   personalState: IPersonalState;
   winnersIds: string[] | null;
   passedPlayers: string[];
+  activePlayers: string[];
+  pendingActions: IPendingAction[];
 
   // Методы для обновления состояния
   setSlots: (slots: ISlot[]) => void;
@@ -37,6 +47,7 @@ export interface GameStoreState {
   setWinnersIds: (ids: string[] | null) => void;
   setPassedPlayers: (playerIds: string[]) => void;
   addPassedPlayer: (playerId: string) => void;
+  setActivePlayers: (playerIds: string[]) => void;
 
   // Методы для работы с картами
   setTrumpCard: (trump: ICard) => void;
@@ -45,6 +56,11 @@ export interface GameStoreState {
   addCardToSlot: (card: ICard, slotID: number) => void;
   removeFromSlot: (slotId: number, cardId: string) => void;
   clearTable: () => void;
+  
+  // Методы для работы с ожидающими действиями
+  addPendingAction: (action: IPendingAction) => void;
+  removePendingAction: (actionId: string) => IPendingAction | undefined;
+  findPendingActionById: (actionId: string) => IPendingAction | undefined;
 }
 
 // Функция для получения начального состояния
@@ -66,11 +82,13 @@ const getInitialStateValues = () => ({
   },
   winnersIds: null,
   passedPlayers: [],
+  activePlayers: [],
+  pendingActions: [],
 });
 
 const useGameStore = create<GameStoreState>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       ...getInitialStateValues(),
 
       // Реализация методов обновления
@@ -88,6 +106,7 @@ const useGameStore = create<GameStoreState>()(
       setWinnersIds: (ids) => set({ winnersIds: ids }, undefined, 'game/setWinnersIds'),
       setPassedPlayers: (playerIds) => set({ passedPlayers: playerIds }, undefined, 'game/setPassedPlayers'),
       addPassedPlayer: (playerId) => set((state) => ({ passedPlayers: [...state.passedPlayers, playerId] }), undefined, 'game/addPassedPlayer'),
+      setActivePlayers: (playerIds) => set({ activePlayers: playerIds }, undefined, 'game/setActivePlayers'),
 
       // Реализация методов для работы с картами
       addCardToHand: (card) => set((state) => ({
@@ -132,6 +151,29 @@ const useGameStore = create<GameStoreState>()(
       clearTable: () => set((state) => ({
         slots: state.slots.map((slot) => ({ ...slot, cards: [] }))
       }), undefined, 'game/clearTable'),
+      
+      // Методы для работы с ожидающими действиями
+      addPendingAction: (action) => set((state) => ({
+        pendingActions: [...state.pendingActions, action]
+      }), undefined, 'game/addPendingAction'),
+      
+      removePendingAction: (actionId) => {
+        const state = get();
+        const actionIndex = state.pendingActions.findIndex(a => a.actionId === actionId);
+        if (actionIndex === -1) return undefined;
+        
+        const action = state.pendingActions[actionIndex];
+        set({
+          pendingActions: state.pendingActions.filter((_, index) => index !== actionIndex)
+        }, undefined, 'game/removePendingAction');
+        
+        return action;
+      },
+      
+      findPendingActionById: (actionId) => {
+        const state = get();
+        return state.pendingActions.find(a => a.actionId === actionId);
+      },
     }),
     { name: 'Game Store' }
   )

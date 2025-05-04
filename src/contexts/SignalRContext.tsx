@@ -3,6 +3,8 @@ import * as signalR from '@microsoft/signalr';
 import { HubConnection } from '@microsoft/signalr';
 import { signalRLoggingEnabled } from "src/environments/environment";
 import { useToast } from 'src/services/ToastService';
+import useConnectionStore from 'src/store/connectionStore';
+import { GameUpdateTypes } from 'src/types';
 
 // Тип контекста SignalR
 export interface SignalRContextType {
@@ -21,7 +23,6 @@ const SignalRContext = createContext<SignalRContextType | undefined>(undefined);
 // Пропсы для провайдера
 interface SignalRProviderProps {
    children: ReactNode;
-   hubUrl?: string;
 }
 
 // Функция для логирования ошибок
@@ -33,17 +34,25 @@ function error(value: string, err: any) {
 }
 
 // Компонент провайдера контекста
-export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hubs/fool' }: SignalRProviderProps) => {
+export const SignalRProvider = ({ children }: SignalRProviderProps) => {
    const [connection, setConnection] = useState<HubConnection | null>(null);
    const [isConnected, setIsConnected] = useState(false);
    const [data, setData] = useState<any>(null);
    const { showToast } = useToast();
+   const { hubDetails } = useConnectionStore();
 
    // Создание соединения
    useEffect(() => {
+      if (!hubDetails.url) return;
+
       const newConnection = new signalR.HubConnectionBuilder()
-         .withUrl(hubUrl)
+         .withUrl(hubDetails.url, {
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets,
+            accessTokenFactory: () => btoa(JSON.stringify(hubDetails.token)),
+         })
          .withAutomaticReconnect()
+         .configureLogging(signalR.LogLevel.Error)
          .build();
 
       setConnection(newConnection);
@@ -53,7 +62,14 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
             newConnection.stop().catch(err => error('Error stopping connection:', err));
          }
       };
-   }, [hubUrl]);
+   }, [hubDetails]);
+
+   // Создание соединения
+   useEffect(() => {
+      if (connection && !isConnected) {
+         startConnection();
+      }
+   }, [connection, isConnected]);
 
    // Функция для запуска соединения
    const startConnection = useCallback(async () => {
@@ -62,14 +78,22 @@ export const SignalRProvider = ({ children, hubUrl = 'https://localhost:7110/hub
             await connection.start();
             setIsConnected(true);
             showToast('Подключение к серверу установлено', 'success');
-
+            
             // Обработчик входящих сообщений от сервера
-            connection.on('ReceiveMessage', (message: any) => {
-               console.log('Received message from server:', message);
+            connection.on('onGameUpdated', (message: any) => {
                setData(message);
             });
 
+            connection.on('onGameFinished', (message: any) => {
+               setData({event: message, updateType: GameUpdateTypes.GameFinished});
+            });
+            
+            connection.on('onGameCanceled', (message: any) => {
+               setData({event: message, updateType: GameUpdateTypes.GameCanceled});
+            });
+            
          } catch (err) {
+            setIsConnected(false);
             showToast('Ошибка при подключении к серверу', 'error');
             error('Error starting connection:', err);
          }

@@ -12,13 +12,17 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
+  IGameCanceledEvent,
+  IGameSyncState,
+  IActivePlayersUpdatedEvent,
+  IWinnersUpdatedEvent,
 } from '../types';
 import { testMode } from 'src/environments/environment';
 import { useToast } from '../services/ToastService';
 
 interface GameServiceContextType {
   handleDragEnd: (event: DragEndEvent) => void;
-  pass: () => Promise<void>;
+  pass: () => void;
   validateAttack: (cardId: string) => boolean;
   validateDefend: (cardId: string, slotId: number) => boolean;
 }
@@ -39,45 +43,63 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   // Обработка событий от SignalR
   useEffect(() => {
     if (!data || !isConnected && !testMode().enabled) return;
+    
     console.log(data);
 
     switch (data.updateType) {
       // Базовые события
       case GameUpdateTypes.GameStateSync:
-        gameService.handleSyncGameState(data.state, store);
+        gameService.handleSyncGameState(data.event as IGameSyncState, store);
         break;
 
       // Оптимизированные события
       case GameUpdateTypes.ActionResult:
         // Обработка результата действия текущего игрока
-        const actionResult = data.result as IActionResultEvent;
+        const actionResult = data.event as IActionResultEvent;
 
         if (actionResult.success)
-          gameService.handleSuccessfulAction(actionResult, user.id, store.setPassedPlayers);
+          gameService.handleSuccessfulAction(actionResult, user.id, store);
         else
-          gameService.handleFailedCardAction(actionResult, store.addCardToHand, store.removeFromSlot, showToast);
+          gameService.handleFailedCardAction(actionResult, showToast, store);
+        break;
 
+      case GameUpdateTypes.ActivePlayersUpdated:
+        // Обработка обновления списка активных игроков
+        gameService.handleActivePlayersUpdated(data.event as IActivePlayersUpdatedEvent, store);
         break;
 
       case GameUpdateTypes.RoundEnded:
         // Обработка окончания раунда
-        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, store, play);
+        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, play, store);
         break;
 
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
-        gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, store.addCardToSlot, store.setPassedPlayers);
+        store.setMoveAt(new Date().toISOString());
+
+        if (data.event.playerId !== user.id)
+          gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, store);
         break;
 
       case GameUpdateTypes.CardsDealt:
         // Обработка раздачи карт
         data.event.playerId = user.id === data.event.playerId ? "currentPlayer" : data.event.playerId;
-        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, store.addCardToHand);
+        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, store);
         break;
 
       case GameUpdateTypes.GameFinished:
         // Обработка окончания игры
-        gameService.handleGameFinished(data.event as IGameFinishedEvent, store.setWinnersIds);
+        gameService.handleGameFinished(data.event as IGameFinishedEvent, store);
+        break;
+
+      case GameUpdateTypes.GameCanceled:
+        // Обработка отмены игры
+        gameService.handleGameCanceled(data.event as IGameCanceledEvent, store, showToast);
+        break;
+
+      case GameUpdateTypes.WinnersUpdated:
+        // Обработка обновления списка победителей
+        gameService.handleWinnersUpdated(data.event as IWinnersUpdatedEvent, store);
         break;
 
       default:
@@ -174,21 +196,23 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   }, [user.id, store.slots, store.personalState.cardsInHand]);
 
   // Функция для отправки атаки
-  const attack = useCallback(async (cardId: string) => {
+  const attack = useCallback(async (cardId: string, actionId: string) => {
     if (isConnected)
-      await sendData("Attack", cardId);
+      await sendData("Attack", cardId, actionId);
   }, [sendData, isConnected]);
 
   // Функция для отправки защиты
-  const defend = useCallback(async (cardDefendingId: string, cardAttackingIndex: number) => {
+  const defend = useCallback(async (cardDefendingId: string, cardAttackingIndex: number, actionId: string) => {
     if (isConnected)
-      await sendData("Defend", cardDefendingId, cardAttackingIndex);
+      await sendData("Defend", cardDefendingId, cardAttackingIndex, actionId);
   }, [sendData, isConnected]);
 
-  // Функция для передачи хода
-  const pass = useCallback(async () => {
-    if (isConnected)
-      await sendData("Pass");
+  const pass = useCallback(() => {
+    if (isConnected) {
+      gameService.executePass(async (actionId: string) => {
+        await sendData("Pass", actionId);
+      }, store);
+    }
   }, [sendData, isConnected]);
 
   // Обработчик завершения перетаскивания
@@ -216,12 +240,11 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
           gameService.onDroppedToTableSlot(
             card,
             slotId,
-            store.removeCardFromHand,
-            store.addCardToSlot,
             defend,
             attack,
             play,
             'defend',
+            store,
             event.active.rect.current.translated
           );
         }
@@ -282,12 +305,11 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     gameService.onDroppedToTableSlot(
       card,
       targetSlotId,
-      store.removeCardFromHand,
-      store.addCardToSlot,
       defend,
       attack,
       play,
       type,
+      store,
       event.active.rect.current.translated
     );
   }, [user.id, validateDefend, validateAttack, store.removeCardFromHand, store.addCardToSlot, defend, attack, play]);

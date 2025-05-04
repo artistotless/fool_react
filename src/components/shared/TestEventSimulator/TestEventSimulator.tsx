@@ -6,11 +6,12 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
+  CardActionType,
 } from '../../../types';
 import animationService from "../../../contexts/animationService";
 import { useAudio } from "../../../contexts/AudioContext";
 import useGameStore from "../../../store/gameStore";
-import { clearTableAnimated, moveElementTo, Sounds } from "../../../utils";
+import { clearTableAnimated, generateGuid, moveElementTo, Sounds } from "../../../utils";
 import { testMode } from 'src/environments/environment';
 import styles from './TestEventSimulator.module.css';
 
@@ -38,7 +39,7 @@ const TestEventSimulator: React.FC = () => {
   // Состояние для настройки параметров событий
   const [playerActionParams, setPlayerActionParams] = useState({
     playerId: testMode().testPlayers[1].id,
-    actionType: 'attack',
+    actionType: CardActionType.Attack,
     targetSlotId: 0,
     cardIndex: 0
   });
@@ -55,7 +56,7 @@ const TestEventSimulator: React.FC = () => {
   // Состояние для настройки параметров ActionResultError
   const [actionResultErrorParams, setActionResultErrorParams] = useState({
     slotId: 0,
-    actionType: 'attack',
+    actionType: CardActionType.Attack,
     errorCode: 'INVALID_CARD',
     errorMessage: 'Невозможно атаковать этой картой',
     cardId: ''
@@ -75,9 +76,10 @@ const TestEventSimulator: React.FC = () => {
   // Генераторы различных событий
   const generateActionResult = () => {
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
-      result: {
+      event: {
         success: true,
-        actionType: 'pass',
+        actionType: CardActionType.Pass,
+        actionId: generateGuid()
       } as IActionResultEvent
     });
   };
@@ -105,13 +107,10 @@ const TestEventSimulator: React.FC = () => {
     }
 
     simulateEvent(ExtendedGameUpdateTypes.ActionResult, {
-      result: {
+      event: {
         success: false,
-        actionType: actionResultErrorParams.actionType,
-        cardId: cardIdToUse,
-        slotId: slotId,
-        errorCode: actionResultErrorParams.errorCode,
-        errorMessage: actionResultErrorParams.errorMessage
+        errorMessage: actionResultErrorParams.errorMessage,
+        actionId: generateGuid()
       } as IActionResultEvent
     });
   };
@@ -134,9 +133,8 @@ const TestEventSimulator: React.FC = () => {
       event: {
         playerId: playerActionParams.playerId,
         actionType: playerActionParams.actionType,
-        targetSlotId: Number(playerActionParams.targetSlotId),
         cardInfo: {
-          isHidden: false,
+          slotIndex: Number(playerActionParams.targetSlotId),
           card: testMode().testCards[Number(playerActionParams.cardIndex)]
         }
       } as IPlayerActionEvent
@@ -147,7 +145,7 @@ const TestEventSimulator: React.FC = () => {
     simulateEvent(ExtendedGameUpdateTypes.PlayerAction, {
       event: {
         playerId: testMode().testPlayers[1].id,
-        actionType: 'pass'
+        actionType: CardActionType.Pass
       } as IPlayerActionEvent
     });
   };
@@ -207,7 +205,7 @@ const TestEventSimulator: React.FC = () => {
     }
 
     simulateEvent(ExtendedGameUpdateTypes.GameStateSync, {
-      state: {
+      event: {
         attackerId: newAttackerId,
         defenderId: newDefenderId,
         tableCards: [],
@@ -324,10 +322,10 @@ const TestEventSimulator: React.FC = () => {
             <select
               className={styles.select}
               value={playerActionParams.actionType}
-              onChange={(e) => setPlayerActionParams({ ...playerActionParams, actionType: e.target.value })}
+              onChange={(e) => setPlayerActionParams({ ...playerActionParams, actionType: Number(e.target.value) })}
             >
-              <option value="attack">Атака</option>
-              <option value="defend">Защита</option>
+              <option value={CardActionType.Attack}>Атака</option>
+              <option value={CardActionType.Defend}>Защита</option>
             </select>
           </label>
 
@@ -463,10 +461,10 @@ const TestEventSimulator: React.FC = () => {
             <select
               className={styles.select}
               value={actionResultErrorParams.actionType}
-              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, actionType: e.target.value })}
+              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, actionType: Number(e.target.value) })}
             >
-              <option value="attack">Атака</option>
-              <option value="defend">Защита</option>
+              <option value={CardActionType.Attack}>Атака</option>
+              <option value={CardActionType.Defend}>Защита</option>
             </select>
           </label>
 

@@ -3,10 +3,10 @@ import styles from "./connPanel.module.scss";
 import * as env from "../../../environments/environment";
 import { motion } from "framer-motion";
 import { useUser } from "src/contexts/UserContext";
-import { IUserToken } from "src/types";
 import { useToast } from "src/services/ToastService";
+import useConnectionStore from "src/store/connectionStore";
 
-const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, token: IUserToken, subs: string[]) => void }) => {
+const ConnPanel = () => {
 
   const { showToast } = useToast();
   const [matchId, setMatchId] = useState<string>(() => {
@@ -16,6 +16,7 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
     return localStorage.getItem('lastSelectedPlayer') || '';
   });
   const { token, setToken } = useUser();
+  const { setHubDetails } = useConnectionStore();
 
   // Загрузка сохраненных данных при монтировании компонента
   useEffect(() => {
@@ -39,12 +40,17 @@ const ConnPanel = ({ startConnection }: { startConnection: (endpoint: string, to
   const handleConnect = () => {
     if (token && matchId) {
       localStorage.setItem('lastMatchId', matchId);
+      let endpoint;
+      
       if (env.gsEndpoint == null) {
-        startConnection(`http://${window.location.hostname}:52001/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
+        endpoint = `http://${window.location.hostname}:52001/matches/${matchId}`;
+      } else {
+        endpoint = `${env.gsEndpoint}/matches/${matchId}`;
       }
-      else {
-        startConnection(`${env.gsEndpoint}/matches/${matchId}`, token, ["onGameUpdated", "onGameFinished"]);
-      }
+      
+      // Сохраняем URL подключения и токен в store
+      setHubDetails({ url: endpoint, token });
+
     } else {
       showToast("Выберите игрока и введите идентификатор матча.", "error");
     }

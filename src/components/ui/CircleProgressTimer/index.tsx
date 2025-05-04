@@ -6,11 +6,10 @@ import { useAudio } from 'src/contexts/AudioContext';
 interface CircleProgressTimerProps {
     moveTime: string | null;
     movedAt: string | null;
-    isActive: boolean;
     className?: string;
 }
 
-const CircleProgressTimer = ({ moveTime, movedAt, isActive, className }: CircleProgressTimerProps) => {
+const CircleProgressTimer = ({ moveTime, movedAt, className }: CircleProgressTimerProps) => {
     const [progress, setProgress] = useState<number>(100);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const { play, stop } = useAudio();
@@ -18,7 +17,7 @@ const CircleProgressTimer = ({ moveTime, movedAt, isActive, className }: CircleP
 
     // Эффект для управления таймером
     useEffect(() => {
-        if (moveTime && movedAt && isActive) {
+        if (moveTime && movedAt) {
             // Сбрасываем флаг воспроизведения при новых значениях времени
             soundPlayedRef.current = false;
             
@@ -61,7 +60,7 @@ const CircleProgressTimer = ({ moveTime, movedAt, isActive, className }: CircleP
                 soundPlayedRef.current = false;
             };
         }
-    }, [moveTime, movedAt, isActive, play, stop]);
+    }, [moveTime, movedAt, play, stop]);
 
     // Определяем класс для состояния таймера
     const timerClass = [

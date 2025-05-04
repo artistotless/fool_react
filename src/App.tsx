@@ -7,7 +7,7 @@ import { useSignalR } from "./contexts/SignalRContext";
 import * as env from "./environments/environment";
 
 function App() {
-   const { startConnection, isConnected } = useSignalR();
+   const { isConnected } = useSignalR();
 
    return (
       <div>
@@ -20,7 +20,7 @@ function App() {
                   {env.testMode().enabled && <TestEventSimulator />}
                </div>
             )
-            : (<ConnPanel startConnection={startConnection} />)}
+            : (<ConnPanel/>)}
       </div>
    );
 }

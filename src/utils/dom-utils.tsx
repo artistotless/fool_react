@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { IDraggableData, IRank, ISuit, RankValues, SuitsSymbols } from "../types";
+import { IDraggableData, IRank, ISuit, RankValues, SuitsSymbols, ICard } from "../types";
 import playerCardStyles from "../components/ui/Card/playerCard.module.scss";
 import tableCardStyles from "../components/ui/Card/tableCard.module.scss";
 
@@ -269,5 +269,47 @@ export const createCardHtmlElement = (rank: IRank, suit: ISuit, tableCard: boole
     cardElement.appendChild(bottomRight);
     
     return cardElement;
+};
+
+/**
+ * createFakeCard function
+ * 
+ * Создает фейковый HTML элемент карты для анимации
+ * 
+ * @param {ICard} card - Объект карты
+ * @param {string} cardPrefix - Префикс для идентификатора карты
+ * @param {Object} startPosition - Начальная позиция карты
+ * @param {Object} size - Размер карты
+ * @returns {HTMLElement} HTML элемент карты
+ */
+export const createFakeCard = (
+  card: ICard, 
+  cardPrefix: string, 
+  startPosition?: { top: number, left: number, width?: number, height?: number } | null, 
+  size?: { width: number, height: number }
+): HTMLElement | null => {
+  const cardId = `${card.suit.name}-${card.rank.name}`;
+
+  // Создаем HTML элемент карты
+  const cardClone = createCardHtmlElement(card.rank, card.suit, false, `${cardPrefix}-fake-${cardId}`);
+
+  // Настраиваем позицию и размеры карты
+  cardClone.id = `${cardPrefix}-fake-${cardId}`;
+  cardClone.style.position = 'absolute';
+
+  // Используем позицию, где было завершено перетаскивание
+  cardClone.style.left = `${startPosition?.left}px`;
+  cardClone.style.top = `${startPosition?.top}px`;
+
+  if (size) {
+    cardClone.style.width = `${size?.width}px`;
+    cardClone.style.height = `${size?.height}px`;
+  }
+
+  cardClone.style.transform = '';
+  cardClone.style.zIndex = '1999';
+  cardClone.style.transition = 'none'; // Отключаем анимацию, чтобы клон не "прыгал" в позицию
+
+  return cardClone;
 };
 
