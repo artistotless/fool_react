@@ -72,7 +72,7 @@ class GameService {
   }
 
   // Метод для обработки успешного действия безы карты
-  handleSuccessfulAction(action: IActionResultEvent, playerId: string, store: GameStoreState) {
+  handleSuccessfulAction(action: IActionResultEvent, store: GameStoreState) {
     // Находим соответствующее действие в pendingActions
     const pendingAction = store.findPendingActionById(action.actionId);
 
@@ -84,24 +84,16 @@ class GameService {
     // Удаляем обработанное действие из списка ожидающих
     store.removePendingAction(action.actionId);
 
-    if (pendingAction.type === 'pass') {
+    if (pendingAction.type === CardActionType.Pass) {
       console.log(`Действие pass успешно выполнено`);
-      store.addPassedPlayer(playerId);
     }
     else {
       console.log(`Действие ${pendingAction.type} успешно выполнено`);
     }
   }
 
-  /**
-   * Обрабатывает событие обновления списка активных игроков
-   */
-  handleActivePlayersUpdated(event: IActivePlayersUpdatedEvent, store: GameStoreState) {
-    store.setActivePlayers(event.activePlayers);
-  }
-
   // Метод для обработки отклоненного действия с картой
-  handleFailedCardAction(action: IActionResultEvent, showToast: Function, store: GameStoreState) {
+  handleFailedCardAction(action: IActionResultEvent, playerId: string, showToast: Function, store: GameStoreState) {
     // Находим соответствующее действие в pendingActions
     const pendingAction = store.findPendingActionById(action.actionId);
 
@@ -110,25 +102,39 @@ class GameService {
       return;
     }
 
-    console.log(`Действие ${pendingAction.type} с картой ${pendingAction.cardId} отклонено: ${action.errorMessage}`);
-    const { tableCardsRef } = animationService;
+    if (pendingAction.type === CardActionType.Pass) {
+      // Если действие не удалось, просто удаляем игрока из списка пасовавших
+      const currentPassedPlayers = store.passedPlayers.filter(id => id !== playerId);
+      store.setPassedPlayers(currentPassedPlayers);
+    }
+    else {
+      console.log(`Действие ${pendingAction.type} с картой ${pendingAction.cardId} отклонено: ${action.errorMessage}`);
+      const { tableCardsRef } = animationService;
 
-    // Удаляем обработанное действие из списка ожидающих
-    store.removePendingAction(action.actionId);
+      // Удаляем обработанное действие из списка ожидающих
+      store.removePendingAction(action.actionId);
 
-    if (!pendingAction.cardId || !pendingAction.card)
-      return;
+      if (!pendingAction.cardId || !pendingAction.card)
+        return;
 
-    const cardData = pendingAction.card;
-    const cardElement = tableCardsRef.current[pendingAction.cardId];
+      const cardData = pendingAction.card;
+      const cardElement = tableCardsRef.current[pendingAction.cardId];
 
-    showToast(action.errorMessage!, 'error');
+      showToast(action.errorMessage!, 'error');
 
-    moveElementTo(cardElement!, "playercards", 300, undefined, undefined, () => {
-      delete tableCardsRef.current[pendingAction.cardId!];
-      store.addCardToHand(cardData);
-      store.removeFromSlot(pendingAction.slotId!, pendingAction.cardId!);
-    });
+      moveElementTo(cardElement!, "playercards", 300, undefined, undefined, () => {
+        delete tableCardsRef.current[pendingAction.cardId!];
+        store.addCardToHand(cardData);
+        store.removeFromSlot(pendingAction.slotId!, pendingAction.cardId!);
+      });
+    }
+  }
+
+  /**
+ * Обрабатывает событие обновления списка активных игроков
+ */
+  handleActivePlayersUpdated(event: IActivePlayersUpdatedEvent, store: GameStoreState) {
+    store.setActivePlayers(event.activePlayers);
   }
 
   // Метод для обработки окончания раунда
@@ -157,10 +163,51 @@ class GameService {
     store.setDefender(event.defenderId);
     store.setRounds(store.rounds + 1);
     store.setPassedPlayers([]);
+    store.setMoveAt(new Date().toISOString());
+  }
+
+  handleServerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
+    const pendingAction = store.pendingActions.find(action => action.type === event.actionType);
+    if (pendingAction)
+      return;
+
+    if (event.actionType == CardActionType.Pass) {
+      console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
+      if (event.playerId !== store.defenderId)
+        store.setPassedPlayers([event.playerId]);
+      else
+        store.addPassedPlayer(event.playerId);
+    }
+    else if (event.actionType === CardActionType.Attack || event.actionType === CardActionType.Defend) {
+      const cardPrefix = `playercard-${event.playerId}`;
+      const cardData = event.cardInfo?.card as ICard;
+      const playerCardsElement = document.getElementById(`playercards`);
+      let position;
+
+      if (playerCardsElement) {
+        const sourceRect = playerCardsElement.getBoundingClientRect();
+        position = { top: sourceRect.top, left: sourceRect.left };
+      } else {
+        position = { top: -100, left: window.innerWidth / 2 };
+      }
+
+      const fakeCard = createFakeCard(cardData, cardPrefix, position);
+      if (!fakeCard) throw new Error("Fake card not found");
+
+      // Анимация перемещения карты от игрока на стол в конкретный слот
+      this.moveFakeCardToSlot(fakeCard, event.cardInfo?.slotIndex!, play, undefined,
+        () => {
+          fakeCard.remove();
+          event.cardInfo!.card!.playPlaceAnim = event.actionType === CardActionType.Attack;
+          store.addCardToSlot(event.cardInfo!.card!, event.cardInfo?.slotIndex!);
+        }
+      );
+    }
   }
 
   // Метод для обработки действий других игроков
   handlePlayerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
+
     if (event.actionType == CardActionType.Pass) {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
       if (event.playerId !== store.defenderId)
@@ -168,10 +215,6 @@ class GameService {
       else
         store.addPassedPlayer(event.playerId);
       return;
-    }
-
-    if (event.actionType === CardActionType.Defend) {
-      store.setPassedPlayers([store.defenderId]);
     }
 
     // Другой игрок сыграл карту
@@ -318,7 +361,7 @@ class GameService {
 
         // Добавляем действие в список ожидающих подтверждения
         const pendingAction: IPendingAction = {
-          type,
+          type: type === 'defend' ? CardActionType.Defend : CardActionType.Attack,
           cardId,
           slotId,
           card,
@@ -336,16 +379,17 @@ class GameService {
   }
 
   // Метод для выполнения действия "пасс"
-  executePass(pass: Function, store: GameStoreState) {
+  executePass(pass: Function, store: GameStoreState, playerId: string) {
     // Генерируем actionId для действия
     const actionId = generateGuid();
 
     // Добавляем действие в список ожидающих подтверждения
     const pendingAction: IPendingAction = {
-      type: 'pass',
+      type: CardActionType.Pass,
       actionId
     };
 
+    store.addPassedPlayer(playerId);
     store.addPendingAction(pendingAction);
 
     // Отправляем действие на сервер

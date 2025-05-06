@@ -43,7 +43,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   // Обработка событий от SignalR
   useEffect(() => {
     if (!data || !isConnected && !testMode().enabled) return;
-    
+
     console.log(data);
 
     switch (data.updateType) {
@@ -58,9 +58,9 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         const actionResult = data.event as IActionResultEvent;
 
         if (actionResult.success)
-          gameService.handleSuccessfulAction(actionResult, user.id, store);
+          gameService.handleSuccessfulAction(actionResult, store);
         else
-          gameService.handleFailedCardAction(actionResult, showToast, store);
+          gameService.handleFailedCardAction(actionResult, user.id, showToast, store);
         break;
 
       case GameUpdateTypes.ActivePlayersUpdated:
@@ -76,9 +76,10 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
         store.setMoveAt(new Date().toISOString());
-
         if (data.event.playerId !== user.id)
           gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, store);
+        else
+          gameService.handleServerAction(data.event as IPlayerActionEvent, play, store);
         break;
 
       case GameUpdateTypes.CardsDealt:
@@ -211,7 +212,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     if (isConnected) {
       gameService.executePass(async (actionId: string) => {
         await sendData("Pass", actionId);
-      }, store);
+      }, store, user.id);
     }
   }, [sendData, isConnected]);
 

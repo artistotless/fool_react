@@ -16,7 +16,7 @@ const PassButton = () => {
    const isDefender = user.id === defenderId;
    
    // Проверяем, все ли карты биты (в каждом слоте либо 2 карты, либо 0)
-   const allBeaten = slots.every(slot => slot.cards.length === 2);
+   const allBeaten = slots.every(slot => slot.cards.length === 2 || slot.cards.length === 0) && slots.some(slot => slot.cards.length > 0);
    
    // Проверяем, есть ли на столе хотя бы одна небитая карта
    const hasUnbeatenCards = slots.some(slot => slot.cards.length === 1);
@@ -25,7 +25,7 @@ const PassButton = () => {
    let className = '';
 
    // Кнопка "Беру" - игрок в составе activePlayers и игрок является defender
-   if (isActive && isDefender) {
+   if (isActive && isDefender && !allBeaten) {
       passBtnTitle = 'Беру';
       className = styles.take;
    }

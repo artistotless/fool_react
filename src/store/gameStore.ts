@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware'
-import { IPersonalState, ICard, GameStatus, IFoolPlayer } from 'src/types';
+import { IPersonalState, ICard, GameStatus, IFoolPlayer, CardActionType } from 'src/types';
 
 export interface ISlot {
   id: number;
@@ -8,7 +8,7 @@ export interface ISlot {
 }
 
 export interface IPendingAction {
-  type: 'attack' | 'defend' | 'pass';
+  type: CardActionType;
   cardId?: string;
   slotId?: number;
   card?: ICard;
