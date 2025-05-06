@@ -6,7 +6,11 @@ import {
   IPlayerActionEvent,
   ICardsDealtEvent,
   IGameFinishedEvent,
+  IGameCanceledEvent,
+  IActivePlayersUpdatedEvent,
+  IWinnersUpdatedEvent,
   CardActionType,
+  GameUpdateTypes
 } from '../../../types';
 import animationService from "../../../contexts/animationService";
 import { useAudio } from "../../../contexts/AudioContext";
@@ -15,15 +19,8 @@ import { clearTableAnimated, generateGuid, moveElementTo, Sounds } from "../../.
 import { testMode } from 'src/environments/environment';
 import styles from './TestEventSimulator.module.css';
 
-// Дополним enum GameUpdateTypes, так как его не хватает в файле types.ts
-enum ExtendedGameUpdateTypes {
-  GameStateSync = "GameStateSyncDto",
-  CardsDealt = "CardsDealtDto",
-  PlayerAction = "PlayerActionDto",
-  ActionResult = "ActionResultDto",
-  RoundEnded = "RoundEndedDto",
-  GameFinished = "GameFinishedDto"
-}
+// Используем существующий enum вместо создания нового
+const ExtendedGameUpdateTypes = GameUpdateTypes;
 
 const TestEventSimulator: React.FC = () => {
   const { simulateReceiveEvent } = useSignalR();
@@ -60,6 +57,29 @@ const TestEventSimulator: React.FC = () => {
     errorCode: 'INVALID_CARD',
     errorMessage: 'Невозможно атаковать этой картой',
     cardId: ''
+  });
+
+  // НОВОЕ: Состояние для настройки параметров GameCanceled
+  const [gameCanceledParams, setGameCanceledParams] = useState({
+    reason: 'Игра отменена администратором'
+  });
+
+  // НОВОЕ: Состояние для настройки параметров ActivePlayersUpdated
+  const [activePlayersParams, setActivePlayersParams] = useState({
+    activePlayers: [testMode().testPlayers[0].id, testMode().testPlayers[1].id]
+  });
+
+  // Состояние для настройки параметров WinnersUpdated
+  const [winnersUpdatedParams, setWinnersUpdatedParams] = useState({
+    winners: [testMode().testPlayers[0].id]
+  });
+
+  // НОВОЕ: Состояние для настройки расширенных параметров CardsDealt
+  const [cardsDealtCustomParams, setCardsDealtCustomParams] = useState({
+    playerId: testMode().testPlayers[0].id,
+    count: 3,
+    isInitialDeal: false,
+    isHidden: false
   });
 
   // Функция для имитации получения события от сервера
@@ -153,12 +173,12 @@ const TestEventSimulator: React.FC = () => {
   const generateCardsDealt = () => {
     simulateEvent(ExtendedGameUpdateTypes.CardsDealt, {
       event: {
-        playerId: testMode().testPlayers[2].id,
-        count: 3,
-        isInitialDeal: false,
+        playerId: cardsDealtCustomParams.playerId,
+        count: cardsDealtCustomParams.count,
+        isInitialDeal: cardsDealtCustomParams.isInitialDeal,
         cardsInfo: {
-          isHidden: false,
-          cards: testMode().testCards.slice(0, 3)
+          isHidden: cardsDealtCustomParams.isHidden,
+          cards: cardsDealtCustomParams.isHidden ? undefined : testMode().testCards.slice(0, cardsDealtCustomParams.count)
         }
       } as ICardsDealtEvent
     });
@@ -176,6 +196,33 @@ const TestEventSimulator: React.FC = () => {
           }
         ]
       } as IGameFinishedEvent
+    });
+  };
+
+  // НОВОЕ: Генератор события GameCanceled
+  const generateGameCanceled = () => {
+    simulateEvent(ExtendedGameUpdateTypes.GameCanceled, {
+      event: {
+        reason: gameCanceledParams.reason
+      } as IGameCanceledEvent
+    });
+  };
+
+  // НОВОЕ: Генератор события ActivePlayersUpdated
+  const generateActivePlayersUpdated = () => {
+    simulateEvent(ExtendedGameUpdateTypes.ActivePlayersUpdated, {
+      event: {
+        activePlayers: activePlayersParams.activePlayers
+      } as IActivePlayersUpdatedEvent
+    });
+  };
+
+  // НОВОЕ: Генератор события WinnersUpdated
+  const generateWinnersUpdated = () => {
+    simulateEvent(ExtendedGameUpdateTypes.WinnersUpdated, {
+      event: {
+        winners: winnersUpdatedParams.winners
+      } as IWinnersUpdatedEvent
     });
   };
 
@@ -218,7 +265,8 @@ const TestEventSimulator: React.FC = () => {
         status: 'InProgress',
         players: testMode().testPlayers,
         movedAt: testMode().testMovedAt,
-        moveTime: testMode().testMoveTime
+        moveTime: testMode().testMoveTime,
+        activePlayers: []
       }
     });
   };
@@ -233,6 +281,9 @@ const TestEventSimulator: React.FC = () => {
     [ExtendedGameUpdateTypes.PlayerAction + '_pass']: generatePlayerPass,
     [ExtendedGameUpdateTypes.CardsDealt]: generateCardsDealt,
     [ExtendedGameUpdateTypes.GameFinished]: generateGameFinished,
+    [ExtendedGameUpdateTypes.GameCanceled]: generateGameCanceled,
+    [ExtendedGameUpdateTypes.ActivePlayersUpdated]: generateActivePlayersUpdated,
+    [ExtendedGameUpdateTypes.WinnersUpdated]: generateWinnersUpdated
   };
 
   // Функция для обработки выбранного события
@@ -293,6 +344,32 @@ const TestEventSimulator: React.FC = () => {
       ...actionResultErrorParams,
       cardId: e.target.value
     });
+  };
+
+  // НОВОЕ: Обработчик изменения списка активных игроков
+  const handleActivePlayersChange = (playerId: string, isActive: boolean) => {
+    if (isActive) {
+      setActivePlayersParams({
+        activePlayers: [...activePlayersParams.activePlayers, playerId]
+      });
+    } else {
+      setActivePlayersParams({
+        activePlayers: activePlayersParams.activePlayers.filter(id => id !== playerId)
+      });
+    }
+  };
+
+  // НОВОЕ: Обработчик изменения списка победителей
+  const handleWinnersChange = (playerId: string, isWinner: boolean) => {
+    if (isWinner) {
+      setWinnersUpdatedParams({
+        winners: [...winnersUpdatedParams.winners, playerId]
+      });
+    } else {
+      setWinnersUpdatedParams({
+        winners: winnersUpdatedParams.winners.filter(id => id !== playerId)
+      });
+    }
   };
 
   // Рендеринг формы для настройки параметров
@@ -513,6 +590,119 @@ const TestEventSimulator: React.FC = () => {
               value={actionResultErrorParams.errorMessage}
               onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, errorMessage: e.target.value })}
             />
+          </label>
+        </div>
+      );
+    }
+    
+    // НОВОЕ: Форма для настройки параметров GameCanceled
+    if (selectedEvent === ExtendedGameUpdateTypes.GameCanceled) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки отмены игры</h4>
+          
+          <label className={styles.label}>
+            Причина отмены:
+            <input
+              type="text"
+              className={styles.input}
+              value={gameCanceledParams.reason}
+              onChange={(e) => setGameCanceledParams({ reason: e.target.value })}
+            />
+          </label>
+        </div>
+      );
+    }
+    
+    // НОВОЕ: Форма для настройки параметров ActivePlayersUpdated
+    if (selectedEvent === ExtendedGameUpdateTypes.ActivePlayersUpdated) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки активных игроков</h4>
+          
+          {testMode().testPlayers.map((player, index) => (
+            <label key={player.id} className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={activePlayersParams.activePlayers.includes(player.id)}
+                onChange={(e) => handleActivePlayersChange(player.id, e.target.checked)}
+              />
+              Игрок {index + 1}: {player.name}
+            </label>
+          ))}
+        </div>
+      );
+    }
+    
+    // НОВОЕ: Форма для настройки параметров WinnersUpdated
+    if (selectedEvent === ExtendedGameUpdateTypes.WinnersUpdated) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки победителей</h4>
+          
+          {testMode().testPlayers.map((player, index) => (
+            <label key={player.id} className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={winnersUpdatedParams.winners.includes(player.id)}
+                onChange={(e) => handleWinnersChange(player.id, e.target.checked)}
+              />
+              Игрок {index + 1}: {player.name}
+            </label>
+          ))}
+        </div>
+      );
+    }
+    
+    // НОВОЕ: Форма для настройки параметров CardsDealt с расширенными настройками
+    if (selectedEvent === ExtendedGameUpdateTypes.CardsDealt) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки раздачи карт</h4>
+          
+          <label className={styles.label}>
+            ID игрока:
+            <select
+              className={styles.select}
+              value={cardsDealtCustomParams.playerId}
+              onChange={(e) => setCardsDealtCustomParams({ ...cardsDealtCustomParams, playerId: e.target.value })}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          
+          <label className={styles.label}>
+            Количество карт:
+            <input
+              type="number"
+              min="1"
+              max="6"
+              className={styles.input}
+              value={cardsDealtCustomParams.count}
+              onChange={(e) => setCardsDealtCustomParams({ ...cardsDealtCustomParams, count: Number(e.target.value) })}
+            />
+          </label>
+          
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={cardsDealtCustomParams.isInitialDeal}
+              onChange={(e) => setCardsDealtCustomParams({ ...cardsDealtCustomParams, isInitialDeal: e.target.checked })}
+            />
+            Начальная раздача
+          </label>
+          
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={cardsDealtCustomParams.isHidden}
+              onChange={(e) => setCardsDealtCustomParams({ ...cardsDealtCustomParams, isHidden: e.target.checked })}
+            />
+            Скрытые карты
           </label>
         </div>
       );

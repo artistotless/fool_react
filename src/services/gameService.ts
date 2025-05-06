@@ -143,25 +143,35 @@ class GameService {
       clearTableAnimated(tableCardsRef, undefined, clearTable as () => void);
     } else if (event.reason === 'defenderTookCards') {
       // Защищающийся взял карты
-      const toElement = event.defenderId === userId ? "playercards" : `player-${event.defenderId}`;
+      const toElement = store.defenderId === userId ? "playercards" : `player-${store.defenderId}`;
       moveElementTo(Object.values(tableCardsRef.current), toElement, 300, undefined, { x: 0, y: 0 }, () => {
         clearTable();
-        store.addCardToHand(event.cards!);
+        if (userId == store.defenderId)
+          store.addCardToHand(event.cards!);
         tableCardsRef.current = {};
       });
     }
 
-    store.setAttacker(event.newAttackerId);
-    store.setDefender(event.newDefenderId);
+    // Обновляем атакующего и защищающегося
+    store.setAttacker(event.attackerId);
+    store.setDefender(event.defenderId);
     store.setRounds(store.rounds + 1);
+    store.setPassedPlayers([]);
   }
 
   // Метод для обработки действий других игроков
   handlePlayerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
     if (event.actionType == CardActionType.Pass) {
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
-      store.addPassedPlayer(event.playerId);
+      if (event.playerId !== store.defenderId)
+        store.setPassedPlayers([event.playerId]);
+      else
+        store.addPassedPlayer(event.playerId);
       return;
+    }
+
+    if (event.actionType === CardActionType.Defend) {
+      store.setPassedPlayers([store.defenderId]);
     }
 
     // Другой игрок сыграл карту
