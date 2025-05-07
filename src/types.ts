@@ -224,6 +224,7 @@ export interface IRoundEndedEvent {
    reason: 'allCardsBeaten' | 'defenderTookCards';
    attackerId: string;
    defenderId: string;
+   deckCardsCount: number;
    cards?: ICard[];
 }
 

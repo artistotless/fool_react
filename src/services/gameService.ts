@@ -168,6 +168,7 @@ class GameService {
     store.setRounds(store.rounds + 1);
     store.setPassedPlayers([]);
     store.setMoveAt(new Date().toISOString());
+    store.setDeckCardsCount(event.deckCardsCount);
   }
 
   handleServerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
