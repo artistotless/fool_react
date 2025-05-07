@@ -3,15 +3,15 @@ import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 export enum GameUpdateTypes {
    // Cобытия состояния игры
-   GameStateSync = "GameStateSyncDto",
-   CardsDealt = "CardsDealtDto", // Получение карт игроком
-   PlayerAction = "PlayerActionDto", // Действия других игроков
-   ActionResult = "ActionResultDto", // Результат действия
-   RoundEnded = "RoundEndedDto", // Информация о завершении раунда
+   GameStateSync = "GameStateSyncEvent",
+   CardsDealt = "CardsDealtEvent", // Получение карт игроком
+   PlayerAction = "PlayerActionEvent", // Действия других игроков
+   ActionResult = "ActionResultEvent", // Результат действия
+   RoundEnded = "RoundEndedEvent", // Информация о завершении раунда
    GameFinished = "GameFinishedDto", // Завершение игры
    GameCanceled = "GameCanceledDto", // Отмена игры
-   ActivePlayersUpdated = "ActivePlayersUpdatedDto", // Обновление списка активных игроков
-   WinnersUpdated = "WinnersUpdatedDto" // Обновление списка победителей
+   ActivePlayersUpdated = "ActivePlayersUpdatedEvent", // Обновление списка активных игроков
+   WinnersUpdated = "WinnersUpdatedEvent" // Обновление списка победителей
 }
 
 export enum Suits {
@@ -169,6 +169,9 @@ export interface IGameSyncState {
 
    /** Список активных игроков, которые могут ходить */
    activePlayers: string[];
+
+   /** Идентификатор игрока*/
+   playerId: string;
 }
 
 export interface IPersonalState {
@@ -189,12 +192,8 @@ export enum CardActionType {
  */
 export interface ICardsDealtEvent {
    playerId: string;
-   count: number;
-   isInitialDeal: boolean;
-   cardsInfo?: {
-      isHidden: boolean;
-      cards?: ICard[];
-   };
+   count?: number;
+   cards?: ICard[];
 }
 
 /**

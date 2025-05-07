@@ -10,11 +10,12 @@ import { GameUpdateTypes } from 'src/types';
 export interface SignalRContextType {
    connection: HubConnection | null;
    isConnected: boolean;
-   data: any;
+   events: any[];
    sendData: (methodName: string, ...args: any[]) => Promise<any>;
    simulateReceiveEvent: (eventData: any) => void;
    startConnection: () => void;
    stopConnection: () => void;
+   clearProcessedEvent: (eventIndex: number) => void;
 }
 
 // Создаем контекст
@@ -37,7 +38,7 @@ function error(value: string, err: any) {
 export const SignalRProvider = ({ children }: SignalRProviderProps) => {
    const [connection, setConnection] = useState<HubConnection | null>(null);
    const [isConnected, setIsConnected] = useState(false);
-   const [data, setData] = useState<any>(null);
+   const [events, setEvents] = useState<any[]>([]);
    const { showToast } = useToast();
    const { hubDetails } = useConnectionStore();
 
@@ -71,6 +72,11 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
       }
    }, [connection, isConnected]);
 
+   // Метод для добавления нового события в очередь
+   const addEvent = useCallback((event: any) => {
+      setEvents(prev => [...prev, event]);
+   }, []);
+
    // Функция для запуска соединения
    const startConnection = useCallback(async () => {
       if (connection) {
@@ -81,15 +87,16 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
             
             // Обработчик входящих сообщений от сервера
             connection.on('onGameUpdated', (message: any) => {
-               setData(message);
+               console.log(message.updateType, message.event);
+               addEvent(message);
             });
 
             connection.on('onGameFinished', (message: any) => {
-               setData({event: message, updateType: GameUpdateTypes.GameFinished});
+               addEvent({event: message, updateType: GameUpdateTypes.GameFinished});
             });
             
             connection.on('onGameCanceled', (message: any) => {
-               setData({event: message, updateType: GameUpdateTypes.GameCanceled});
+               addEvent({event: message, updateType: GameUpdateTypes.GameCanceled});
             });
             
          } catch (err) {
@@ -98,7 +105,7 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
             error('Error starting connection:', err);
          }
       }
-   }, [connection]);
+   }, [connection, addEvent, showToast]);
 
    // Функция для остановки соединения
    const stopConnection = useCallback(async () => {
@@ -131,19 +138,25 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
    // Метод для симуляции получения события от сервера
    const simulateReceiveEvent = useCallback((eventData: any) => {
       console.log('Simulating server event:', eventData);
-      setData(eventData);
+      addEvent(eventData);
+   }, [addEvent]);
+
+   // Метод для удаления обработанного события из очереди
+   const clearProcessedEvent = useCallback((eventIndex: number) => {
+      setEvents(prev => prev.filter((_, index) => index !== eventIndex));
    }, []);
 
    // Мемоизация значения контекста
    const contextValue = useMemo(() => ({
       connection,
       isConnected,
-      data,
+      events,
       sendData,
       simulateReceiveEvent,
       startConnection,
-      stopConnection
-   }), [connection, isConnected, data, sendData, simulateReceiveEvent, startConnection, stopConnection]);
+      stopConnection,
+      clearProcessedEvent
+   }), [connection, isConnected, events, sendData, simulateReceiveEvent, startConnection, stopConnection, clearProcessedEvent]);
 
    return (
       <SignalRContext.Provider value={contextValue}>

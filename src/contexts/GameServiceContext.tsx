@@ -32,7 +32,7 @@ const GameServiceContext = createContext<GameServiceContextType | null>(null);
 
 // Провайдер для GameService
 export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
-  const { isConnected, data, sendData } = useSignalR();
+  const { isConnected, events, sendData, clearProcessedEvent } = useSignalR();
   const { play } = useAudio();
   const { user } = useUser();
   const { showToast } = useToast();
@@ -40,22 +40,24 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
   // Методы и состояние из gameStore
   const store = useGameStore();
 
-  // Обработка событий от SignalR
+  // Обработка событий из очереди SignalR
   useEffect(() => {
-    if (!data || !isConnected && !testMode().enabled) return;
+    if ((!isConnected && !testMode().enabled) || events.length === 0) return;
 
-    console.log(data);
+    // Обрабатываем первое событие в очереди
+    const currentEvent = events[0];
+    const eventIndex = 0;
 
-    switch (data.updateType) {
+    switch (currentEvent.updateType) {
       // Базовые события
       case GameUpdateTypes.GameStateSync:
-        gameService.handleSyncGameState(data.event as IGameSyncState, store);
+        gameService.handleSyncGameState(currentEvent.event as IGameSyncState, play, store);
         break;
 
       // Оптимизированные события
       case GameUpdateTypes.ActionResult:
         // Обработка результата действия текущего игрока
-        const actionResult = data.event as IActionResultEvent;
+        const actionResult = currentEvent.event as IActionResultEvent;
 
         if (actionResult.success)
           gameService.handleSuccessfulAction(actionResult, store);
@@ -65,49 +67,51 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
       case GameUpdateTypes.ActivePlayersUpdated:
         // Обработка обновления списка активных игроков
-        gameService.handleActivePlayersUpdated(data.event as IActivePlayersUpdatedEvent, store);
+        gameService.handleActivePlayersUpdated(currentEvent.event as IActivePlayersUpdatedEvent, store);
         break;
 
       case GameUpdateTypes.RoundEnded:
         // Обработка окончания раунда
-        gameService.handleRoundEnded(data.event as IRoundEndedEvent, user.id, play, store);
+        gameService.handleRoundEnded(currentEvent.event as IRoundEndedEvent, user.id, play, store);
         break;
 
       case GameUpdateTypes.PlayerAction:
         // Обработка действий других игроков
         store.setMoveAt(new Date().toISOString());
-        if (data.event.playerId !== user.id)
-          gameService.handlePlayerAction(data.event as IPlayerActionEvent, play, store);
+        if (currentEvent.event.playerId !== user.id)
+          gameService.handlePlayerAction(currentEvent.event as IPlayerActionEvent, play, store);
         else
-          gameService.handleServerAction(data.event as IPlayerActionEvent, play, store);
+          gameService.handleServerAction(currentEvent.event as IPlayerActionEvent, play, store);
         break;
 
       case GameUpdateTypes.CardsDealt:
         // Обработка раздачи карт
-        data.event.playerId = user.id === data.event.playerId ? "currentPlayer" : data.event.playerId;
-        gameService.handleCardsDealt(data.event as ICardsDealtEvent, play, store);
+        gameService.handleCardsDealt(currentEvent.event as ICardsDealtEvent, user.id, play, store);
         break;
 
       case GameUpdateTypes.GameFinished:
         // Обработка окончания игры
-        gameService.handleGameFinished(data.event as IGameFinishedEvent, store);
+        gameService.handleGameFinished(currentEvent.event as IGameFinishedEvent, store);
         break;
 
       case GameUpdateTypes.GameCanceled:
         // Обработка отмены игры
-        gameService.handleGameCanceled(data.event as IGameCanceledEvent, store, showToast);
+        gameService.handleGameCanceled(currentEvent.event as IGameCanceledEvent, store, showToast);
         break;
 
       case GameUpdateTypes.WinnersUpdated:
         // Обработка обновления списка победителей
-        gameService.handleWinnersUpdated(data.event as IWinnersUpdatedEvent, store);
+        gameService.handleWinnersUpdated(currentEvent.event as IWinnersUpdatedEvent, store);
         break;
 
       default:
-        console.log("Неизвестный тип события:", data.updateType);
+        console.log("Неизвестный тип события:", currentEvent.updateType);
         break;
     }
-  }, [data, isConnected]);
+
+    // Удаляем обработанное событие из очереди
+    clearProcessedEvent(eventIndex);
+  }, [events, isConnected, clearProcessedEvent]);
 
   // Запрос обновления данных при подключении
   useEffect(() => {

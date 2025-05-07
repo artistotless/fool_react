@@ -39,7 +39,7 @@ class GameService {
     return GameService.instance;
   }
 
-  handleSyncGameState(state: IGameSyncState, store: GameStoreState) {
+  handleSyncGameState(state: IGameSyncState, play: Function, store: GameStoreState) {
     let slots: ISlot[] = [];
 
     Array.from(Array(6).keys()).forEach(slotIndex => {
@@ -50,7 +50,6 @@ class GameService {
       });
     });
 
-    store.setPersonalState(state.personalState);
     store.setDefender(state.defenderId!);
     store.setAttacker(state.attackerId!);
     store.setTrumpCard(state.trumpCard!);
@@ -61,6 +60,11 @@ class GameService {
     store.setPlayers(state.players);
     store.setMoveAt(state.movedAt!);
     store.setMoveTime(state.moveTime!);
+
+    if (state.rounds > 0)
+      store.setPersonalState(state.personalState);
+    else
+      this.handleCardsDealt({ playerId: state.playerId!, cards: state.personalState.cardsInHand }, state.playerId!, play, store);
 
     // Обновляем список пасовавших игроков
     const passedPlayers = state.players
@@ -247,17 +251,21 @@ class GameService {
   }
 
   // Метод для обработки раздачи карт
-  handleCardsDealt(event: ICardsDealtEvent, play: Function, store: GameStoreState) {
-    const isCurrentPlayer = event.playerId === 'currentPlayer';
+  handleCardsDealt(event: ICardsDealtEvent, userId: string, play: Function, store: GameStoreState) {
+    const isCurrentPlayer = event.playerId === userId;
+    const isPersonal = event.cards != undefined && event.count === undefined;
+
+    if (!isPersonal && isCurrentPlayer)
+      return;
 
     // Проигрываем звук раздачи карт
-    if (event.isInitialDeal && isCurrentPlayer)
+    if (event.cards?.length && event.cards.length > 3 && isCurrentPlayer)
       play(Sounds.CardsShuffle);
 
     // Если это текущий игрок и есть информация о картах, добавляем карты в руку
-    if (isCurrentPlayer && event.cardsInfo && event.cardsInfo.cards) {
+    if (isCurrentPlayer && event.cards) {
       // Добавляем карты в руку игрока
-      event.cardsInfo.cards.forEach((card, index) => {
+      event.cards.forEach((card, index) => {
         setTimeout(() => {
           // if (!event.isInitialDeal)
           play(Sounds.CardFromDeck);
@@ -270,7 +278,7 @@ class GameService {
     // Если это другой игрок просто анимируем
     else {
       // Анимируем раздачу карт
-      for (let i = 0; i < event.count; i++) {
+      for (let i = 0; i < event.count!; i++) {
         setTimeout(() => {
           const target = `player-${event.playerId}`;
           moveCardFromDeck(target, "deck", 400, undefined,
