@@ -202,20 +202,33 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
 
   // Функция для отправки атаки
   const attack = useCallback(async (cardId: string, actionId: string) => {
-    if (isConnected)
-      await sendData("Attack", cardId, actionId);
+    if (isConnected) {
+      try {
+        await sendData("Attack", cardId, actionId);
+      } catch (error) {
+        console.error(error);
+      }
+    }
   }, [sendData, isConnected]);
 
   // Функция для отправки защиты
   const defend = useCallback(async (cardDefendingId: string, cardAttackingIndex: number, actionId: string) => {
     if (isConnected)
-      await sendData("Defend", cardDefendingId, cardAttackingIndex, actionId);
+      try {
+        await sendData("Defend", cardDefendingId, cardAttackingIndex, actionId);
+      } catch (error) {
+        console.error(error);
+      }
   }, [sendData, isConnected]);
 
   const pass = useCallback(() => {
     if (isConnected) {
       gameService.executePass(async (actionId: string) => {
-        await sendData("Pass", actionId);
+        try {
+          await sendData("Pass", actionId);
+        } catch (error) {
+          console.error(error);
+        }
       }, store, user.id);
     }
   }, [sendData, isConnected]);

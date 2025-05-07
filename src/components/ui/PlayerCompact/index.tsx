@@ -1,10 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { IFoolPlayer } from 'src/types';
 import styles from './playercompact.module.scss';
 import LineProgressTimer from '../LineProgressTimer';
 import { testMode } from 'src/environments/environment';
 import useGameStore from 'src/store/gameStore';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { useUser } from 'src/contexts/UserContext';
+import { useGameService } from 'src/contexts/GameServiceContext';
+
+// Хук для обновления позиции бэджа при прокрутке
+const useUpdateBadgePosition = (
+   playerRef: React.RefObject<HTMLDivElement>,
+   isVisible: boolean
+) => {
+   const [position, setPosition] = useState({ left: 0, top: 0 });
+
+   const updatePosition = useCallback(() => {
+      if (playerRef.current) {
+         const rect = playerRef.current.getBoundingClientRect();
+         setPosition({
+            left: rect.left + rect.width / 2,
+            top: rect.top + rect.height + 5
+         });
+      }
+   }, [playerRef]);
+
+   useEffect(() => {
+      if (!playerRef.current || !isVisible) return;
+
+      // Начальное обновление позиции
+      updatePosition();
+
+      // Обновление позиции при скролле и изменении размера окна
+      window.addEventListener('scroll', updatePosition, { passive: true });
+      window.addEventListener('resize', updatePosition, { passive: true });
+
+      // Также обновляем позицию по интервалу на случай динамических изменений в DOM
+      const intervalId = setInterval(updatePosition, 300);
+
+      return () => {
+         window.removeEventListener('scroll', updatePosition);
+         window.removeEventListener('resize', updatePosition);
+         clearInterval(intervalId);
+      };
+   }, [playerRef, isVisible, updatePosition]);
+
+   return position;
+};
 
 const PlayerCompact = ({
    name,
@@ -13,11 +56,13 @@ const PlayerCompact = ({
    id,
 }: IFoolPlayer) => {
    const [avatarSrc, setAvatarSrc] = useState<string>(avatar);
+   const playerRef = useRef<HTMLDivElement>(null);
    const { defenderId, moveTime, movedAt, passedPlayers, slots, activePlayers } = useGameStore();
 
    const isPassed = passedPlayers.includes(id);
-   const unbeatenCardsCount = slots.filter(slot => slot.cards.length === 1).length;
-   
+   const showBadge = isPassed;
+   const badgePosition = useUpdateBadgePosition(playerRef, showBadge);
+
    useEffect(() => {
       // Если аватарка отсутствует, загружаем случайную с DiceBear API
       if (!avatar || avatar.trim() === '') {
@@ -33,11 +78,30 @@ const PlayerCompact = ({
 
    // Показываем таймер только для текущего атакующего или защищающегося игрока
    const shouldShowTimer =
-   // testMode().enabled ? (currentPlayer.id === attackerId || currentPlayer.id === defenderId) :
-       (moveTime && movedAt && activePlayers.includes(id));
+      // testMode().enabled ? (currentPlayer.id === attackerId || currentPlayer.id === defenderId) :
+      (moveTime && movedAt && activePlayers.includes(id));
+   
+      const isDefender = id === defenderId;
+      const allBeaten = slots.every(slot => slot.cards.length === 2 || slot.cards.length === 0) && slots.some(slot => slot.cards.length > 0);
+      const hasUnbeatenCards = slots.some(slot => slot.cards.length === 1);
+   
+      let passBtnTitle = '';
+   
+      // Кнопка "Беру" - игрок в составе activePlayers и игрок является defender
+      if (isDefender && !allBeaten) {
+         passBtnTitle = 'Беру';
+      }
+      // Кнопка "Бито" - игрок в составе activePlayers и все карты на столе биты и игрок не является defender
+      else if (allBeaten && !isDefender) {
+         passBtnTitle = 'Бито';
+      }
+      // Кнопка "Пас" - игрок в составе activePlayers и на столе есть хотя бы одна небитая карта и игрок не является defender
+      else if (hasUnbeatenCards && !isDefender) {
+         passBtnTitle = 'Пасс';
+      }
 
    return (
-      <div className={styles.player_compact} id={`player-${id}`}>
+      <div className={styles.player_compact} id={`player-${id}`} ref={playerRef}>
          <div className={styles.avatar_mini}>
             <img src={avatarSrc} alt={name} onError={() => {
                // Запасной вариант, если даже DiceBear не загрузился
@@ -56,19 +120,27 @@ const PlayerCompact = ({
                className={styles.progress}
             />
          )}
-         <AnimatePresence>
-            {isPassed && (
+         {showBadge && document.body && createPortal(
+            <AnimatePresence>
                <motion.div
                   className={styles.passed_badge}
-                  initial={{ opacity: 0, top: -100 }}
-                  animate={{ opacity: 1, top: 40 }}
-                  exit={{ opacity: 0, top: 40 }}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 0 }}
                   transition={{ duration: 0.3 }}
-               > 
-                  {id === defenderId ? 'Беру' : (unbeatenCardsCount > 0 ? 'Пасс' : 'Бито')}
+                  style={{
+                     position: 'fixed',
+                     left: badgePosition.left,
+                     top: badgePosition.top,
+                     transform: 'translateX(-50%)',
+                     zIndex: 1000
+                  }}
+               >
+                  {passBtnTitle}
                </motion.div>
-            )}
-         </AnimatePresence>
+            </AnimatePresence>,
+            document.body
+         )}
       </div>
    );
 };

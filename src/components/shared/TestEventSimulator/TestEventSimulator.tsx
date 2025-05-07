@@ -141,8 +141,6 @@ const TestEventSimulator: React.FC = () => {
         reason: roundEndedParams.reason,
         attackerId: roundEndedParams.attackerId,
         defenderId: roundEndedParams.defenderId,
-        newAttackerId: roundEndedParams.newAttackerId,
-        newDefenderId: roundEndedParams.newDefenderId,
         cards: slots.map(slot => slot.cards).flat()
       } as IRoundEndedEvent
     });
@@ -187,14 +185,7 @@ const TestEventSimulator: React.FC = () => {
   const generateGameFinished = () => {
     simulateEvent(ExtendedGameUpdateTypes.GameFinished, {
       event: {
-        winners: [testMode().testPlayers[0].id],
-        statistics: [
-          {
-            playerId: testMode().testPlayers[0].id,
-            cardsPlayed: 12,
-            roundsWon: 3
-          }
-        ]
+        winners: { winners: [testMode().testPlayers[0].id] }
       } as IGameFinishedEvent
     });
   };
@@ -594,13 +585,13 @@ const TestEventSimulator: React.FC = () => {
         </div>
       );
     }
-    
+
     // НОВОЕ: Форма для настройки параметров GameCanceled
     if (selectedEvent === ExtendedGameUpdateTypes.GameCanceled) {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки отмены игры</h4>
-          
+
           <label className={styles.label}>
             Причина отмены:
             <input
@@ -613,13 +604,13 @@ const TestEventSimulator: React.FC = () => {
         </div>
       );
     }
-    
+
     // НОВОЕ: Форма для настройки параметров ActivePlayersUpdated
     if (selectedEvent === ExtendedGameUpdateTypes.ActivePlayersUpdated) {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки активных игроков</h4>
-          
+
           {testMode().testPlayers.map((player, index) => (
             <label key={player.id} className={styles.checkboxLabel}>
               <input
@@ -633,13 +624,13 @@ const TestEventSimulator: React.FC = () => {
         </div>
       );
     }
-    
+
     // НОВОЕ: Форма для настройки параметров WinnersUpdated
     if (selectedEvent === ExtendedGameUpdateTypes.WinnersUpdated) {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки победителей</h4>
-          
+
           {testMode().testPlayers.map((player, index) => (
             <label key={player.id} className={styles.checkboxLabel}>
               <input
@@ -653,13 +644,13 @@ const TestEventSimulator: React.FC = () => {
         </div>
       );
     }
-    
+
     // НОВОЕ: Форма для настройки параметров CardsDealt с расширенными настройками
     if (selectedEvent === ExtendedGameUpdateTypes.CardsDealt) {
       return (
         <div className={styles.form}>
           <h4 className={styles.formTitle}>Настройки раздачи карт</h4>
-          
+
           <label className={styles.label}>
             ID игрока:
             <select
@@ -674,7 +665,7 @@ const TestEventSimulator: React.FC = () => {
               ))}
             </select>
           </label>
-          
+
           <label className={styles.label}>
             Количество карт:
             <input
@@ -686,7 +677,7 @@ const TestEventSimulator: React.FC = () => {
               onChange={(e) => setCardsDealtCustomParams({ ...cardsDealtCustomParams, count: Number(e.target.value) })}
             />
           </label>
-          
+
           <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
@@ -695,7 +686,7 @@ const TestEventSimulator: React.FC = () => {
             />
             Начальная раздача
           </label>
-          
+
           <label className={styles.checkboxLabel}>
             <input
               type="checkbox"

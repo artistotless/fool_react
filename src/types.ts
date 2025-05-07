@@ -239,7 +239,7 @@ export interface IActivePlayersUpdatedEvent {
  * Событие окончания игры
  */
 export interface IGameFinishedEvent {
-   winners: string[];
+   winners: { winners: string[] };
 }
 
 /**

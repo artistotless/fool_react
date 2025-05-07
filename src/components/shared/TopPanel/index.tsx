@@ -20,9 +20,6 @@ const TopPanel = () => {
 
    // Рефы для контейнера игроков и проверки возможности скроллинга
    const playersContainerRef = useRef<HTMLDivElement>(null);
-   const [canScrollLeft, setCanScrollLeft] = useState(false);
-   const [canScrollRight, setCanScrollRight] = useState(false);
-   const [needScroll, setNeedScroll] = useState(false);
    const [isMobile, setIsMobile] = useState(false);
 
    // Проверка, является ли устройство мобильным
@@ -39,88 +36,7 @@ const TopPanel = () => {
       };
    }, []);
 
-   // Функция для проверки возможности скроллинга влево и вправо
-   const checkScrollability = () => {
-      const container = playersContainerRef.current;
-      if (container) {
-         // Проверяем, нужен ли скроллинг вообще
-         const needToScroll = container.scrollWidth > container.clientWidth;
-         setNeedScroll(needToScroll);
-
-         setCanScrollLeft(container.scrollLeft > 0);
-         setCanScrollRight(
-            container.scrollLeft < container.scrollWidth - container.clientWidth - 5
-         );
-      }
-   };
-
-   // Обработчик прокрутки влево
-   const scrollLeft = () => {
-      const container = playersContainerRef.current;
-      if (container) {
-         container.scrollBy({
-            left: -100,
-            behavior: 'smooth'
-         });
-      }
-   };
-
-   // Обработчик прокрутки вправо
-   const scrollRight = () => {
-      const container = playersContainerRef.current;
-      if (container) {
-         container.scrollBy({
-            left: 100,
-            behavior: 'smooth'
-         });
-      }
-   };
-
-   // Проверка скроллинга при инициализации и изменении размера окна
-   useEffect(() => {
-      // Начальная проверка возможности скроллинга
-      const initialCheck = () => {
-         checkScrollability();
-      };
-
-      // Проверяем после полной загрузки DOM и изображений
-      window.addEventListener('load', initialCheck);
-
-      // Резервный таймаут на случай, если событие load уже произошло
-      const timer = setTimeout(initialCheck, 500);
-
-      const handleResize = () => {
-         checkScrollability();
-      };
-
-      // Добавляем слушатель для скроллинга контейнера
-      const handleScroll = () => {
-         checkScrollability();
-      };
-
-      const container = playersContainerRef.current;
-      if (container) {
-         container.addEventListener('scroll', handleScroll);
-      }
-
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-         window.removeEventListener('load', initialCheck);
-         window.removeEventListener('resize', handleResize);
-         clearTimeout(timer);
-         if (container) {
-            container.removeEventListener('scroll', handleScroll);
-         }
-      };
-   }, []);
-
    let isRed = trumpCard?.suit.iconChar == SuitsSymbols.Diamond || trumpCard?.suit.iconChar == SuitsSymbols.Heart;
-
-   // Проверка скроллинга при изменении количества игроков
-   useEffect(() => {
-      checkScrollability();
-   }, [players.length]);
 
    const testDeckMethod = () => {
       if (testMode().enabled) {
@@ -151,15 +67,6 @@ const TopPanel = () => {
          </div>
 
          <div className={styles.center_section}>
-            {needScroll && (
-               <div
-                  className={`${styles.scroll_arrow} ${styles.left} ${canScrollLeft ? styles.visible : ''}`}
-                  onClick={scrollLeft}
-               >
-                  &#8249;
-               </div>
-            )}
-
             <div
                className={styles.players_compact}
                ref={playersContainerRef}
@@ -171,15 +78,6 @@ const TopPanel = () => {
                   />
                ))}
             </div>
-
-            {needScroll && (
-               <div
-                  className={`${styles.scroll_arrow} ${styles.right} ${canScrollRight ? styles.visible : ''}`}
-                  onClick={scrollRight}
-               >
-                  &#8250;
-               </div>
-            )}
          </div>
       </div>
    );

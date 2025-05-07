@@ -293,7 +293,11 @@ class GameService {
 
   // Метод для обработки окончания игры
   handleGameFinished(event: IGameFinishedEvent, store: GameStoreState) {
-    store.setWinnersIds(event.winners);
+    store.setWinnersIds(event.winners.winners);
+    store.setActivePlayers([]);
+    store.setPassedPlayers([]);
+    store.setPersonalState({ cardsInHand: []});
+    store.setSlots([]);
     store.setStatus('Finished');
   }
 
