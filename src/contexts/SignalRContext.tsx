@@ -44,6 +44,13 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
 
    // Создание соединения
    useEffect(() => {
+
+      if (!hubDetails) {
+         setConnection(null);
+         setIsConnected(false);
+         return;
+      }
+
       if (!hubDetails.url) return;
 
       const newConnection = new signalR.HubConnectionBuilder()
@@ -84,7 +91,7 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
             await connection.start();
             setIsConnected(true);
             showToast('Подключение к серверу установлено', 'success');
-            
+
             // Обработчик входящих сообщений от сервера
             connection.on('onGameUpdated', (message: any) => {
                console.log(message.updateType, message.event);
@@ -92,13 +99,13 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
             });
 
             connection.on('onGameFinished', (message: any) => {
-               addEvent({event: message, updateType: GameUpdateTypes.GameFinished});
+               addEvent({ event: message, updateType: GameUpdateTypes.GameFinished });
             });
-            
+
             connection.on('onGameCanceled', (message: any) => {
-               addEvent({event: message, updateType: GameUpdateTypes.GameCanceled});
+               addEvent({ event: message, updateType: GameUpdateTypes.GameCanceled });
             });
-            
+
          } catch (err) {
             setIsConnected(false);
             showToast('Ошибка при подключении к серверу', 'error');

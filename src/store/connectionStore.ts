@@ -5,8 +5,8 @@ export interface ConnectionStoreState {
   hubDetails: {
     url: string | null;
     token: any | null;
-  };
-  setHubDetails: (details: { url: string, token: any }) => void;
+  } | null;
+  setHubDetails: (details: { url: string, token: any } | null) => void;
 }
 
 const useConnectionStore = create<ConnectionStoreState>()(
