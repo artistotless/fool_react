@@ -126,9 +126,9 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
     const [_, rankName] = cardId.split('-');
 
     // Проверяем, может ли игрок атаковать
-    if (store.attackerId !== user.id && !store.passedPlayers.includes(store.attackerId || '') && !testMode().enabled) {
-      return false;
-    }
+    // if (store.attackerId !== user.id && !store.passedPlayers.includes(store.attackerId || '') && !testMode().enabled) {
+    //   return false;
+    // }
 
     // Проверка пустого стола - можно ходить любой картой
     const hasCardsOnTable = store.slots.some(slot => slot.cards.length > 0);

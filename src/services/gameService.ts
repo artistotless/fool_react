@@ -188,6 +188,8 @@ class GameService {
       const cardData = event.cardInfo?.card as ICard;
       const playerCardsElement = document.getElementById(`playercards`);
       let position;
+      const cardId = `${cardData.suit.name}-${cardData.rank.name}`;
+      store.removeCardFromHand(cardId);
 
       if (playerCardsElement) {
         const sourceRect = playerCardsElement.getBoundingClientRect();
@@ -220,6 +222,10 @@ class GameService {
       else
         store.addPassedPlayer(event.playerId);
       return;
+    }
+
+    if (event.actionType === CardActionType.Defend) {
+      store.setPassedPlayers([]);
     }
 
     // Другой игрок сыграл карту
@@ -296,7 +302,7 @@ class GameService {
     store.setWinnersIds(event.winners.winners);
     store.setActivePlayers([]);
     store.setPassedPlayers([]);
-    store.setPersonalState({ cardsInHand: []});
+    store.setPersonalState({ cardsInHand: [] });
     store.setSlots([]);
     store.setStatus('Finished');
   }

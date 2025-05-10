@@ -14,24 +14,8 @@
    border-radius: 10px;
    box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
    transform-style: preserve-3d;
- 
    transition: transform 1s ease-out;
-   animation: card-appear 0.25s ease-in-out;
    transform: translateZ(5px);
-
-   @keyframes card-appear {
-    0% {
-       opacity: 0.2;
-       scale: 1.2;
-       transform: translateY(-8px) translateZ(20px);
-    }
-
-    100% {
-       opacity: 1;
-       scale: 1;
-       transform: translateY(0) translateZ(5px);
-    }
- }
  
    &.red {
      color: red;
