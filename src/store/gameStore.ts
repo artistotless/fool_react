@@ -27,10 +27,14 @@ export interface GameStoreState {
   players: IFoolPlayer[];
   movedAt: string | null;
   moveTime: string | null;
+  created: string | null;
+  syncAt: string | null;
+  cancellationTime: string | null;
   personalState: IPersonalState;
   winnersIds: string[] | null;
   passedPlayers: string[];
   activePlayers: string[];
+  connectedPlayers: string[];
   pendingActions: IPendingAction[];
 
   // Методы для обновления состояния
@@ -41,13 +45,18 @@ export interface GameStoreState {
   setDeckCardsCount: (deckCardsCount: number) => void;
   setMoveAt: (moveAt: string) => void;
   setMoveTime: (moveTime: string) => void;
+  setCancellationTime: (cancellationTime: string | null) => void;
+  setCreated: (created: string | null) => void;
   setPlayers: (players: IFoolPlayer[]) => void;
   setStatus: (status: GameStatus) => void;
   setPersonalState: (personalState: IPersonalState) => void;
   setWinnersIds: (ids: string[] | null) => void;
+  setConnectedPlayers: (playerIds: string[]) => void;
   setPassedPlayers: (playerIds: string[]) => void;
   addPassedPlayer: (playerId: string) => void;
   setActivePlayers: (playerIds: string[]) => void;
+  setSyncAt: (syncAt: string) => void;
+  clearState: () => void;
 
   // Методы для работы с картами
   setTrumpCard: (trump: ICard) => void;
@@ -73,10 +82,13 @@ const getInitialStateValues = () => ({
   trumpCard: null,
   deckCardsCount: 0,
   rounds: 0,
-  status: 'ReadyToBegin' as GameStatus,
+  status: 'Preparing' as GameStatus,
+  connectedPlayers: [],
   players: [],
   movedAt: null,
   moveTime: null,
+  cancellationTime: null,
+  created: null,
   personalState: {
     cardsInHand: [],
   },
@@ -84,6 +96,7 @@ const getInitialStateValues = () => ({
   passedPlayers: [],
   activePlayers: [],
   pendingActions: [],
+  syncAt: null,
 });
 
 const useGameStore = create<GameStoreState>()(
@@ -101,12 +114,17 @@ const useGameStore = create<GameStoreState>()(
       setDeckCardsCount: (deckCardsCount) => set({ deckCardsCount }, undefined, 'game/setDeckCardsCount'),
       setMoveAt: (moveAt) => set({ movedAt: moveAt }, undefined, 'game/setMoveAt'),
       setMoveTime: (moveTime) => set({ moveTime }, undefined, 'game/setMoveTime'),
+      setCreated: (created) => set({ created }, undefined, 'game/setCreated'),
+      setCancellationTime: (cancellationTime) => set({ cancellationTime }, undefined, 'game/setCancellationTime'),
       setTrumpCard: (trump) => set({ trumpCard: trump }, undefined, 'game/setTrumpCard'),
       setPersonalState: (personalState) => set({ personalState }, undefined, 'game/setPersonalState'),
       setWinnersIds: (ids) => set({ winnersIds: ids }, undefined, 'game/setWinnersIds'),
       setPassedPlayers: (playerIds) => set({ passedPlayers: playerIds }, undefined, 'game/setPassedPlayers'),
       addPassedPlayer: (playerId) => set((state) => ({ passedPlayers: [...state.passedPlayers, playerId] }), undefined, 'game/addPassedPlayer'),
       setActivePlayers: (playerIds) => set({ activePlayers: playerIds }, undefined, 'game/setActivePlayers'),
+      setConnectedPlayers: (playerIds: string[]) => set({ connectedPlayers: playerIds }, undefined, 'game/setConnectedPlayers'),
+      setSyncAt: (syncAt) => set({ syncAt }, undefined, 'game/setSyncAt'),
+      clearState: () => set(getInitialStateValues()),
 
       // Реализация методов для работы с картами
       addCardToHand: (card) => set((state) => ({

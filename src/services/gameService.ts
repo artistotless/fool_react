@@ -12,6 +12,9 @@ import {
   CardActionType,
   IActivePlayersUpdatedEvent,
   IWinnersUpdatedEvent,
+  IPlayerDisconnectedEvent,
+  IPlayerConnectedEvent,
+  IGameStatusUpdatedEvent,
 } from "../types";
 import {
   animateCardToSlot,
@@ -39,7 +42,25 @@ class GameService {
     return GameService.instance;
   }
 
+  handlePlayerConnected(event: IPlayerConnectedEvent, store: GameStoreState) {
+    store.setConnectedPlayers([...store.connectedPlayers.filter(id => id !== event.playerId), event.playerId]);
+  }
+
+  handlePlayerDisconnected(event: IPlayerDisconnectedEvent, store: GameStoreState) {
+    store.setConnectedPlayers(store.connectedPlayers.filter(id => id !== event.playerId));
+  }
+
+  handleGameStatusUpdated(event: IGameStatusUpdatedEvent, store: GameStoreState) {
+    store.setStatus(event.status);
+    if (event.status === 'InProgress') {
+      store.setMoveAt(new Date().toISOString());
+    }
+  }
+
   handleSyncGameState(state: IGameSyncState, play: Function, store: GameStoreState) {
+    if(store.syncAt)
+      return;
+
     let slots: ISlot[] = [];
 
     Array.from(Array(6).keys()).forEach(slotIndex => {
@@ -60,6 +81,10 @@ class GameService {
     store.setPlayers(state.players);
     store.setMoveAt(state.movedAt!);
     store.setMoveTime(state.moveTime!);
+    store.setCancellationTime(state.cancellationTime);
+    store.setCreated(state.created);
+    store.setWinnersIds(state.winners);
+    store.setConnectedPlayers(state.connectedPlayers);
 
     if (state.rounds > 0)
       store.setPersonalState(state.personalState);
@@ -73,6 +98,7 @@ class GameService {
 
     store.setPassedPlayers(passedPlayers);
     store.setActivePlayers(state.activePlayers || []);
+    store.setSyncAt(new Date().toISOString());
   }
 
   // Метод для обработки успешного действия безы карты
@@ -315,6 +341,7 @@ class GameService {
 
   // Метод для обработки обновления списка победителей
   handleWinnersUpdated(event: IWinnersUpdatedEvent, store: GameStoreState) {
+    // Обновляем список победителей в хранилище
     store.setWinnersIds(event.winners);
   }
 

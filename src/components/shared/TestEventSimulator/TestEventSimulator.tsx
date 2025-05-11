@@ -10,7 +10,11 @@ import {
   IActivePlayersUpdatedEvent,
   IWinnersUpdatedEvent,
   CardActionType,
-  GameUpdateTypes
+  GameUpdateTypes,
+  IPlayerConnectedEvent,
+  IPlayerDisconnectedEvent,
+  IGameStatusUpdatedEvent,
+  GameStatus
 } from '../../../types';
 import animationService from "../../../contexts/animationService";
 import { useAudio } from "../../../contexts/AudioContext";
@@ -47,7 +51,8 @@ const TestEventSimulator: React.FC = () => {
     defenderId: testMode().testPlayers[1].id,
     attackerId: testMode().testPlayers[0].id,
     newDefenderId: testMode().testPlayers[0].id,
-    newAttackerId: testMode().testPlayers[1].id
+    newAttackerId: testMode().testPlayers[1].id,
+    deckCardsCount: 24
   });
 
   // Состояние для настройки параметров ActionResultError
@@ -56,15 +61,16 @@ const TestEventSimulator: React.FC = () => {
     actionType: CardActionType.Attack,
     errorCode: 'INVALID_CARD',
     errorMessage: 'Невозможно атаковать этой картой',
-    cardId: ''
+    cardId: '',
+    actionId: generateGuid()
   });
 
-  // НОВОЕ: Состояние для настройки параметров GameCanceled
+  // Состояние для настройки параметров GameCanceled
   const [gameCanceledParams, setGameCanceledParams] = useState({
     reason: 'Игра отменена администратором'
   });
 
-  // НОВОЕ: Состояние для настройки параметров ActivePlayersUpdated
+  // Состояние для настройки параметров ActivePlayersUpdated
   const [activePlayersParams, setActivePlayersParams] = useState({
     activePlayers: [testMode().testPlayers[0].id, testMode().testPlayers[1].id]
   });
@@ -74,12 +80,27 @@ const TestEventSimulator: React.FC = () => {
     winners: [testMode().testPlayers[0].id]
   });
 
-  // НОВОЕ: Состояние для настройки расширенных параметров CardsDealt
+  // Состояние для настройки расширенных параметров CardsDealt
   const [cardsDealtCustomParams, setCardsDealtCustomParams] = useState({
     playerId: testMode().testPlayers[0].id,
     count: 3,
     isInitialDeal: false,
     isHidden: false
+  });
+
+  // Состояние для настройки параметров PlayerConnected
+  const [playerConnectedParams, setPlayerConnectedParams] = useState({
+    playerId: testMode().testPlayers[0].id
+  });
+
+  // Состояние для настройки параметров PlayerDisconnected
+  const [playerDisconnectedParams, setPlayerDisconnectedParams] = useState({
+    playerId: testMode().testPlayers[0].id
+  });
+
+  // Состояние для настройки параметров GameStatusUpdated
+  const [gameStatusUpdatedParams, setGameStatusUpdatedParams] = useState({
+    status: 'InProgress' as GameStatus
   });
 
   // Функция для имитации получения события от сервера
@@ -130,7 +151,7 @@ const TestEventSimulator: React.FC = () => {
       event: {
         success: false,
         errorMessage: actionResultErrorParams.errorMessage,
-        actionId: generateGuid()
+        actionId: actionResultErrorParams.actionId
       } as IActionResultEvent
     });
   };
@@ -141,7 +162,8 @@ const TestEventSimulator: React.FC = () => {
         reason: roundEndedParams.reason,
         attackerId: roundEndedParams.attackerId,
         defenderId: roundEndedParams.defenderId,
-        cards: slots.map(slot => slot.cards).flat()
+        cards: slots.map(slot => slot.cards).flat(),
+        deckCardsCount: roundEndedParams.deckCardsCount
       } as IRoundEndedEvent
     });
   };
@@ -190,7 +212,7 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
-  // НОВОЕ: Генератор события GameCanceled
+  // Генератор события GameCanceled
   const generateGameCanceled = () => {
     simulateEvent(ExtendedGameUpdateTypes.GameCanceled, {
       event: {
@@ -199,7 +221,7 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
-  // НОВОЕ: Генератор события ActivePlayersUpdated
+  // Генератор события ActivePlayersUpdated
   const generateActivePlayersUpdated = () => {
     simulateEvent(ExtendedGameUpdateTypes.ActivePlayersUpdated, {
       event: {
@@ -208,12 +230,39 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
-  // НОВОЕ: Генератор события WinnersUpdated
+  // Генератор события WinnersUpdated
   const generateWinnersUpdated = () => {
     simulateEvent(ExtendedGameUpdateTypes.WinnersUpdated, {
       event: {
         winners: winnersUpdatedParams.winners
       } as IWinnersUpdatedEvent
+    });
+  };
+
+  // Генератор события PlayerConnected
+  const generatePlayerConnected = () => {
+    simulateEvent(ExtendedGameUpdateTypes.PlayerConnected, {
+      event: {
+        playerId: playerConnectedParams.playerId
+      } as IPlayerConnectedEvent
+    });
+  };
+
+  // Генератор события PlayerDisconnected
+  const generatePlayerDisconnected = () => {
+    simulateEvent(ExtendedGameUpdateTypes.PlayerDisconnected, {
+      event: {
+        playerId: playerDisconnectedParams.playerId
+      } as IPlayerDisconnectedEvent
+    });
+  };
+
+  // Генератор события GameStatusUpdated
+  const generateGameStatusUpdated = () => {
+    simulateEvent(ExtendedGameUpdateTypes.GameStatusUpdated, {
+      event: {
+        status: gameStatusUpdatedParams.status
+      } as IGameStatusUpdatedEvent
     });
   };
 
@@ -257,7 +306,12 @@ const TestEventSimulator: React.FC = () => {
         players: testMode().testPlayers,
         movedAt: testMode().testMovedAt,
         moveTime: testMode().testMoveTime,
-        activePlayers: []
+        activePlayers: [],
+        playerId: player0Id,
+        winners: [],
+        connectedPlayers: [player0Id, player1Id],
+        created: new Date().toISOString(),
+        cancellationTime: null
       }
     });
   };
@@ -274,7 +328,10 @@ const TestEventSimulator: React.FC = () => {
     [ExtendedGameUpdateTypes.GameFinished]: generateGameFinished,
     [ExtendedGameUpdateTypes.GameCanceled]: generateGameCanceled,
     [ExtendedGameUpdateTypes.ActivePlayersUpdated]: generateActivePlayersUpdated,
-    [ExtendedGameUpdateTypes.WinnersUpdated]: generateWinnersUpdated
+    [ExtendedGameUpdateTypes.WinnersUpdated]: generateWinnersUpdated,
+    [ExtendedGameUpdateTypes.PlayerConnected]: generatePlayerConnected,
+    [ExtendedGameUpdateTypes.PlayerDisconnected]: generatePlayerDisconnected,
+    [ExtendedGameUpdateTypes.GameStatusUpdated]: generateGameStatusUpdated
   };
 
   // Функция для обработки выбранного события
@@ -337,7 +394,7 @@ const TestEventSimulator: React.FC = () => {
     });
   };
 
-  // НОВОЕ: Обработчик изменения списка активных игроков
+  // Обработчик изменения списка активных игроков
   const handleActivePlayersChange = (playerId: string, isActive: boolean) => {
     if (isActive) {
       setActivePlayersParams({
@@ -350,7 +407,7 @@ const TestEventSimulator: React.FC = () => {
     }
   };
 
-  // НОВОЕ: Обработчик изменения списка победителей
+  // Обработчик изменения списка победителей
   const handleWinnersChange = (playerId: string, isWinner: boolean) => {
     if (isWinner) {
       setWinnersUpdatedParams({
@@ -499,6 +556,18 @@ const TestEventSimulator: React.FC = () => {
               ))}
             </select>
           </label>
+
+          <label className={styles.label}>
+            Количество карт в колоде:
+            <input
+              type="number"
+              min="0"
+              max="36"
+              className={styles.input}
+              value={roundEndedParams.deckCardsCount}
+              onChange={(e) => setRoundEndedParams({ ...roundEndedParams, deckCardsCount: Number(e.target.value) })}
+            />
+          </label>
         </div>
       );
     }
@@ -582,11 +651,21 @@ const TestEventSimulator: React.FC = () => {
               onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, errorMessage: e.target.value })}
             />
           </label>
+
+          <label className={styles.label}>
+            ID действия:
+            <input
+              type="text"
+              className={styles.input}
+              value={actionResultErrorParams.actionId}
+              onChange={(e) => setActionResultErrorParams({ ...actionResultErrorParams, actionId: e.target.value })}
+            />
+          </label>
         </div>
       );
     }
 
-    // НОВОЕ: Форма для настройки параметров GameCanceled
+    // Форма для настройки параметров GameCanceled
     if (selectedEvent === ExtendedGameUpdateTypes.GameCanceled) {
       return (
         <div className={styles.form}>
@@ -605,7 +684,7 @@ const TestEventSimulator: React.FC = () => {
       );
     }
 
-    // НОВОЕ: Форма для настройки параметров ActivePlayersUpdated
+    // Форма для настройки параметров ActivePlayersUpdated
     if (selectedEvent === ExtendedGameUpdateTypes.ActivePlayersUpdated) {
       return (
         <div className={styles.form}>
@@ -625,7 +704,7 @@ const TestEventSimulator: React.FC = () => {
       );
     }
 
-    // НОВОЕ: Форма для настройки параметров WinnersUpdated
+    // Форма для настройки параметров WinnersUpdated
     if (selectedEvent === ExtendedGameUpdateTypes.WinnersUpdated) {
       return (
         <div className={styles.form}>
@@ -645,7 +724,79 @@ const TestEventSimulator: React.FC = () => {
       );
     }
 
-    // НОВОЕ: Форма для настройки параметров CardsDealt с расширенными настройками
+    // Форма для настройки параметров PlayerConnected
+    if (selectedEvent === ExtendedGameUpdateTypes.PlayerConnected) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки подключения игрока</h4>
+
+          <label className={styles.label}>
+            ID игрока:
+            <select
+              className={styles.select}
+              value={playerConnectedParams.playerId}
+              onChange={(e) => setPlayerConnectedParams({ playerId: e.target.value })}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      );
+    }
+
+    // Форма для настройки параметров PlayerDisconnected
+    if (selectedEvent === ExtendedGameUpdateTypes.PlayerDisconnected) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки отключения игрока</h4>
+
+          <label className={styles.label}>
+            ID игрока:
+            <select
+              className={styles.select}
+              value={playerDisconnectedParams.playerId}
+              onChange={(e) => setPlayerDisconnectedParams({ playerId: e.target.value })}
+            >
+              {testMode().testPlayers.map((player, index) => (
+                <option key={player.id} value={player.id}>
+                  Игрок {index + 1}: {player.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      );
+    }
+
+    // Форма для настройки параметров GameStatusUpdated
+    if (selectedEvent === ExtendedGameUpdateTypes.GameStatusUpdated) {
+      return (
+        <div className={styles.form}>
+          <h4 className={styles.formTitle}>Настройки статуса игры</h4>
+
+          <label className={styles.label}>
+            Статус:
+            <select
+              className={styles.select}
+              value={gameStatusUpdatedParams.status}
+              onChange={(e) => setGameStatusUpdatedParams({ status: e.target.value as GameStatus })}
+            >
+              <option value="Preparing">Подготовка</option>
+              <option value="InProgress">В процессе</option>
+              <option value="Finished">Завершена</option>
+              <option value="Canceled">Отменена</option>
+              <option value="WaitingForPlayers">Ожидание игроков</option>
+            </select>
+          </label>
+        </div>
+      );
+    }
+
+    // Форма для настройки параметров CardsDealt с расширенными настройками
     if (selectedEvent === ExtendedGameUpdateTypes.CardsDealt) {
       return (
         <div className={styles.form}>

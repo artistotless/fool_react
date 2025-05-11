@@ -51,14 +51,14 @@ const testPlayers = [
         id: "f02d247e-5662-4b36-b1ec-ca61c518c973",
         passed: false,
         cardsCount: 6
-    },
-    {
-        name: "Player 3",
-        avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
-        id: "fb20be9e-f06c-4c75-91a0-c58f842147cb",
-        passed: false,
-        cardsCount: 6
     }
+    // ,{
+    //     name: "Player 3",
+    //     avatar: `https://api.dicebear.com/9.x/${avaStyle}/svg?seed=3`,
+    //     id: "fb20be9e-f06c-4c75-91a0-c58f842147cb",
+    //     passed: false,
+    //     cardsCount: 6
+    // }
 ];
 
 export const testMode = (): {
@@ -104,7 +104,7 @@ export const testMode = (): {
     };
 }
 
-const testModeEnabled = false;
+const testModeEnabled = true;
 
 export const connPanelEnabled = !testModeEnabled;
 export const signalRLoggingEnabled = true;

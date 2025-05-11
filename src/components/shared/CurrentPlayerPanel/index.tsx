@@ -3,14 +3,18 @@ import styles from './currentplayerpanel.module.scss';
 import { useUser } from 'src/contexts/UserContext';
 import useGameStore from 'src/store/gameStore';
 import CircleProgressTimer from 'src/components/ui/CircleProgressTimer';
+import { motion } from 'framer-motion';
 
 const CurrentPlayerPanel = () => {
     const { user } = useUser();
-    const { players, attackerId, defenderId, passedPlayers, moveTime, movedAt, activePlayers } = useGameStore();
+    const { players, attackerId, defenderId, passedPlayers, moveTime, movedAt, activePlayers, winnersIds, status } = useGameStore();
     const [avatarSrc, setAvatarSrc] = useState<string>(user.avatar || '');
 
     // Находим текущего игрока из списка игроков
     const currentPlayer = players.find(player => player.id === user.id);
+    
+    // Проверяем, является ли текущий игрок победителем
+    const isWinner = winnersIds?.includes(user.id) && status !== 'Finished';
 
     useEffect(() => {
         // Если аватарка отсутствует, загружаем случайную с DiceBear API
@@ -39,7 +43,8 @@ const CurrentPlayerPanel = () => {
         styles.avatar_container,
         isAttacking && styles.attacking,
         isDefending && styles.defending,
-        isPassed && styles.passed
+        isPassed && styles.passed,
+        isWinner && styles.winner // Добавляем класс для победителя
     ].filter(Boolean).join(' ');
 
     const shouldShowTimer =
@@ -57,6 +62,7 @@ const CurrentPlayerPanel = () => {
                     setAvatarSrc(`https://api.dicebear.com/7.x/bottts/svg?seed=${fallbackSeed}`);
                 }}
             />
+            
             {shouldShowTimer && (
                 <CircleProgressTimer
                     moveTime={moveTime}

@@ -16,6 +16,9 @@ import {
   IGameSyncState,
   IActivePlayersUpdatedEvent,
   IWinnersUpdatedEvent,
+  IPlayerConnectedEvent,
+  IPlayerDisconnectedEvent,
+  IGameStatusUpdatedEvent,
 } from '../types';
 import { testMode } from 'src/environments/environment';
 import { useToast } from '../services/ToastService';
@@ -52,6 +55,18 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       // Базовые события
       case GameUpdateTypes.GameStateSync:
         gameService.handleSyncGameState(currentEvent.event as IGameSyncState, play, store);
+        break;
+
+      case GameUpdateTypes.PlayerConnected:
+        gameService.handlePlayerConnected(currentEvent.event as IPlayerConnectedEvent, store);
+        break;
+
+      case GameUpdateTypes.PlayerDisconnected:
+        gameService.handlePlayerDisconnected(currentEvent.event as IPlayerDisconnectedEvent, store);
+        break;
+
+      case GameUpdateTypes.GameStatusUpdated:
+        gameService.handleGameStatusUpdated(currentEvent.event as IGameStatusUpdatedEvent, store);
         break;
 
       // Оптимизированные события

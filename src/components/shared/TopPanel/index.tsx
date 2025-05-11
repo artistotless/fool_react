@@ -48,6 +48,7 @@ const TopPanel = () => {
 
    // Фильтруем список игроков, исключая текущего игрока
    const opponents = players.filter(player => player.id !== user.id);
+   const isSingleOpponent = opponents.length === 1;
 
    return (
       <div className={`${styles.top_panel} ${isMobile ? styles.mobile : ''}`}>
@@ -75,6 +76,7 @@ const TopPanel = () => {
                   <PlayerCompact
                      key={player.id}
                      {...player}
+                     isSingleOpponent={isSingleOpponent}
                   />
                ))}
             </div>

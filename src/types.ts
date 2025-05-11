@@ -11,7 +11,10 @@ export enum GameUpdateTypes {
    GameFinished = "GameFinishedDto", // Завершение игры
    GameCanceled = "GameCanceledDto", // Отмена игры
    ActivePlayersUpdated = "ActivePlayersUpdatedEvent", // Обновление списка активных игроков
-   WinnersUpdated = "WinnersUpdatedEvent" // Обновление списка победителей
+   WinnersUpdated = "WinnersUpdatedEvent", // Обновление списка победителей
+   PlayerConnected = "PlayerConnectedEvent", // Игрок подключился
+   PlayerDisconnected = "PlayerDisconnectedEvent", // Игрок отключился
+   GameStatusUpdated = "GameStatusUpdatedEvent", // Обновление статуса игры
 }
 
 export enum Suits {
@@ -102,7 +105,7 @@ export interface IUserToken {
    scopes: string[];
 }
 
-export type GameStatus = 'ReadyToBegin' | 'InProgress' | 'Finished' | 'Canceled';
+export type GameStatus = 'Preparing' | 'InProgress' | 'Finished' | 'Canceled' | 'WaitingForPlayers';
 
 export interface ITableCard {
    defendingCard?: ICard;
@@ -153,6 +156,11 @@ export interface IGameSyncState {
    players: IFoolPlayer[];
 
    /**
+    * The date and time when the game was created.
+    */
+   created: string | null;
+
+   /**
     * The date and time when the move was made.
     */
    movedAt: string | null;
@@ -163,15 +171,26 @@ export interface IGameSyncState {
    moveTime: string | null;
 
    /**
+    * The time when the game will be canceled.
+    */
+   cancellationTime: string | null;
+
+   /**
     * The personal state of the current player.
     */
    personalState: IPersonalState;
 
-   /** Список активных игроков, которые могут ходить */
+   /** List of active players who can walk*/
    activePlayers: string[];
 
    /** Идентификатор игрока*/
    playerId: string;
+
+   /** Winners' identifiers */
+   winners: string[];
+
+   /** Connected players' identifiers */
+   connectedPlayers: string[];
 }
 
 export interface IPersonalState {
@@ -256,3 +275,23 @@ export interface IWinnersUpdatedEvent {
    winners: string[];
 }
 
+/**
+ * Событие подключения игрока
+ */
+export interface IPlayerConnectedEvent {
+   playerId: string;
+}
+
+/**
+ * Событие отключения игрока
+ */
+export interface IPlayerDisconnectedEvent {
+   playerId: string;
+}
+
+/**
+ * Событие обновления статуса игры
+ */
+export interface IGameStatusUpdatedEvent {
+   status: GameStatus;
+}
