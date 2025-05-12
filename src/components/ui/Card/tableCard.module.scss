@@ -1,5 +1,13 @@
 .card {
-   width: 122px;
+   --card-width: 122px;
+   --card-font-size: 20px;
+   --suit-small-size: 0.9rem; 
+   --suit-regular-size: 1.52rem;
+   --suit-corner-size: 1.7rem;
+   --card-border-radius: 10px;
+   --card-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
+   
+   width: var(--card-width);
    height: 100%;
    aspect-ratio: 0.7166676282;
    touch-action: none;
@@ -9,10 +17,10 @@
    color: black;
    font-weight: bold;
    justify-content: space-evenly;
-   border:   0.2px solid #e1e1e1;
+   border: 0.2px solid #e1e1e1;
    border-bottom-width: 3px;
-   border-radius: 10px;
-   box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
+   border-radius: var(--card-border-radius);
+   box-shadow: var(--card-shadow);
    transform-style: preserve-3d;
    transition: transform 1s ease-out;
    transform: translateZ(5px);
@@ -41,15 +49,12 @@
  
    .rank {
      font-family: Arial, sans-serif;
-     font-size: 20px;
- 
+     font-size: var(--card-font-size);
    }
  
    .suit_small {
-     // font-size: clamp(0.9rem, 1.657vh, 1.776rem);
-     font-size: 0.9rem;
+     font-size: var(--suit-small-size);
      margin-top: -9px;
- 
    }
  
    // Bottom-right corner
@@ -69,9 +74,7 @@
        position: absolute;
        border: none;
        outline: none;
-       font-family: inherit;
-       // font-size: clamp(1.7rem, 3.131vh, 3rem);
-       font-size: 1.7rem;
+       font-size: var(--suit-corner-size);
        font-family: "Noto Sans SC", serif;
        font-optical-sizing: auto;
        font-weight: 400;
@@ -92,8 +95,7 @@
        background-size: cover;
        background-repeat: no-repeat;
        border: 1px solid black;
-       background-position-x: center;
-       background-position-y: center;
+       background-position: center;
        height: 100%;
        width: 100%;
      }
@@ -115,8 +117,7 @@
        align-items: center;
  
        .suit_regular {
-         font-size: 1.52rem;
-         // font-size: clamp(1.52rem, 3vh, 3rem);
+         font-size: var(--suit-regular-size);
          line-height: 1;
  
          &.mt_42 {
@@ -137,6 +138,4 @@
        }
      }
    }
- 
-
 }

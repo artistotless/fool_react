@@ -1,15 +1,19 @@
 .field {
+   --padding-horizontal: 15px;
+   --padding-vertical: 10px;
+   --shadow-inset: inset 6px 12px 112px 6px rgba(0, 0, 0, 0.3);
+   --background-color: #102f41;
+   --scale-mobile: 0.7;
+   
    flex: 1 1 auto;
    position: relative;
-   padding: 0 15px;
+   padding: var(--padding-vertical) var(--padding-horizontal);
    display: flex;
    justify-content: space-between;
    align-items: center;
    flex-direction: column;
-   background: #102f41;
-   box-shadow: inset 6px 12px 112px 6px rgba(0, 0, 0, 0.3);
-   padding-top: 10px;
-   padding-bottom: 10px;
+   background: var(--background-color);
+   box-shadow: var(--shadow-inset);
    z-index: 10;
 }
 
@@ -30,20 +34,12 @@
    gap: 10px;
    height: fit-content;
 
-   @media(max-width:500px) {
-      scale: 0.7;
-   }
-
-   @media(max-height:400px) {
-      scale: 0.7;
+   @media (max-width: 500px), (max-height: 400px) {
+      scale: var(--scale-mobile);
    }
 }
 
 @keyframes timerProgress {
-   0% {
-      width: 100%;
-   }
-   100% {
-      width: 0%;
-   }
+   from { width: 100%; }
+   to { width: 0%; }
 }

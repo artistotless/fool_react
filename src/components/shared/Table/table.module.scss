@@ -1,7 +1,16 @@
 .table_container {
+   --max-width: 800px;
+   --scale-desktop: 0.9;
+   --scale-tablet: 0.8;
+   --scale-mobile: 0.65;
+   --scale-low-height: 0.49;
+   --slot-border-radius: 10px;
+   --slot-border-width: 3px;
+   --slot-border-active: 2px dashed #2AABEE;
+   
    margin-top: 1lvh;
    width: 95lvw;
-   max-width: 800px;
+   max-width: var(--max-width);
    flex-grow: 1;
    height: 50lvh;
    perspective: 1000px;
@@ -9,12 +18,12 @@
    .table {
       position: relative;
       margin: 0 auto;
-      scale: 0.9;
+      scale: var(--scale-desktop);
       z-index: 1;
       display: grid;
       grid-template-columns: repeat(3, 0fr);
       gap: 22px;
-      max-width: 800px;
+      max-width: var(--max-width);
       width: 100%;
       height: 100%;
       align-content: center;
@@ -22,35 +31,34 @@
       transform: rotateX(20deg);
       transform-style: preserve-3d;
 
-      @media(max-width:500px) {
-         scale: 0.8;
+      @media (max-width: 500px) {
+         scale: var(--scale-tablet);
       }
 
-      @media(max-width:350px) {
-         scale: 0.65;
+      @media (max-width: 350px) {
+         scale: var(--scale-mobile);
       }
 
-      @media(max-height:400px) {
-         scale: 0.49;
+      @media (max-height: 400px) {
+         scale: var(--scale-low-height);
       }
 
       .slot {
          position: relative;
          display: flex;
          justify-content: center;
-         border: 2px solid transparent;
-         border-width: 3px;
-         border-radius: 10px;
+         border: var(--slot-border-width) solid transparent;
+         border-radius: var(--slot-border-radius);
          align-items: center;
          transform-style: preserve-3d;
 
          &.drop {
-            border: 2px dashed #2AABEE;
-            border-width: 3px;
-            border-radius: 10px;
+            border: var(--slot-border-active);
+            border-width: var(--slot-border-width);
+            border-radius: var(--slot-border-radius);
          }
 
-         >* {
+         > * {
             &:not(:first-child) {
                position: absolute;
                top: 0;

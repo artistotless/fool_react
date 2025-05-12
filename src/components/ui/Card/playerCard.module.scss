@@ -1,9 +1,11 @@
 .card {
-  --card-width: 122px;  // базовый размер карты
-  --card-font-size: 20px;  // базовый размер шрифта
-  --suit-small-size: 0.9rem;  // базовый размер для маленьких мастей
-  --suit-regular-size: 1.52rem;  // базовый размер для обычных мастей
-  --suit-corner-size: 1.7rem;  // базовый размер для мастей в углах высоких карт
+  --card-width: 122px;
+  --card-font-size: 20px;
+  --suit-small-size: 0.9rem;
+  --suit-regular-size: 1.52rem;
+  --suit-corner-size: 1.7rem;
+  --card-border-radius: 10px;
+  --card-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
   
   width: var(--card-width);
   height: auto;
@@ -15,10 +17,10 @@
   color: black;
   font-weight: bold;
   justify-content: space-evenly;
-  border:   0.2px solid #e1e1e1;
+  border: 0.2px solid #e1e1e1;
   border-bottom-width: 3px;
-  border-radius: 10px;
-  box-shadow: 0 10px 15px 1px rgba(0, 0, 0, 0.15);
+  border-radius: var(--card-border-radius);
+  box-shadow: var(--card-shadow);
   position: relative;
 
   &.red {
@@ -58,13 +60,10 @@
     &::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       z-index: 2;
       background-color: rgba(255, 255, 255, 1);
-      border-radius: 10px;
+      border-radius: var(--card-border-radius);
       animation: pulse 1.5s infinite;
       visibility: visible;
     }
@@ -179,8 +178,9 @@
     --suit-small-size: 0.8rem;
     --suit-regular-size: 1.3rem;
     --suit-corner-size: 1.4rem;
+    --card-border-radius: 8px;
     
-    border-radius: 8px;
+    border-radius: var(--card-border-radius);
     border-bottom-width: 2px;
     
     .card_top_left, .card_bottom_right {
@@ -210,9 +210,11 @@
     --suit-small-size: 0.8rem;
     --suit-regular-size: 1.25rem;
     --suit-corner-size: 1.35rem;
+    --card-border-radius: 7px;
+    --card-shadow: 0 5px 12px 1px rgba(0, 0, 0, 0.15);
     
-    border-radius: 7px;
-    box-shadow: 0 5px 12px 1px rgba(0, 0, 0, 0.15);
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
     
     .suit_small {
       margin-top: -6px;

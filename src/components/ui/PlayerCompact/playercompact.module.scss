@@ -1,30 +1,40 @@
 .player_compact {
+   --border-radius: 12px;
+   --avatar-size: 28px;
+   --gap: 6px;
+   --padding: 4px 8px;
+   --min-width: 100px;
+   --disconnect-icon-size: 16px;
+   --primary-color: rgba(100, 160, 255, 0.4);
+   --shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+   
    display: flex;
    flex-direction: row;
    align-items: center;
-   gap: 6px;
-   padding: 4px 8px;
+   gap: var(--gap);
+   padding: var(--padding);
    background: linear-gradient(145deg, rgba(30, 35, 60, 0.7), rgba(20, 25, 45, 0.7));
-   border-radius: 12px;
+   border-radius: var(--border-radius);
    border: 1px solid rgba(70, 100, 255, 0.2);
-   min-width: 100px;
+   min-width: var(--min-width);
    position: relative;
    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
    flex-shrink: 0;
    backdrop-filter: blur(6px);
-   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+   box-shadow: var(--shadow);
    overflow: hidden;
 
    @media (max-width: 480px) {
-      min-width: 90px;
-      padding: 3px 6px;
-      gap: 4px;
-      border-radius: 10px;
+      --border-radius: 10px;
+      --avatar-size: 26px;
+      --gap: 4px;
+      --padding: 3px 6px;
+      --min-width: 90px;
    }
 
    @media (max-width: 400px) {
-      min-width: 70px;
-      padding: 3px 4px;
+      --min-width: 70px;
+      --padding: 3px 4px;
       
       .player_info {
          .name {
@@ -54,13 +64,10 @@
    }
    
    @media (max-width: 360px) {
-      min-width: 60px;
-      gap: 3px;
-      
-      .avatar_mini {
-         width: 24px;
-         height: 24px;
-      }
+      --min-width: 60px;
+      --gap: 3px;
+      --avatar-size: 24px;
+      --disconnect-icon-size: 14px;
       
       .player_info {
          .name {
@@ -80,13 +87,13 @@
          .name {
             max-width: none;
          }
+      }
    }
-}
 
    &:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
-      border-color: rgba(100, 160, 255, 0.4);
+      border-color: var(--primary-color);
 
       .avatar_mini {
          transform: scale(1.05);
@@ -132,7 +139,7 @@
          content: '';
          position: absolute;
          inset: 0;
-         border-radius: 12px;
+         border-radius: var(--border-radius);
          background: radial-gradient(circle at center, rgba(255, 215, 0, 0.15), transparent);
          animation: pulse-winner 2s infinite;
       }
@@ -154,7 +161,7 @@
       
       &:hover {
          transform: none;
-         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+         box-shadow: var(--shadow);
          border-color: rgba(100, 100, 100, 0.4);
          
          .avatar_mini {
@@ -164,8 +171,8 @@
    }
 
    .avatar_mini {
-      width: 28px;
-      height: 28px;
+      width: var(--avatar-size);
+      height: var(--avatar-size);
       border-radius: 50%;
       overflow: hidden;
       flex-shrink: 0;
@@ -174,11 +181,6 @@
       background: linear-gradient(145deg, #2E5CB8, #1A3A70);
       position: relative;
       transition: all 0.3s ease;
-      
-      @media (max-width: 480px) {
-         width: 26px;
-         height: 26px;
-      }
 
       img {
          width: 100%;
@@ -196,22 +198,8 @@
          background-color: rgba(50, 50, 50, 0.8);
          
          svg {
-            width: 20px;
-            height: 20px;
-         }
-         
-         @media (max-width: 480px) {
-            svg {
-               width: 18px;
-               height: 18px;
-            }
-         }
-         
-         @media (max-width: 360px) {
-            svg {
-               width: 16px;
-               height: 16px;
-            }
+            width: calc(var(--avatar-size) - 8px);
+            height: calc(var(--avatar-size) - 8px);
          }
       }
       
@@ -221,8 +209,8 @@
          right: -3px;
          background: rgba(30, 30, 30, 0.9);
          border-radius: 50%;
-         width: 16px;
-         height: 16px;
+         width: var(--disconnect-icon-size);
+         height: var(--disconnect-icon-size);
          display: flex;
          align-items: center;
          justify-content: center;
@@ -232,21 +220,9 @@
          box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
          
          svg {
-            width: 12px;
-            height: 12px;
+            width: calc(var(--disconnect-icon-size) - 4px);
+            height: calc(var(--disconnect-icon-size) - 4px);
             stroke-width: 2.5;
-         }
-         
-         @media (max-width: 360px) {
-            width: 14px;
-            height: 14px;
-            bottom: -2px;
-            right: -2px;
-            
-            svg {
-               width: 10px;
-               height: 10px;
-            }
          }
       }
    }

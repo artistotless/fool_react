@@ -207,7 +207,7 @@ const TestEventSimulator: React.FC = () => {
   const generateGameFinished = () => {
     simulateEvent(ExtendedGameUpdateTypes.GameFinished, {
       event: {
-        winners: { winners: [testMode().testPlayers[0].id] }
+        winners: { winners: [testMode().testPlayers[0].id, testMode().testPlayers[1].id] }
       } as IGameFinishedEvent
     });
   };
