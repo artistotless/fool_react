@@ -3,61 +3,55 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(145deg, rgba(30, 35, 60, 0.9), rgba(20, 25, 45, 0.9));
-  border-radius: 12px;
-  padding: 25px;
-  border: 2px solid rgba(255, 215, 0, 0.7);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(145deg, rgba(25, 50, 100, 0.95), rgba(10, 25, 55, 0.95));
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid rgba(100, 150, 255, 0.5);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
   z-index: 900;
-  max-width: 400px;
+  max-width: 420px;
   width: 90%;
   transition: all 0.3s ease;
   animation: appearFromTop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   
   &:hover {
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
   }
 }
 
 .title {
-  color: #FFD700;
-  font-size: 28px;
-  margin: 0 0 20px 0;
+  color: #E0EFFF;
+  font-size: 26px;
+  margin: 0 0 25px 0;
   text-align: center;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-  font-weight: bold;
-  letter-spacing: 2px;
-  
-  &::before, &::after {
-    content: "✨";
-    margin: 0 8px;
-    font-size: 20px;
-  }
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  letter-spacing: 1.5px;
 }
 
 .winnersList {
   list-style: none;
   padding: 0;
-  margin: 0 0 20px 0;
-  max-height: 250px;
+  margin: 0 0 25px 0;
+  max-height: 260px;
   overflow-y: auto;
   
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
   }
   
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 215, 0, 0.3);
+    background: rgba(100, 150, 255, 0.6);
     border-radius: 10px;
     
     &:hover {
-      background: rgba(255, 215, 0, 0.5);
+      background: rgba(120, 170, 255, 0.8);
     }
   }
 }
@@ -65,31 +59,35 @@
 .winnerItem {
   display: flex;
   align-items: center;
-  padding: 12px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  padding: 14px 10px;
+  border-bottom: 1px solid rgba(100, 150, 255, 0.15);
+  transition: all 0.25s ease;
   position: relative;
+  border-radius: 8px;
+  margin-bottom: 8px;
   
   &:last-child {
     border-bottom: none;
+    margin-bottom: 0;
   }
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    transform: translateX(3px);
+    background-color: rgba(100, 150, 255, 0.1);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 }
 
 .winnerAvatar {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
   overflow: hidden;
-  margin-right: 15px;
-  border: 3px solid #FFD700;
+  margin-right: 18px;
+  border: 3px solid rgba(120, 170, 255, 0.8);
   flex-shrink: 0;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   
   img {
     width: 100%;
@@ -99,60 +97,60 @@
 }
 
 .winnerName {
-  color: #ffffff;
-  font-size: 18px;
+  color: #D0E0FF;
+  font-size: 17px;
   font-weight: 500;
   flex-grow: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .currentPlayerBadge {
-  background-color: rgba(255, 215, 0, 0.2);
-  color: #FFD700;
+  background-color: rgba(100, 180, 255, 0.25);
+  color: #C0DFFF;
   font-size: 12px;
   font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 10px;
-  margin-left: 8px;
-  border: 1px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-left: 10px;
+  border: 1px solid rgba(100, 180, 255, 0.5);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   animation: pulseBadge 2s infinite;
   
   @media (max-width: 480px) {
     font-size: 10px;
-    padding: 2px 6px;
+    padding: 3px 7px;
   }
 }
 
 .closeButton {
   display: block;
   width: 100%;
-  padding: 12px 20px;
-  background: linear-gradient(145deg, #3a3a5a, #252540);
+  padding: 14px 22px;
+  background: linear-gradient(145deg, #007bff, #0056b3);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  margin-top: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   
   &:hover {
-    background: linear-gradient(145deg, #4a4a6a, #353550);
+    background: linear-gradient(145deg, #0069d9, #004085);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.3);
   }
   
   &:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
   }
 }
 
@@ -181,17 +179,20 @@
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .winnersListContainer {
-    padding: 20px;
-    max-width: 350px;
+    padding: 25px;
+    max-width: 90%;
   }
   
   .title {
-    font-size: 24px;
+    font-size: 22px;
+    &::before, &::after {
+      font-size: 20px;
+    }
   }
   
   .winnerAvatar {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
   }
   
   .winnerName {
@@ -199,7 +200,7 @@
   }
   
   .closeButton {
-    padding: 10px 18px;
+    padding: 12px 20px;
     font-size: 15px;
   }
 }
@@ -207,30 +208,35 @@
 /* Для очень маленьких экранов */
 @media (max-width: 400px) {
   .winnersListContainer {
-    max-width: 300px;
-    padding: 15px;
+    max-width: 95%;
+    padding: 20px;
   }
   
   .title {
     font-size: 20px;
     
     &::before, &::after {
-      font-size: 16px;
+      font-size: 18px;
     }
   }
   
   .winnerAvatar {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
+    width: 45px;
+    height: 45px;
+    margin-right: 12px;
   }
   
   .winnerName {
-    font-size: 14px;
+    font-size: 15px;
+  }
+  
+  .currentPlayerBadge {
+    padding: 3px 8px;
+    font-size: 11px;
   }
   
   .closeButton {
-    padding: 8px 15px;
+    padding: 10px 16px;
     font-size: 14px;
   }
 } 
