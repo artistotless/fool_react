@@ -102,7 +102,7 @@ class GameService {
   }
 
   // Метод для обработки успешного действия безы карты
-  handleSuccessfulAction(action: IActionResultEvent, store: GameStoreState) {
+  handleSuccessfulAction(action: IActionResultEvent, play: Function, store: GameStoreState) {
     // Находим соответствующее действие в pendingActions
     const pendingAction = store.findPendingActionById(action.actionId);
 
@@ -116,6 +116,7 @@ class GameService {
 
     if (pendingAction.type === CardActionType.Pass) {
       console.log(`Действие pass успешно выполнено`);
+      play(Sounds.Toast);
     }
     else {
       console.log(`Действие ${pendingAction.type} успешно выполнено`);
@@ -208,6 +209,8 @@ class GameService {
         store.setPassedPlayers([event.playerId]);
       else
         store.addPassedPlayer(event.playerId);
+
+      play(Sounds.Toast);
     }
     else if (event.actionType === CardActionType.Attack || event.actionType === CardActionType.Defend) {
       const cardPrefix = `playercard-${event.playerId}`;
@@ -242,6 +245,7 @@ class GameService {
   handlePlayerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
 
     if (event.actionType == CardActionType.Pass) {
+      play(Sounds.Toast);
       console.log(`Игрок ${event.playerId} выполнил действие ${event.actionType}`);
       if (event.playerId !== store.defenderId)
         store.setPassedPlayers([event.playerId]);

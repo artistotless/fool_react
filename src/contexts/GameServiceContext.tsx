@@ -75,7 +75,7 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
         const actionResult = currentEvent.event as IActionResultEvent;
 
         if (actionResult.success)
-          gameService.handleSuccessfulAction(actionResult, store);
+          gameService.handleSuccessfulAction(actionResult, play, store);
         else
           gameService.handleFailedCardAction(actionResult, user.id, showToast, store);
         break;

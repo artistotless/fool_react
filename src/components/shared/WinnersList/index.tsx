@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useUser } from 'src/contexts/UserContext';
 import victorySound from '../../../assets/sounds/victory.mp3';
+import { useAudio } from 'src/contexts/AudioContext';
+import { Sounds } from 'src/utils/sounds';
 
 // Компонент для отображения аватарки с поддержкой запасных вариантов
 const PlayerAvatar = ({ playerId, playerName, avatar }: { playerId: string, playerName: string, avatar: string }) => {
@@ -40,6 +42,7 @@ const WinnersList: React.FC = () => {
   const { players, winnersIds, status, clearState } = useGameStore();
   const { setHubDetails } = useConnectionStore();
   const { user } = useUser();
+  const { play } = useAudio();
   const [showAnimation, setShowAnimation] = useState(false);
   const effectsTriggeredRef = useRef(false);
 
@@ -65,7 +68,7 @@ const WinnersList: React.FC = () => {
       // Запускаем конфетти только если текущий игрок - победитель и эффекты еще не были запущены
       if (isCurrentPlayerWinner && !effectsTriggeredRef.current) {
         effectsTriggeredRef.current = true; // Отмечаем, что эффекты уже запущены
-        playVictorySound();
+        play(Sounds.Victory, false, 0.5);
         launchConfetti();
       }
 
@@ -85,15 +88,6 @@ const WinnersList: React.FC = () => {
     };
   }, [status, winnersIds, winners, isCurrentPlayerWinner]);
 
-  const playVictorySound = () => {
-    try {
-      const audio = new Audio(victorySound);
-      audio.volume = 0.5;
-      audio.play().catch(e => console.log('Не удалось воспроизвести звук победы', e));
-    } catch (e) {
-      console.log('Ошибка при создании аудио объекта', e);
-    }
-  }
   // Функция для запуска анимации конфетти
   const launchConfetti = () => {
     const canvas = document.createElement('canvas');
