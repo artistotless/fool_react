@@ -57,6 +57,7 @@ export interface GameStoreState {
   setActivePlayers: (playerIds: string[]) => void;
   setSyncAt: (syncAt: string) => void;
   clearState: () => void;
+  setPlayerHand: (playerId: string, cardsCount: number) => void;
 
   // Методы для работы с картами
   setTrumpCard: (trump: ICard) => void;
@@ -125,6 +126,12 @@ const useGameStore = create<GameStoreState>()(
       setConnectedPlayers: (playerIds: string[]) => set({ connectedPlayers: playerIds }, undefined, 'game/setConnectedPlayers'),
       setSyncAt: (syncAt) => set({ syncAt }, undefined, 'game/setSyncAt'),
       clearState: () => set(getInitialStateValues()),
+      setPlayerHand: (playerId, cardsCount) => set((state) => ({
+        players: state.players.map((player) =>
+          player.id === playerId ? { ...player, cardsCount } : player
+        )
+      }), undefined, 'game/setPlayerHand'),
+
 
       // Реализация методов для работы с картами
       addCardToHand: (card) => set((state) => ({

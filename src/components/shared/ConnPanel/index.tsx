@@ -9,9 +9,6 @@ import useConnectionStore from "src/store/connectionStore";
 const ConnPanel = () => {
 
   const { showToast } = useToast();
-  const [matchId, setMatchId] = useState<string>(() => {
-    return localStorage.getItem('lastMatchId') || '';
-  });
   const [selectedPlayer, setSelectedPlayer] = useState(() => {
     return localStorage.getItem('lastSelectedPlayer') || '';
   });
@@ -38,10 +35,9 @@ const ConnPanel = () => {
 
   // Обработчик клика на кнопку "Connect to match"
   const handleConnect = () => {
-    if (token && matchId) {
-      localStorage.setItem('lastMatchId', matchId);
+    if (token) {
       let endpoint;
-      
+      const matchId = "e7f138e9-43ab-4210-8f93-72f001b45208";
       if (env.gsEndpoint == null) {
         endpoint = `http://${window.location.hostname}:52001/matches/${matchId}`;
       } else {
@@ -54,12 +50,6 @@ const ConnPanel = () => {
     } else {
       showToast("Выберите игрока и введите идентификатор матча.", "error");
     }
-  };
-
-  // Обработчик изменения matchId
-  const handleMatchIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMatchId = e.target.value;
-    setMatchId(newMatchId);
   };
 
   // Варианты анимации
@@ -121,7 +111,7 @@ const ConnPanel = () => {
               type="radio"
               checked={selectedPlayer === "0"}
             />{" "}
-            Игрок 1
+           artistotless
           </label>
         </div>
       </motion.div>
@@ -135,7 +125,7 @@ const ConnPanel = () => {
               type="radio"
               checked={selectedPlayer === "1"}
             />{" "}
-            Игрок 2
+            DARKSIDE
           </label>
         </div>
       </motion.div>
@@ -149,7 +139,7 @@ const ConnPanel = () => {
               type="radio"
               checked={selectedPlayer === "2"}
             />{" "}
-            Игрок 3
+            хьэнтхъупс
           </label>
         </div>
       </motion.div>
@@ -170,14 +160,6 @@ const ConnPanel = () => {
 
       <motion.div variants={itemVariants}>
         <div className={styles.formGroup}>
-          <input
-            value={matchId}
-            onChange={handleMatchIdChange}
-            type="text"
-            placeholder="ID матча (Пример: 60b59ce0-e2c0-4777-9c94-6b7d7c9b17df)"
-            name="matchId"
-            id="matchIdInput"
-          />
           <motion.button 
             onClick={handleConnect} 
             id="connectButton"

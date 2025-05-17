@@ -8,6 +8,7 @@ export enum GameUpdateTypes {
    PlayerAction = "PlayerActionEvent", // Действия других игроков
    ActionResult = "ActionResultEvent", // Результат действия
    RoundEnded = "RoundEndedEvent", // Информация о завершении раунда
+   PlayerHandChanged = "PlayerHandChangedEvent", // Изменение кол-ва карт в руке игрока
    GameFinished = "GameFinishedDto", // Завершение игры
    GameCanceled = "GameCanceledDto", // Отмена игры
    ActivePlayersUpdated = "ActivePlayersUpdatedEvent", // Обновление списка активных игроков
@@ -245,6 +246,15 @@ export interface IRoundEndedEvent {
    defenderId: string;
    deckCardsCount: number;
    cards?: ICard[];
+   playersCardsCount: Record<string, number>;
+}
+
+/**
+ * Событие изменения кол-ва карт в руке игрока
+ */
+export interface IPlayerHandChangedEvent {
+   playerId: string;
+   cardsCount: number;
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   IPlayerConnectedEvent,
   IPlayerDisconnectedEvent,
   IGameStatusUpdatedEvent,
+  IPlayerHandChangedEvent,
 } from '../types';
 import { testMode } from 'src/environments/environment';
 import { useToast } from '../services/ToastService';
@@ -83,6 +84,11 @@ export const GameServiceProvider = ({ children }: { children: ReactNode }) => {
       case GameUpdateTypes.ActivePlayersUpdated:
         // Обработка обновления списка активных игроков
         gameService.handleActivePlayersUpdated(currentEvent.event as IActivePlayersUpdatedEvent, store);
+        break;
+
+      case GameUpdateTypes.PlayerHandChanged:
+        // Обработка изменения кол-ва карт в руке игрока
+        gameService.handlePlayerHandChanged(currentEvent.event as IPlayerHandChangedEvent, store);
         break;
 
       case GameUpdateTypes.RoundEnded:

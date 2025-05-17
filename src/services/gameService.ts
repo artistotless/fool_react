@@ -15,6 +15,7 @@ import {
   IPlayerDisconnectedEvent,
   IPlayerConnectedEvent,
   IGameStatusUpdatedEvent,
+  IPlayerHandChangedEvent,
 } from "../types";
 import {
   animateCardToSlot,
@@ -58,7 +59,7 @@ class GameService {
   }
 
   handleSyncGameState(state: IGameSyncState, play: Function, store: GameStoreState) {
-    if(store.syncAt)
+    if (store.syncAt)
       return;
 
     let slots: ISlot[] = [];
@@ -168,6 +169,13 @@ class GameService {
     store.setActivePlayers(event.activePlayers);
   }
 
+  /**
+   * Обрабатывает событие изменения кол-ва карт в руке игрока
+   */
+  handlePlayerHandChanged(event: IPlayerHandChangedEvent, store: GameStoreState) {
+    store.setPlayerHand(event.playerId, event.cardsCount);
+  }
+
   // Метод для обработки окончания раунда
   handleRoundEnded(event: IRoundEndedEvent, userId: string, play: Function, store: GameStoreState,) {
     const { tableCardsRef } = animationService;
@@ -196,6 +204,10 @@ class GameService {
     store.setPassedPlayers([]);
     store.setMoveAt(new Date().toISOString());
     store.setDeckCardsCount(event.deckCardsCount);
+    // Обновляем количество карт у игроков
+    Object.entries(event.playersCardsCount).forEach(([playerId, cardsCount]) => {
+      store.setPlayerHand(playerId, cardsCount);
+    });
   }
 
   handleServerAction(event: IPlayerActionEvent, play: Function, store: GameStoreState) {
@@ -347,6 +359,10 @@ class GameService {
   handleWinnersUpdated(event: IWinnersUpdatedEvent, store: GameStoreState) {
     // Обновляем список победителей в хранилище
     store.setWinnersIds(event.winners);
+    // Обновляем количество карт у игроков
+    event.winners.forEach((playerId) => {
+      store.setPlayerHand(playerId, 0);
+    });
   }
 
   // Метод для перемещения фейковой карты в слот
